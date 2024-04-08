@@ -1,8 +1,12 @@
 #ifndef MEMORIA_MAIN_H_
 #define MEMORIA_MAIN_H_
 
-#include<commons/log.h>
-#include<commons/config.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <../../utils/include/hello.h>
+
+#include <commons/log.h>
+#include <commons/config.h>
 
 char* PUERTO_ESCUCHA; //pdf dice int
 int TAM_MEMORIA;

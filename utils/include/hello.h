@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include<commons/log.h>
-#include<commons/config.h>
-#include<commons/string.h>
-#include<commons/string.h>
+#include <commons/log.h>
+#include <commons/config.h>
+#include <commons/string.h>
+#include <commons/string.h>
 
 /**
 * @fn    decir_hola
@@ -19,16 +19,5 @@ void decir_hola(char* quien);
 t_log* logger;
 t_log* debug_log;
 t_config* config;
-
-//declaracion funciones
-int crear_conexion(char* ip, char* puerto);
-
-
-
-
-
-
-
-
 
 #endif

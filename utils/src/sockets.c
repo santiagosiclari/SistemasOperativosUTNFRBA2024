@@ -1,4 +1,4 @@
-#include "sockets.h"
+#include "../include/sockets.h"
 
 // Estas son solo las funciones entre cliente y servidor
 

@@ -1,8 +1,12 @@
 #ifndef ENTRADASALIDA_MAIN_H_
 #define ENTRADASALIDA_MAIN_H_
 
-#include<commons/log.h>
-#include<commons/config.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <../../utils/include/hello.h>
+
+#include <commons/log.h>
+#include <commons/config.h>
 
 
 //declaracion archivos de configuracion

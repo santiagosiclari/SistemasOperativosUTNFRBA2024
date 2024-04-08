@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <utils/hello.h>
-#include "main.h"
+#include "../include/main.h"
 
 int main(int argc, char* argv[]) {
     decir_hola("Kernel");
@@ -28,7 +25,7 @@ if (kernel_config == NULL)
     //leer de archivo config
     PUERTO_ESCUCHA = config_get_string_value(kernel_config, "PUERTO_ESCUCHA");
     IP_MEMORIA = config_get_string_value(kernel_config, "IP_MEMORIA");
-    PUERTO_MEMORIA = config_get_int_value(kernel_config, "PUERTO_MEMORIA");
+    PUERTO_MEMORIA = config_get_string_value(kernel_config, "PUERTO_MEMORIA");
     IP_CPU = config_get_string_value(kernel_config, "IP_CPU");
     PUERTO_CPU_DISPATCH = config_get_string_value(kernel_config, "PUERTO_CPU_DISPATCH");
     PUERTO_CPU_INTERRUPT = config_get_string_value(kernel_config, "PUERTO_CPU_INTERRUPT");
@@ -38,7 +35,5 @@ if (kernel_config == NULL)
     INSTANCIAS_RECURSOS = config_get_array_value(kernel_config, "INSTANCIAS_RECUERSOS");
     GRADO_MULTIPROGRAMACION = config_get_int_value(kernel_config, "GRADO_MULTIPROGRAMACION");
 
-
-
-return 0;
+    return 0;
 }
