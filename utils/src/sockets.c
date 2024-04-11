@@ -32,16 +32,16 @@ int crear_conexion(t_log* logger, char *ip, char* puerto, char* modulo) {
 	return socket_cliente;
 }
 
-int iniciar_servidor(t_log* logger, char* ip, char* puerto, char* modulo) {
+int iniciar_servidor(t_log* logger, char* puerto, char* modulo) {
     int socket_servidor;
     struct addrinfo hints, *server_info;
-
+    
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    getaddrinfo(ip, puerto, &hints, &server_info);
+    getaddrinfo(NULL, puerto, &hints, &server_info);
 
     socket_servidor = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
 
@@ -50,7 +50,7 @@ int iniciar_servidor(t_log* logger, char* ip, char* puerto, char* modulo) {
     listen(socket_servidor, SOMAXCONN); 
 
     // Aviso al logger que esta escuchando
-    log_trace(logger, "Escuchando en %s:%s del modulo %s\n", ip, puerto, modulo);
+    log_trace(logger, "Escuchando en el puerto %s del modulo %s\n", puerto, modulo);
 
     freeaddrinfo(server_info);
 
