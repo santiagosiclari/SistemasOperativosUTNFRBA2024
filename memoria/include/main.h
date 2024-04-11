@@ -9,8 +9,8 @@
 
 #include "../../utils/include/sockets.h"
 
-extern int fd_memoria;
-extern int fd_cpu;
+int fd_memoria;
+int fd_cpu;
 
 t_config* memoria_config;
 
