@@ -9,8 +9,7 @@ int main(int argc, char* argv[]) {
     init_memoria_config();
 
     // Iniciar servidor de memoria
-    fd_memoria = iniciar_servidor(memoria_logger, NULL, PUERTO_ESCUCHA, "Memoria");
-    log_info(memoria_logger, "Socket memoria: %d", fd_memoria); // Prueba
+    fd_memoria = iniciar_servidor(memoria_logger, PUERTO_ESCUCHA, "Memoria");
 
     // Conexiones
     // Espera conexion de Kernel
@@ -22,7 +21,6 @@ int main(int argc, char* argv[]) {
     // Espera conexion de CPU
     log_info(memoria_logger, "Esperando al modulo CPU");
     fd_cpu = esperar_cliente(memoria_logger, fd_memoria, "CPU");
-    log_info(memoria_logger, "Socket cpu: %d", fd_cpu); // Prueba
 
     
 

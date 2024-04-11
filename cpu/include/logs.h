@@ -6,8 +6,8 @@
 
 #include <commons/log.h>
 
-t_log* cpu_logger;
-t_log* cpu_debug;
+extern t_log* cpu_logger;
+extern t_log* cpu_debug;
 
 void init_cpu_logs();
 

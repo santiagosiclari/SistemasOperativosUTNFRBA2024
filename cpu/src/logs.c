@@ -1,4 +1,4 @@
-#include <../include/logs.h>
+#include "../include/logs.h"
 
 void init_cpu_logs(void) {
     cpu_logger = log_create("cpu.log", "CPU LOGGER", 1, LOG_LEVEL_INFO);

@@ -8,4 +8,19 @@
 #include "logs.h"
 #include <../../utils/include/sockets.h>
 
+int fd_memoria;
+
+t_log* cpu_logger;
+t_log* cpu_debug;
+
+t_config* cpu_config;
+
+// Declaracion archivos de configuracion
+char* IP_MEMORIA;
+char* PUERTO_MEMORIA; //char para func
+char* PUERTO_ESCUCHA_DISPATCH;//char para func
+char* PUERTO_ESCUCHA_INTERRUPT;//char para func
+int CANTIDAD_ENTRADAS_TLB;
+char* ALGORITMO_TLB;
+
 #endif

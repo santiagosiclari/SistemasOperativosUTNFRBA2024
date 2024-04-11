@@ -1,4 +1,4 @@
-#include <../include/configs.h>
+#include "../include/configs.h"
 
 void init_cpu_config(void) {
     cpu_config = config_create("/home/utnso/tp-2024-1c-ChacoForSystem/cpu/cpu.config");
