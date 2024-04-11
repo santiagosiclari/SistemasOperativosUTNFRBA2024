@@ -1,4 +1,4 @@
-#include <../include/logs.h>
+#include "../include/logs.h"
 
 void init_memoria_logs(void) {
     memoria_logger = log_create("memoria.log", "MEMORIA LOGGER", 1, LOG_LEVEL_INFO);

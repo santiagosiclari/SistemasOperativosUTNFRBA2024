@@ -6,14 +6,14 @@
 
 #include <commons/config.h>
 
-t_config* memoria_config;
+extern t_config* memoria_config;
 
 // Declaracion archivos de configuracion
-char* PUERTO_ESCUCHA; //pdf dice int
-int TAM_MEMORIA;
-int TAM_PAGINA;
-char* PATH_INSTRUCCIONES;
-int RETARDO_RESPUESTA;
+extern char* PUERTO_ESCUCHA; //pdf dice int
+extern int TAM_MEMORIA;
+extern int TAM_PAGINA;
+extern char* PATH_INSTRUCCIONES;
+extern int RETARDO_RESPUESTA;
 
 void init_memoria_config();
 
