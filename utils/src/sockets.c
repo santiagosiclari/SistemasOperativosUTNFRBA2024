@@ -49,8 +49,8 @@ int iniciar_servidor(t_log* logger, char* puerto, char* modulo) {
     
     listen(socket_servidor, SOMAXCONN); 
 
-    // Aviso al logger que esta escuchando
-    log_info(logger, "Escuchando en el puerto %s del modulo %s\n", puerto, modulo);
+    // Aviso al logger que el servidor se inicio
+    log_info(logger, "Servidor iniciado en el puerto %s del modulo %s\n", puerto, modulo);
 
     freeaddrinfo(server_info);
 
