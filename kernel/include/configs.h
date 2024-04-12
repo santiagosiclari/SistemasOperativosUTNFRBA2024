@@ -6,20 +6,20 @@
 
 #include <commons/config.h>
 
-t_config* kernel_config;
+extern t_config* kernel_config;
 
 // Declaracion archivos de configuracion
-char* PUERTO_ESCUCHA; //pdf dice int
-char* IP_MEMORIA;
-char* PUERTO_MEMORIA;//pdf dice int
-char* IP_CPU;
-char* PUERTO_CPU_DISPATCH;//pdf dice int
-char* PUERTO_CPU_INTERRUPT;//pdf dice int
-char* ALGORITMO_PLANIFICACION;
-int QUANTUM;
-char** RECURSOS;//lista, luego usar common de string
-char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
-int GRADO_MULTIPROGRAMACION;
+extern char* PUERTO_ESCUCHA; //pdf dice int
+extern char* IP_MEMORIA;
+extern char* PUERTO_MEMORIA;//pdf dice int
+extern char* IP_CPU;
+extern char* PUERTO_CPU_DISPATCH;//pdf dice int
+extern char* PUERTO_CPU_INTERRUPT;//pdf dice int
+extern char* ALGORITMO_PLANIFICACION;
+extern int QUANTUM;
+extern char** RECURSOS;//lista, luego usar common de string
+extern char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
+extern int GRADO_MULTIPROGRAMACION;
 
 void init_kernel_config();
 
