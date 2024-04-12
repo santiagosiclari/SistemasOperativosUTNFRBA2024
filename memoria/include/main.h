@@ -9,10 +9,11 @@
 
 #include "../../utils/include/sockets.h"
 
+//variables para conexiones
 int fd_memoria;
+int fd_kernel;
+int fd_entradasalida;
 int fd_cpu;
-// int fd_kernel;
-// int fd_entradasalida;
 
 t_config* memoria_config;
 
