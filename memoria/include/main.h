@@ -3,11 +3,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "configs.h"
 #include "logs.h"
 
 #include "../../utils/include/sockets.h"
+
+#include "memoria-kernel.h"
 
 //variables para conexiones
 int fd_memoria;

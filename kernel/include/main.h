@@ -17,6 +17,10 @@ int fd_cpu_interrupt;
 
 t_config* kernel_config;
 
+t_log* kernel_logger;
+t_log* kernel_debug;
+
+// Declaracion archivos de configuracion
 char* PUERTO_ESCUCHA; //pdf dice int
 char* IP_MEMORIA;
 char* PUERTO_MEMORIA;//pdf dice int
@@ -28,8 +32,5 @@ int QUANTUM;
 char** RECURSOS;//lista, luego usar common de string
 char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
 int GRADO_MULTIPROGRAMACION;
-
-t_log* kernel_logger;
-t_log* kernel_debug;
 
 #endif

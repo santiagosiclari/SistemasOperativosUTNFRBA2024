@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "main.h"
+
 #include "../../utils/include/sockets.h"
 
-void conexion_cpu_a_memoria();
+void conexion_memoria_kernel();
 
 #endif

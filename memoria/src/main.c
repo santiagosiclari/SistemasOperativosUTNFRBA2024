@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
 
     // Conexiones
     // Espera conexion de Kernel
+    log_info(memoria_logger, "Esperando al modulo Kernel");
     fd_kernel = esperar_cliente(memoria_logger, fd_memoria, "Kernel");
 
     // Espera conexion de CPU
@@ -24,6 +25,10 @@ int main(int argc, char* argv[]) {
     //ESPERAR CONEXION I/O
     //fd_entradasalida = esperar_cliente(memoria_logger, fd_memoria, "I/O");
 
+    // Hilos Memoria - Kernel
+    pthread_t hilo_memoria;
+    pthread_create(&hilo_memoria, NULL, (void*)conexion_memoria_kernel, NULL);
+    pthread_join(hilo_memoria, NULL);
 
     return 0;
 }
