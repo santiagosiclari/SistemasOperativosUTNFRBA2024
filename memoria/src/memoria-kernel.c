@@ -1,6 +1,6 @@
 #include "../include/memoria-kernel.h"
 
-void conexion_memoria_kernel(void) {
+void conexion_memoria_kernel() {
     bool control = 1;
 	while (control) {
 		int cod_op = recibir_operacion(fd_cpu);
@@ -19,5 +19,4 @@ void conexion_memoria_kernel(void) {
 			break;
 		}
 	}
-	return EXIT_SUCCESS;
 }

@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "main.h"
+#include "configs.h"
+#include "logs.h"
+#include "file-descriptors.h"
 
 #include "../../utils/include/sockets.h"
 
