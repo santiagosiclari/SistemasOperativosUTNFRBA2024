@@ -16,5 +16,13 @@ int main(int argc, char* argv[]) {
     // Conectamos como cliente con el modulo MEMORIA
     fd_memoria = crear_conexion(kernel_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
 
+    int a;
+
+    scanf("%d", &a);
+    send_mensaje(fd_cpu_dispatch, a);
+
+    scanf("%d", &a);
+    send_mensaje(fd_memoria, a);
+
     return 0;
 }

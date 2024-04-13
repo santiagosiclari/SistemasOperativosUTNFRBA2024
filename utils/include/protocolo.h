@@ -1,7 +1,13 @@
 #ifndef PROTOCOLO_H_
 #define PROTOCOLO_H_
 
+#include <inttypes.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include <commons/log.h>
@@ -37,5 +43,7 @@ typedef struct
 } t_paquete;
 
 // Definir funciones de send y recv de cada operacion
+bool send_mensaje(int fd, uint8_t num);
+bool recv_mensaje(int fd, uint8_t* num);
 
 #endif
