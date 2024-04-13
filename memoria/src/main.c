@@ -19,8 +19,8 @@ int main(int argc, char* argv[]) {
     fd_kernel = esperar_cliente(memoria_logger, fd_memoria, "Kernel");
 
     // Espera conexion de CPU
-    log_info(memoria_logger, "Esperando al modulo CPU");
-    fd_cpu = esperar_cliente(memoria_logger, fd_memoria, "CPU");
+    log_info(memoria_logger, "Esperando al modulo CPU - Dispatch");
+    fd_cpu_dispatch = esperar_cliente(memoria_logger, fd_memoria, "CPU - Dispatch");
 
     //ESPERAR CONEXION I/O
     //fd_entradasalida = esperar_cliente(memoria_logger, fd_memoria, "I/O");
