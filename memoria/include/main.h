@@ -17,8 +17,7 @@
 int fd_kernel;
 int fd_memoria;
 int fd_entradasalida;
-int fd_cpu_dispatch;
-int fd_cpu_interrupt;
+int fd_cpu;
 
 t_config* memoria_config;
 

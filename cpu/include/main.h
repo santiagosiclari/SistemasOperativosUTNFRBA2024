@@ -3,14 +3,17 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "configs.h"
 #include "logs.h"
+#include "cpu-kernel-d.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 
-int fd_kernel;
+int fd_kernel_dispatch;
+int fd_kernel_interrupt;
 int fd_memoria;
 int fd_entradasalida;
 int fd_cpu_dispatch;
