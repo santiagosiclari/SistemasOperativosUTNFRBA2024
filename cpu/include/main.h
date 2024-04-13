@@ -9,6 +9,8 @@
 #include <../../utils/include/sockets.h>
 
 int fd_memoria;
+int fd_cpu_dispatch;
+int fd_cpu_interrupt;
 
 t_log* cpu_logger;
 t_log* cpu_debug;
