@@ -12,7 +12,6 @@ void conexion_memoria_kernel() {
 		case -1:
 			log_error(memoria_logger, "El CPU se desconecto. Terminando servidor");
 			control = 0;
-            exit(EXIT_FAILURE);
             break;
 		default:
 			log_warning(memoria_logger, "Operacion desconocida.");
