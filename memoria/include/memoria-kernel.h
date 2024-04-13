@@ -9,6 +9,7 @@
 #include "file-descriptors.h"
 
 #include "../../utils/include/sockets.h"
+#include "../../utils/include/protocolo.h"
 
 void conexion_memoria_kernel();
 

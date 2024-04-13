@@ -3,7 +3,7 @@
 void conexion_memoria_kernel() {
     bool control = 1;
 	while (control) {
-		int cod_op = recibir_operacion(fd_cpu);
+		int cod_op = recibir_operacion(fd_cpu_dispatch);
 		switch (cod_op) {
 		case MENSAJE:
 			break;

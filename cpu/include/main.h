@@ -6,9 +6,13 @@
 
 #include "configs.h"
 #include "logs.h"
-#include <../../utils/include/sockets.h>
 
+#include "../../utils/include/sockets.h"
+#include "../../utils/include/protocolo.h"
+
+int fd_kernel;
 int fd_memoria;
+int fd_entradasalida;
 int fd_cpu_dispatch;
 int fd_cpu_interrupt;
 

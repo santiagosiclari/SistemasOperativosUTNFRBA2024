@@ -10,23 +10,6 @@
 #include <string.h>
 #include <commons/log.h>
 
-typedef enum {
-	MENSAJE,
-	PAQUETE,
-    // Se van a crear mas operaciones segun el protocolo de comunicacion
-} op_code;
-
-typedef struct {
-	int size;
-	void* stream;
-} t_buffer;
-
-typedef struct
-{
-	op_code codigo_operacion;
-	t_buffer* buffer;
-} t_paquete;
-
 int crear_conexion(t_log* logger, char *ip, char* puerto, char* modulo);
 int iniciar_servidor(t_log* logger, char* puerto, char* modulo);
 int esperar_cliente(t_log* logger, int socket_servidor, char* modulo);

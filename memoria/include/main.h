@@ -9,14 +9,16 @@
 #include "logs.h"
 
 #include "../../utils/include/sockets.h"
+#include "../../utils/include/protocolo.h"
 
 #include "memoria-kernel.h"
 
 //variables para conexiones
-int fd_memoria;
 int fd_kernel;
+int fd_memoria;
 int fd_entradasalida;
-int fd_cpu;
+int fd_cpu_dispatch;
+int fd_cpu_interrupt;
 
 t_config* memoria_config;
 
