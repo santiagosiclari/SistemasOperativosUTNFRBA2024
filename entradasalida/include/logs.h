@@ -6,8 +6,8 @@
 
 #include <commons/log.h>
 
-t_log* entradasalida_logger;
-t_log* entradasalida_debug;
+extern t_log* entradasalida_logger;
+extern t_log* entradasalida_debug;
 
 void init_entradasalida_logs();
 

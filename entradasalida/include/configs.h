@@ -6,18 +6,18 @@
 
 #include <commons/config.h>
 
-t_config* entradasalida_config;
+extern t_config* entradasalida_config;
 
 // Declaracion archivos de configuracion
-char* TIPO_INTERFAZ;
-int TIEMPO_UNIDAD_TRABAJO;
-char* IP_KERNEL;
-char* PUERTO_KERNEL; //pdf dice int?
-char* IP_MEMORIA;
-char* PUERTO_MEMORIA;//pdf dice int?
-char* PATH_BASE_DIALFS;
-int BLOCK_SIZE;
-int BLOCK_COUNT;
+extern char* TIPO_INTERFAZ;
+extern int TIEMPO_UNIDAD_TRABAJO;
+extern char* IP_KERNEL;
+extern char* PUERTO_KERNEL; //pdf dice int?
+extern char* IP_MEMORIA;
+extern char* PUERTO_MEMORIA;//pdf dice int?
+extern char* PATH_BASE_DIALFS;
+extern int BLOCK_SIZE;
+extern int BLOCK_COUNT;
 
 void init_entradasalida_config();
 

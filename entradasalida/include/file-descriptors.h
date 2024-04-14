@@ -1,4 +1,4 @@
-#ifndef FD_H_ 
+#ifndef FD_H_
 #define FD_H_
 
 // Variables globales de los FD

@@ -6,8 +6,32 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "file-descriptors.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+
+t_log* entradasalida_logger;
+t_log* entradasalida_debug;
+
+t_config* entradasalida_config;
+
+// Declaracion archivos de configuracion
+char* TIPO_INTERFAZ;
+int TIEMPO_UNIDAD_TRABAJO;
+char* IP_KERNEL;
+char* PUERTO_KERNEL; //pdf dice int?
+char* IP_MEMORIA;
+char* PUERTO_MEMORIA;//pdf dice int?
+char* PATH_BASE_DIALFS;
+int BLOCK_SIZE;
+int BLOCK_COUNT;
+
+int fd_kernel;
+int fd_memoria;
+int fd_entradasalida;
+int fd_cpu_dispatch;
+int fd_cpu_interrupt;
+
 
 #endif
