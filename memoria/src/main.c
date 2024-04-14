@@ -29,7 +29,12 @@ int main(int argc, char* argv[]) {
     // Hilos Kernel - Memoria
     pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*)conexion_memoria_kernel, NULL);
-    pthread_join(hilo_kernel, NULL);
+    pthread_detach(hilo_kernel);
+
+    // Hilos CPU - Memoria
+    pthread_t hilo_cpu;
+    pthread_create(&hilo_cpu, NULL, (void*)conexion_memoria_cpu, NULL);
+    pthread_join(hilo_cpu, NULL);
 
     return 0;
 }

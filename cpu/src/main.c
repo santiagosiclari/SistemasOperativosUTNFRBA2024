@@ -30,7 +30,12 @@ int main(int argc, char* argv[]) {
     // Hilos de Kernel Dispatch - CPU
     pthread_t hilo_kernel_dispatch;
     pthread_create(&hilo_kernel_dispatch, NULL, (void *)conexion_cpu_kernel_dispatch, NULL);
-    pthread_join(hilo_kernel_dispatch, NULL);
+    pthread_detach(hilo_kernel_dispatch);
+
+    // Hilos de Kernel Dispatch - CPU
+    pthread_t hilo_kernel_interrupt;
+    pthread_create(&hilo_kernel_interrupt, NULL, (void *)conexion_cpu_kernel_interrupt, NULL);
+    pthread_join(hilo_kernel_interrupt, NULL);
 
     return 0;
 }

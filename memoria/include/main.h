@@ -12,6 +12,7 @@
 #include "../../utils/include/protocolo.h"
 
 #include "memoria-kernel.h"
+#include "memoria-cpu.h"
 
 //variables para conexiones
 int fd_kernel;
