@@ -11,10 +11,10 @@ int main(int argc, char* argv[]) {
     // Conexiones
 
     //  Inicio servidor de CPU - dispatch
-    fd_cpu_dispatch = iniciar_servidor(cpu_logger,PUERTO_ESCUCHA_DISPATCH,"CPU dispatch inicializado");
+    fd_cpu_dispatch = iniciar_servidor(cpu_logger,PUERTO_ESCUCHA_DISPATCH,"CPU Dispatch");
 
     //  Inicio servidor de CPU - interrupt
-    fd_cpu_interrupt = iniciar_servidor(cpu_logger,PUERTO_ESCUCHA_INTERRUPT,"CPU interrupt inicializada");
+    fd_cpu_interrupt = iniciar_servidor(cpu_logger,PUERTO_ESCUCHA_INTERRUPT,"CPU Interrupt");
 
     //  Espera conexiones de Kernel - dispatch
     log_info(cpu_logger,"Esperando Modulo Kernel Dispatch");

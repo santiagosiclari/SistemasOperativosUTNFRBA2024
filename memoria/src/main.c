@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
     // Conexiones
 
     //iniciar servidor
-    fd_memoria = iniciar_servidor(memoria_logger, PUERTO_ESCUCHA, "Memoria iniciada");
+    fd_memoria = iniciar_servidor(memoria_logger, PUERTO_ESCUCHA, "Memoria");
 
     // Conexiones
     // Espera conexion de Kernel
