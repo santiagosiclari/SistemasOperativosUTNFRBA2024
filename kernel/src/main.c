@@ -23,13 +23,7 @@ int main(int argc, char* argv[]) {
     log_info(kernel_logger, "Esperando al modulo Entrada salida");
     fd_entradasalida = esperar_cliente(kernel_logger, fd_kernel, "Entrada Salida");
 
-    int a;
-
-    scanf("%d", &a);
-    send_mensaje(fd_cpu_dispatch, a);
-
-    scanf("%d", &a);
-    send_mensaje(fd_memoria, a);
+    iniciar_consola(kernel_logger);
 
     return 0;
 }

@@ -6,6 +6,7 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "consola.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
