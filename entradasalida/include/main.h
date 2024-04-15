@@ -6,10 +6,12 @@
 
 #include "configs.h"
 #include "logs.h"
-#include "file-descriptors.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+
+int fd_kernel;
+int fd_memoria;
 
 t_log* entradasalida_logger;
 t_log* entradasalida_debug;
@@ -26,12 +28,5 @@ char* PUERTO_MEMORIA;//pdf dice int?
 char* PATH_BASE_DIALFS;
 int BLOCK_SIZE;
 int BLOCK_COUNT;
-
-int fd_kernel;
-int fd_memoria;
-int fd_entradasalida;
-int fd_cpu_dispatch;
-int fd_cpu_interrupt;
-
 
 #endif

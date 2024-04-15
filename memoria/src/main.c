@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     // Hilos CPU - Memoria
     pthread_t hilo_cpu;
     pthread_create(&hilo_cpu, NULL, (void*)conexion_memoria_cpu, NULL);
-    pthread_join(hilo_cpu, NULL);
+    pthread_detach(hilo_cpu);
 
     return 0;
 }

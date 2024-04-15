@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
     init_entradasalida_config();
 
     // Conexiones
-    fd_kernel = crear_conexion(entradasalida_logger, IP_KERNEL, PUERTO_KERNEL, "KERNEL");
+    fd_kernel = crear_conexion(entradasalida_logger, IP_KERNEL, PUERTO_KERNEL, "Kernel");
 
     fd_memoria = crear_conexion(entradasalida_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
 
