@@ -7,9 +7,6 @@ int main(int argc, char* argv[]) {
     // Inicializamos config
     init_kernel_config();
 
-    // Iniciar servidor
-    fd_kernel = iniciar_servidor(kernel_logger, PUERTO_ESCUCHA, "Kernel");
-
     //  Conectamos como cliente con el modulo CPU - Dispatch
     fd_cpu_dispatch = crear_conexion(kernel_logger, IP_CPU, PUERTO_CPU_DISPATCH, "Cpu - Dispatch");
     send_handshake(kernel_logger, fd_cpu_dispatch, HANDSHAKE_CPU_DISPATCH, "Kernel/CPU (Dispatch)");
@@ -21,6 +18,9 @@ int main(int argc, char* argv[]) {
     // Conectamos como cliente con el modulo MEMORIA
     fd_memoria = crear_conexion(kernel_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
     send_handshake(kernel_logger, fd_memoria, HANDSHAKE_MEMORIA, "Kernel/Memoria");
+
+    // Iniciar servidor
+    fd_kernel = iniciar_servidor(kernel_logger, PUERTO_ESCUCHA, "Kernel");
 
     //Conectamos como servidor con el modulo I/O
     log_info(kernel_logger, "Esperando al modulo Entrada Salida");
