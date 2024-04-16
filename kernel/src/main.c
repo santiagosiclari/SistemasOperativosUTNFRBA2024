@@ -33,6 +33,13 @@ int main(int argc, char* argv[]) {
 
     // Todavia no tiene ninguna funcionalidad pero ya esta inicializada
     iniciar_consola(kernel_logger);
+    
+    // Terminar programa
+    liberar_conexion(fd_cpu_dispatch);
+    liberar_conexion(fd_cpu_interrupt);
+    liberar_conexion(fd_memoria);
+    liberar_conexion(fd_entradasalida);
+    terminar_programa(fd_kernel, kernel_logger, kernel_config);
 
     return 0;
 }

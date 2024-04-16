@@ -26,6 +26,17 @@ typedef enum {
     // - Entrada/Salida = IO
     // Ejemplo: INICIAR_PROCESO_K_CPU
 
+    // Kernel
+
+
+    // CPU
+
+
+    // Memoria
+
+
+    // EntradaSalida
+
 
 } op_code;
 
@@ -48,10 +59,6 @@ typedef struct
 	op_code codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
-
-// Definir funciones de send y recv de cada operacion
-bool send_mensaje(int fd, uint8_t num);
-bool recv_mensaje(int fd, uint8_t* num);
 
 // Handshake
 bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);

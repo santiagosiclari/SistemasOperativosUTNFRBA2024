@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
 
     // Conexiones
 
-    //iniciar servidor
+    // Iniciar servidor
     fd_memoria = iniciar_servidor(memoria_logger, PUERTO_ESCUCHA, "Memoria");
 
     // Conexiones
@@ -40,6 +40,12 @@ int main(int argc, char* argv[]) {
     } else {
         log_error(memoria_logger, "Handshake ERROR de %s", "IO/Memoria");
     }
+
+    // Terminar programa
+    liberar_conexion(fd_kernel);
+    liberar_conexion(fd_cpu);
+    liberar_conexion(fd_entradasalida);
+    terminar_programa(fd_memoria, memoria_logger, memoria_config);
 
     return 0;
 }

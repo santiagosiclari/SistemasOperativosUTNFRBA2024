@@ -37,5 +37,12 @@ int main(int argc, char* argv[]) {
     fd_memoria = crear_conexion(cpu_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
     send_handshake(cpu_logger, fd_memoria, HANDSHAKE_MEMORIA, "CPU/Memoria");
 
+    // Terminar programa
+    liberar_conexion(fd_kernel_dispatch);
+    liberar_conexion(fd_kernel_interrupt);
+    liberar_conexion(fd_memoria);
+    liberar_conexion(fd_cpu_interrupt);
+    terminar_programa(fd_cpu_dispatch, cpu_logger, cpu_config);
+
     return 0;
 }
