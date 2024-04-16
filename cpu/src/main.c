@@ -18,23 +18,24 @@ int main(int argc, char* argv[]) {
     //  Espera conexiones de Kernel - dispatch
     log_info(cpu_logger,"Esperando Modulo Kernel - Dispatch");
     fd_kernel_dispatch = esperar_cliente(cpu_logger, fd_cpu_dispatch, "Kernel - Dispatch");
+    if (recv_handshake(fd_kernel_dispatch, HANDSHAKE_CPU_DISPATCH)) {
+        log_info(cpu_logger, "Handshake OK de %s", "Kernel/CPU (Dispatch)");
+    } else {
+        log_error(cpu_logger, "Handshake ERROR de %s", "Kernel/CPU (Dispatch)");
+    }
 
     //  Espera conexiones de Kernel - dispatch
     log_info(cpu_logger,"Esperando Modulo Kernel - Interrupt");
     fd_kernel_interrupt = esperar_cliente(cpu_logger, fd_cpu_interrupt, "Kernel - Interrupt");
+    if (recv_handshake(fd_kernel_interrupt, HANDSHAKE_CPU_INTERRUPT)) {
+        log_info(cpu_logger, "Handshake OK de %s", "Kernel/CPU (Interrupt)");
+    } else {
+        log_error(cpu_logger, "Handshake ERROR de %s", "Kernel/CPU (Interrupt)");
+    }
 
     // Conectar con la memoria
     fd_memoria = crear_conexion(cpu_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
-
-    // Hilos de Kernel Dispatch - CPU
-    pthread_t hilo_kernel_dispatch;
-    pthread_create(&hilo_kernel_dispatch, NULL, (void *)conexion_cpu_kernel_dispatch, NULL);
-    pthread_detach(hilo_kernel_dispatch);
-
-    // Hilos de Kernel Dispatch - CPU
-    pthread_t hilo_kernel_interrupt;
-    pthread_create(&hilo_kernel_interrupt, NULL, (void *)conexion_cpu_kernel_interrupt, NULL);
-    pthread_detach(hilo_kernel_interrupt);
+    send_handshake(cpu_logger, fd_memoria, HANDSHAKE_MEMORIA, "CPU/Memoria");
 
     return 0;
 }

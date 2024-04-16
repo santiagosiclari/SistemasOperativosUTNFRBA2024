@@ -24,7 +24,7 @@ int crear_conexion(t_log* logger, char *ip, char* puerto, char* modulo) {
     if(connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
         log_error(logger, "Hubo un error en la conexion");
     } else {
-        log_info(logger, "Cliente conectado en %s:%s del modulo %s\n", ip, puerto, modulo);
+        log_info(logger, "Cliente conectado en %s:%s del modulo %s", ip, puerto, modulo);
     }
 
 	freeaddrinfo(server_info);

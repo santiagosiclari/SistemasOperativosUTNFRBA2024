@@ -29,6 +29,13 @@ typedef enum {
 
 } op_code;
 
+typedef enum {
+    HANDSHAKE_KERNEL,
+    HANDSHAKE_CPU_DISPATCH,
+    HANDSHAKE_CPU_INTERRUPT,
+    HANDSHAKE_MEMORIA,
+} op_handshake;
+
 // Estrucuta del buffer
 typedef struct {
 	int size;
@@ -42,12 +49,12 @@ typedef struct
 	t_buffer* buffer;
 } t_paquete;
 
-extern int errno;
-
 // Definir funciones de send y recv de cada operacion
 bool send_mensaje(int fd, uint8_t num);
 bool recv_mensaje(int fd, uint8_t* num);
-bool send_handshake(t_log* logger,int fd,int32_t hs,const char* connection_name);
-bool recv_handshake(int fd);
+
+// Handshake
+bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
+bool recv_handshake(int fd, int32_t handshakeModulo);
 
 #endif

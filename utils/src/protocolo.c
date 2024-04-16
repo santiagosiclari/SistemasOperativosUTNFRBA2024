@@ -42,37 +42,36 @@ bool recv_mensaje(int fd, uint8_t* num) {
     return true;
 }
 
-bool send_handshake(t_log* logger,int fd,int32_t hs,const char* connection_name)
-{
-    size_t bytes;
+bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name) {
+    int errno;
 
-    int32_t handshake = hs;
+    size_t bytes;
     int32_t result;
 
     bytes = send(fd, &handshake, sizeof(int32_t), 0);
     bytes = recv(fd, &result, sizeof(int32_t), MSG_WAITALL);
 
     if (result == 0) {
-        log_info(logger, "Handshake OK de %s", connection_name);
+        log_info(logger, "Handshake OK de %s\n", connection_name);
+        return true;
     } else {
-        log_error(logger, "Handshake ERROR de %s, el error es %s (%d)", connection_name, strerror(errno), errno);
+        log_error(logger, "Handshake ERROR de %s, el error es %s (%d)\n", connection_name, strerror(errno), errno);
+        return false;
     }
-    return true;
 }
 
-bool recv_handshake(int fd)
-{
+bool recv_handshake(int fd, int32_t handshakeModulo) {
     size_t bytes;
     int32_t handshake;
     int32_t resultOk = 0;
     int32_t resultError = -1;
 
     bytes = recv(fd, &handshake, sizeof(int32_t), MSG_WAITALL);
-    if (handshake == 1) {
+    if (handshake == handshakeModulo) {
         bytes = send(fd, &resultOk, sizeof(int32_t), 0);
+        return true;
     } else {
         bytes = send(fd, &resultError, sizeof(int32_t), 0);
+        return false;
     }
-
-    return true;
 }
