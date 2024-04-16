@@ -18,6 +18,8 @@ int main(int argc, char* argv[]) {
     log_info(memoria_logger, "Esperando al modulo Kernel");
     fd_kernel = esperar_cliente(memoria_logger, fd_memoria, "Kernel");
 
+    recv_handshake(fd_kernel);
+
     // Espera conexion de CPU
     log_info(memoria_logger, "Esperando al modulo CPU");
     fd_cpu = esperar_cliente(memoria_logger, fd_memoria, "CPU");

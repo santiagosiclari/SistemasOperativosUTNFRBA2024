@@ -19,6 +19,8 @@ int main(int argc, char* argv[]) {
     // Conectamos como cliente con el modulo MEMORIA
     fd_memoria = crear_conexion(kernel_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
 
+    send_handshake(kernel_logger,fd_memoria,1,"Kernel/Memoria");
+
     //Conectamos como servidor con el modulo I/O
     log_info(kernel_logger, "Esperando al modulo Entrada Salida");
     fd_entradasalida = esperar_cliente(kernel_logger, fd_kernel, "Entrada Salida");
