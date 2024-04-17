@@ -13,6 +13,8 @@
 #include <commons/log.h>
 #include <sys/socket.h>
 
+// Leer protocolo.txt en la carpeta utils para saber el inicio de cada modulo
+
 typedef enum {
 	MENSAJE,
 	PAQUETE,

@@ -7,8 +7,6 @@
 
 #include "configs.h"
 #include "logs.h"
-#include "cpu-kernel-d.h"
-#include "cpu-kernel-i.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
