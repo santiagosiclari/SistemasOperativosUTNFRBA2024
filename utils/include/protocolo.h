@@ -27,18 +27,50 @@ typedef enum {
     // - Memoria = M
     // - Entrada/Salida = IO
     // Ejemplo: INICIAR_PROCESO_K_CPU
+    
+    // ESTAS SON LAS OPERACIONES QUE PENSAMOS QUE VAN A HABER EN NUESTRO TP, PERO PUEDEN IR CAMBIANDO A LO LARGO DEL MISMO
 
     // Kernel
+    // EJECUTAR_SCRIPT 
+    // INICIAR_PROCESO
+    // FINALIZAR_PROCESO
+    // DETENER_PLANIFICACION
+    // INICIAR_PLANIFICACION
+    // MULTIPROGRAMACION
+    // PROCESO_ESTADO
 
 
     // CPU
+    // SET
+    // MOV_IN
+    // MOV_OUT
+    // SUM
+    // SUB
+    // JNZ
+    // RESIZE
+    // COPY_STRING
+    // WAIT
+    // SIGNAL
+    // EXIT
 
 
     // Memoria
-
+    // INICIAR_PROCESO_K_M
+    // FINALIZAR_PROCESO_K_M
+    // AMPLIAR_PROCESO
+    // REDUCIR_PROCESO
+    // ACCERDER_ESPACIO_USUARIO_K_M
+    // ACCERDER_ESPACIO_USUARIO_IO_M
 
     // EntradaSalida
-
+    // IO_GEN_SLEEP
+    // IO_STDIN_READ
+    // IO_STDOUT_WRITE
+    // IO_FS_CREATE
+    // IO_FS_DELETE
+    // IO_FS_TRUNCATE
+    // IO_FS_WRITE
+    // IO_FS_READ
 
 } op_code;
 
