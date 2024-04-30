@@ -7,9 +7,13 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "cpu-kernel-dispatch.h"
+#include "cpu-kernel-interrupt.h"
+#include "terminar-cpu.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+#include "../../utils/include/file-descriptors.h"
 
 int fd_kernel_dispatch;
 int fd_kernel_interrupt;

@@ -3,13 +3,17 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "configs.h"
 #include "logs.h"
 #include "consola.h"
+#include "kernel-entradasalida.h"
+#include "terminar-kernel.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+#include "../../utils/include/file-descriptors.h"
 
 int fd_kernel;
 int fd_memoria;

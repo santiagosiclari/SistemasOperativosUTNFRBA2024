@@ -1,14 +1,16 @@
-#ifndef MEMORIA_MAIN_H_
-#define MEMORIA_MAIN_H_
+#ifndef ENTRADASALIDA_MAIN_H_
+#define ENTRADASALIDA_MAIN_H_
 
 #include <stdlib.h>
 #include <stdio.h>
 
 #include "configs.h"
 #include "logs.h"
+#include "terminar-entradasalida.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+#include "../../utils/include/file-descriptors.h"
 
 int fd_kernel;
 int fd_memoria;

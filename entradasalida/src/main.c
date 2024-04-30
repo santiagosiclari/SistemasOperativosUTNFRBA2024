@@ -1,6 +1,7 @@
 #include "../include/main.h"
 
 int main(int argc, char* argv[]) {
+
     // Inicializamos logger y logger debug
     init_entradasalida_logs();
 
@@ -16,9 +17,12 @@ int main(int argc, char* argv[]) {
     fd_memoria = crear_conexion(entradasalida_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
     send_handshake(entradasalida_logger, fd_memoria, HANDSHAKE_MEMORIA, "IO/Memoria");
 
+    // while (1) {
+    //      
+    // }
+
     // Terminar programa
-    liberar_conexion(fd_kernel);
-    terminar_programa(fd_memoria, entradasalida_logger, entradasalida_config);
+    terminar_entradasalida();
 
     return 0;
 }

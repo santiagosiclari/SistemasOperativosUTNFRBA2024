@@ -7,9 +7,14 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "memoria-kernel.h"
+#include "memoria-cpu.h"
+#include "memoria-entradasalida.h"
+#include "terminar-memoria.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+#include "../../utils/include/file-descriptors.h"
 
 //variables para conexiones
 int fd_kernel;
