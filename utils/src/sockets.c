@@ -17,7 +17,7 @@ int crear_conexion(t_log* logger, char *ip, char* puerto, char* modulo) {
 
     // Control de socket
     if(socket_cliente == -1) {
-        log_error(logger, "Hubo un error en la creacion del socket %s:%s en el modulo %s\n", ip, puerto, modulo);
+        log_error(logger, "Hubo un error en la creacion del socket %s:%s en el modulo %s", ip, puerto, modulo);
     }
 
     // Control de conexion

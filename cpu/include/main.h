@@ -34,4 +34,33 @@ char* PUERTO_ESCUCHA_INTERRUPT;//char para func
 int CANTIDAD_ENTRADAS_TLB;
 char* ALGORITMO_TLB;
 
+typedef enum {
+    NEW,
+    READY,
+    BLOCKED,
+    EXEC,
+    EXIT
+} contexto_ejecucion;
+
+typedef struct {
+    uint8_t AX;
+    uint8_t BX;
+    uint8_t CX;
+    uint8_t DX;
+    uint32_t EAX;
+    uint32_t EBX;
+    uint32_t ECX;
+    uint32_t EDX;
+    uint32_t SI;
+    uint32_t DI;
+} t_registros;
+
+typedef struct {
+    uint8_t pid;
+    uint32_t pc;
+    uint8_t quantum;
+    contexto_ejecucion conexto;
+    t_registros registros;
+} t_pcb;
+
 #endif

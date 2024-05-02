@@ -31,15 +31,15 @@ int main(int argc, char* argv[]) {
         } else {
             log_error(kernel_logger, "Handshake ERROR de %s", "IO/Kernel");
         }
+
+        // Hilos
+        pthread_t kernel_entradasalida;
+        pthread_create(&kernel_entradasalida, NULL, (void *)conexion_kernel_entradasalida, NULL);
+        pthread_detach(kernel_entradasalida);
     
-        // Todavia no tiene ninguna funcionalidad pero ya esta inicializada
+        // Consola interactiva
         iniciar_consola(kernel_logger);
     }
-
-    // Hilos
-    pthread_t kernel_entradasalida;
-    pthread_create(&kernel_entradasalida, NULL, (void *)conexion_kernel_entradasalida, NULL);
-    pthread_detach(kernel_entradasalida);
     
     // Terminar programa
     terminar_kernel();

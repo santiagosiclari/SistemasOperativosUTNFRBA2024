@@ -32,27 +32,24 @@ typedef enum {
 
     // Kernel
     // EJECUTAR_SCRIPT 
-    // INICIAR_PROCESO
+    INICIAR_PROCESO,
     // FINALIZAR_PROCESO
     // DETENER_PLANIFICACION
     // INICIAR_PLANIFICACION
     // MULTIPROGRAMACION
     // PROCESO_ESTADO
 
-
-    // CPU
-    // SET
-    // MOV_IN
-    // MOV_OUT
-    // SUM
-    // SUB
-    // JNZ
-    // RESIZE
-    // COPY_STRING
-    // WAIT
-    // SIGNAL
-    // EXIT
-
+    SET,
+    // MOV_IN,
+    // MOV_OUT,
+    SUM,
+    SUB,
+    JNZ,
+    // RESIZE,
+    // COPY_STRING,
+    // WAIT,
+    // SIGNAL,
+    // EXIT,
 
     // Memoria
     // INICIAR_PROCESO_K_M
@@ -63,7 +60,7 @@ typedef enum {
     // ACCERDER_ESPACIO_USUARIO_IO_M
 
     // EntradaSalida
-    // IO_GEN_SLEEP
+    IO_GEN_SLEEP,
     // IO_STDIN_READ
     // IO_STDOUT_WRITE
     // IO_FS_CREATE
@@ -93,6 +90,19 @@ typedef struct
 	op_code codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
+
+// Funciones de buffer y paquete
+// FALTAN HACER LAS DEMAS
+t_buffer* crear_buffer();
+void cargar_choclo_al_buffer(t_buffer* buffer, void* choclo, int size_choclo);
+void* extraer_choclo_del_buffer(t_buffer* buffer);
+void cargar_string_al_buffer(t_buffer* buffer, char* string);
+char* extraer_string_del_buffer(t_buffer* buffer);
+void destruir_buffer(t_buffer* buffer);
+t_paquete* crear_paquete(op_code cod_op, t_buffer* buffer);
+void* serializar_paquete(t_paquete* paquete, int bytes);
+void enviar_paquete(t_paquete* paquete, int socket_cliente);
+void eliminar_paquete(t_paquete* paquete);
 
 // Handshake
 bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);

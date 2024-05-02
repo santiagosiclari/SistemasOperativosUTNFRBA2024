@@ -11,7 +11,7 @@ void conexion_cpu_kernel_interrupt() {
 		case PAQUETE:
 			break;
 		case -1:
-			log_error(cpu_logger, "El IO se desconecto. Terminando servidor");
+			log_error(cpu_logger, "El Kernel (Interrupt) se desconecto. Terminando servidor");
 			control = 0;
             break;
 		default:

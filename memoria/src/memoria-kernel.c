@@ -10,6 +10,9 @@ void conexion_memoria_kernel() {
 			break;
 		case PAQUETE:
 			break;
+		case INICIAR_PROCESO:
+			log_info(memoria_logger,"Ta todo bien");
+			break;
 		case -1:
 			log_error(memoria_logger, "El Kernel se desconecto. Terminando servidor");
 			control = 0;

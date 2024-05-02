@@ -29,6 +29,11 @@ int main(int argc, char* argv[]) {
             log_error(cpu_logger, "Handshake ERROR de %s", "Kernel/CPU (Dispatch)");
         }
 
+        // Hilos
+        pthread_t cpu_kernel_dispatch;
+        pthread_create(&cpu_kernel_dispatch, NULL, (void *)conexion_cpu_kernel_dispatch, NULL);
+        pthread_detach(cpu_kernel_dispatch);
+
         //  Espera conexiones de Kernel - dispatch
         log_info(cpu_logger,"Esperando Modulo Kernel - Interrupt");
         fd_kernel_interrupt = esperar_cliente(cpu_logger, fd_cpu_interrupt, "Kernel - Interrupt");
@@ -37,16 +42,18 @@ int main(int argc, char* argv[]) {
         } else {
             log_error(cpu_logger, "Handshake ERROR de %s", "Kernel/CPU (Interrupt)");
         }
+
+        // Hilos
+        pthread_t cpu_kernel_interrupt;
+        pthread_create(&cpu_kernel_interrupt, NULL, (void *)conexion_cpu_kernel_interrupt, NULL);
+        pthread_detach(cpu_kernel_interrupt);
+        
+        // Fetch
+        // if (recv_iniciar_proceso) {
+        //     // Usar semaforos
+        //     leer_archivo();
+        // }
     }
-
-    // Hilos
-    pthread_t cpu_kernel_dispatch;
-    pthread_create(&cpu_kernel_dispatch, NULL, (void *)conexion_cpu_kernel_dispatch, NULL);
-    pthread_detach(cpu_kernel_dispatch);
-
-    pthread_t cpu_kernel_interrupt;
-    pthread_create(&cpu_kernel_interrupt, NULL, (void *)conexion_cpu_kernel_interrupt, NULL);
-    pthread_detach(cpu_kernel_interrupt);
 
     // Terminar programa
     terminar_cpu();
