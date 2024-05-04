@@ -12,8 +12,6 @@
 #include <../../utils/include/file-descriptors.h>
 #include <../../utils/include/protocolo.h>
 
-extern t_log* logger;
-
 void iniciar_consola(t_log* logger);
 
 #endif

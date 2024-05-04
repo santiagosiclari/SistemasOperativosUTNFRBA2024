@@ -6,12 +6,19 @@ void conexion_memoria_kernel() {
 		int cod_op = recibir_operacion(fd_kernel);
 		switch (cod_op) {
 		case MENSAJE:
-			log_info(memoria_logger, "Mensaje recibido con el numero");
 			break;
 		case PAQUETE:
 			break;
 		case INICIAR_PROCESO:
-			log_info(memoria_logger,"Ta todo bien");
+			char* path;
+			if(!recv_iniciar_proceso(fd_kernel, &path)) {
+				log_error(memoria_logger, "Hubo en error al recibir INICIAR_PROCESO");
+				break;
+			}
+
+			log_info(memoria_logger, "Iniciando proceso del path: %s", path);
+
+			free(path);
 			break;
 		case -1:
 			log_error(memoria_logger, "El Kernel se desconecto. Terminando servidor");

@@ -26,7 +26,7 @@ typedef enum {
     // - CPU = CPU
     // - Memoria = M
     // - Entrada/Salida = IO
-    // Ejemplo: INICIAR_PROCESO_K_CPU
+    // Ejemplo: INICIAR_PROCESO_KM
     
     // ESTAS SON LAS OPERACIONES QUE PENSAMOS QUE VAN A HABER EN NUESTRO TP, PERO PUEDEN IR CAMBIANDO A LO LARGO DEL MISMO
 
@@ -85,27 +85,17 @@ typedef struct {
 } t_buffer;
 
 // Estructura del paquete
-typedef struct
-{
+typedef struct {
 	op_code codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
 
-// Funciones de buffer y paquete
-// FALTAN HACER LAS DEMAS
-t_buffer* crear_buffer();
-void cargar_choclo_al_buffer(t_buffer* buffer, void* choclo, int size_choclo);
-void* extraer_choclo_del_buffer(t_buffer* buffer);
-void cargar_string_al_buffer(t_buffer* buffer, char* string);
-char* extraer_string_del_buffer(t_buffer* buffer);
-void destruir_buffer(t_buffer* buffer);
-t_paquete* crear_paquete(op_code cod_op, t_buffer* buffer);
-void* serializar_paquete(t_paquete* paquete, int bytes);
-void enviar_paquete(t_paquete* paquete, int socket_cliente);
-void eliminar_paquete(t_paquete* paquete);
-
 // Handshake
 bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
 bool recv_handshake(int fd, int32_t handshakeModulo);
+
+// INICIAR_PROCESO
+bool send_iniciar_proceso(int fd, char* path);
+bool recv_iniciar_proceso(int fd, char** path);
 
 #endif
