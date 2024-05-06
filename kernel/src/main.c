@@ -27,9 +27,9 @@ int main(int argc, char* argv[]) {
         log_info(kernel_logger, "Esperando al modulo Entrada Salida");
         fd_entradasalida = esperar_cliente(kernel_logger, fd_kernel, "Entrada Salida");
         if (recv_handshake(fd_entradasalida, HANDSHAKE_KERNEL)) {
-            log_info(kernel_logger, "Handshake OK de %s", "IO/Kernel");
+            log_info(kernel_logger, "Handshake OK de %s\n", "IO/Kernel");
         } else {
-            log_error(kernel_logger, "Handshake ERROR de %s", "IO/Kernel");
+            log_error(kernel_logger, "Handshake ERROR de %s\n", "IO/Kernel");
         }
 
         // Hilos
@@ -38,7 +38,10 @@ int main(int argc, char* argv[]) {
         pthread_detach(kernel_entradasalida);
     
         // Consola interactiva
-        iniciar_consola(kernel_logger);
+        // Hilos
+        pthread_t consola_interactiva;
+        pthread_create(&consola_interactiva, NULL, (void *)iniciar_consola, NULL);
+        pthread_detach(consola_interactiva);
     }
     
     // Terminar programa

@@ -59,7 +59,7 @@ int iniciar_servidor(t_log* logger, char* puerto, char* modulo) {
 
 int esperar_cliente(t_log* logger, int socket_servidor, char* modulo) {
     int socket_cliente = accept(socket_servidor, NULL, NULL);
-    log_info(logger, "Se conecto el cliente del modulo %s\n", modulo);
+    log_info(logger, "Se conecto el cliente del modulo %s", modulo);
 
     return socket_cliente;
 }

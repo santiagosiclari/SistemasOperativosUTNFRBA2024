@@ -5,8 +5,6 @@ void conexion_cpu_kernel_dispatch() {
 	while (control) {
 		int cod_op = recibir_operacion(fd_kernel_dispatch);
 		switch (cod_op) {
-		case SET:
-			break;
 		case PAQUETE:
 			break;
 		case -1:

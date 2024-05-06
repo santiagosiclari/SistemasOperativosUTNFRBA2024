@@ -111,7 +111,7 @@ typedef struct {
 } t_pcb;
 
 // Handshake
-bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
+void send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
 bool recv_handshake(int fd, int32_t handshakeModulo);
 
 // PCB

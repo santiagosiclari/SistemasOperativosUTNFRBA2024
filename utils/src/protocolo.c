@@ -2,7 +2,7 @@
 
 // Funciones de send y recv del protocolo
 // Handshake
-bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* conexion) {
+void send_handshake(t_log* logger, int fd, int32_t handshake, const char* conexion) {
     size_t bytes;
     int32_t result;
 
@@ -11,10 +11,8 @@ bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* conexi
 
     if (result == 0 && bytes != 0) {
         log_info(logger, "Handshake OK de %s\n", conexion);
-        return true;
     } else {
         log_error(logger, "Handshake ERROR de %s\n", conexion);
-        return false;
     }
 }
 

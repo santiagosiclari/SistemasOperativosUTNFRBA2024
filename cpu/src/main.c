@@ -24,9 +24,9 @@ int main(int argc, char* argv[]) {
         log_info(cpu_logger,"Esperando Modulo Kernel - Dispatch");
         fd_kernel_dispatch = esperar_cliente(cpu_logger, fd_cpu_dispatch, "Kernel - Dispatch");
         if (recv_handshake(fd_kernel_dispatch, HANDSHAKE_CPU_DISPATCH)) {
-            log_info(cpu_logger, "Handshake OK de %s", "Kernel/CPU (Dispatch)");
+            log_info(cpu_logger, "Handshake OK de %s\n", "Kernel/CPU (Dispatch)");
         } else {
-            log_error(cpu_logger, "Handshake ERROR de %s", "Kernel/CPU (Dispatch)");
+            log_error(cpu_logger, "Handshake ERROR de %s\n", "Kernel/CPU (Dispatch)");
         }
 
         // Hilos
@@ -38,9 +38,9 @@ int main(int argc, char* argv[]) {
         log_info(cpu_logger,"Esperando Modulo Kernel - Interrupt");
         fd_kernel_interrupt = esperar_cliente(cpu_logger, fd_cpu_interrupt, "Kernel - Interrupt");
         if (recv_handshake(fd_kernel_interrupt, HANDSHAKE_CPU_INTERRUPT)) {
-            log_info(cpu_logger, "Handshake OK de %s", "Kernel/CPU (Interrupt)");
+            log_info(cpu_logger, "Handshake OK de %s\n", "Kernel/CPU (Interrupt)");
         } else {
-            log_error(cpu_logger, "Handshake ERROR de %s", "Kernel/CPU (Interrupt)");
+            log_error(cpu_logger, "Handshake ERROR de %s\n", "Kernel/CPU (Interrupt)");
         }
 
         // Hilos
