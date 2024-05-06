@@ -30,7 +30,7 @@ typedef enum {
     
     // ESTAS SON LAS OPERACIONES QUE PENSAMOS QUE VAN A HABER EN NUESTRO TP, PERO PUEDEN IR CAMBIANDO A LO LARGO DEL MISMO
 
-    // Kernel
+    // Kernel -> Consola interactiva
     // EJECUTAR_SCRIPT 
     INICIAR_PROCESO,
     // FINALIZAR_PROCESO
@@ -39,12 +39,13 @@ typedef enum {
     // MULTIPROGRAMACION
     // PROCESO_ESTADO
 
-    SET,
+    // CPU (no hace falta ponerlas aca despues las sacamos)
+    // SET,
     // MOV_IN,
     // MOV_OUT,
-    SUM,
-    SUB,
-    JNZ,
+    // SUM,
+    // SUB,
+    // JNZ,
     // RESIZE,
     // COPY_STRING,
     // WAIT,
@@ -59,7 +60,7 @@ typedef enum {
     // ACCERDER_ESPACIO_USUARIO_K_M
     // ACCERDER_ESPACIO_USUARIO_IO_M
 
-    // EntradaSalida
+    // EntradaSalida (IO)
     IO_GEN_SLEEP,
     // IO_STDIN_READ
     // IO_STDOUT_WRITE
@@ -68,7 +69,7 @@ typedef enum {
     // IO_FS_TRUNCATE
     // IO_FS_WRITE
     // IO_FS_READ
-
+    
 } op_code;
 
 typedef enum {
@@ -90,9 +91,36 @@ typedef struct {
 	t_buffer* buffer;
 } t_paquete;
 
+// Estructura de los registros
+typedef struct {
+    uint8_t AX, BX, CX, DX;
+    uint32_t EAX, EBX, ECX, EDX, SI, DI;
+} t_registros;
+
+// Estructura del PCB
+typedef struct {
+    uint8_t pid;
+    uint32_t pc; // Program Counter -> Puntero de instruccion
+    char estado; // Es un caracter, es decir N seria New, B Blocked, E Exec, etc.
+    uint8_t quantum;
+    // falta semaforo
+    // falta info de memoria
+    // falta info de la programacion (prioridad por ej.)
+    // falta info de entrada/salida (e/s)
+    t_registros* registros;
+} t_pcb;
+
 // Handshake
 bool send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
 bool recv_handshake(int fd, int32_t handshakeModulo);
+
+// PCB
+bool send_pcb(int fd, t_pcb* pcb);
+bool recv_pcb(int fd, t_pcb** pcb);
+
+// Contexto de ejecucion
+bool send_contexto_de_ejecucion(int fd, t_registros* registros, uint32_t pc); // Hay q ver si agregar mas cosas como el PATH del proceso
+bool recv_contexto_de_ejecucion(int fd, t_registros** registros, uint32_t* pc);
 
 // INICIAR_PROCESO
 bool send_iniciar_proceso(int fd, char* path);

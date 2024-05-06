@@ -34,6 +34,132 @@ bool recv_handshake(int fd, int32_t handshakeModulo) {
     }
 }
 
+// PCB
+static void* serializar_pcb(size_t* size, t_pcb* pcb) {
+
+    *size = 
+        sizeof(uint8_t) +    // pid
+        sizeof(uint32_t) +   // pc
+        sizeof(char) +       // estado
+        sizeof(uint8_t) +    // quantum
+        sizeof(t_registros); // registros serializados
+
+    void* stream = malloc(*size);
+
+    size_t offset = 0;
+
+    memcpy(stream + offset, &pcb->pid, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
+
+    memcpy(stream + offset, &pcb->pc, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    memcpy(stream + offset, &pcb->estado, sizeof(char));
+    offset += sizeof(char);
+
+    memcpy(stream + offset, &pcb->quantum, sizeof(uint8_t));
+    offset += sizeof(uint8_t);
+
+    memcpy(stream+ offset, &pcb->registros, sizeof(t_registros));
+    offset += sizeof(t_registros);
+
+    return stream;
+}
+
+static void deserializar_pcb(void* stream, t_pcb** pcb) {
+    size_t size_pcb;
+    memcpy(&size_pcb, stream, sizeof(size_t));
+
+    t_pcb* r_pcb = malloc(size_pcb);
+    memcpy(r_pcb, stream+sizeof(size_t), size_pcb);
+    *pcb = r_pcb;
+}
+
+bool send_pcb(int fd, t_pcb* pcb) {
+    size_t size;
+    void* stream = serializar_pcb(&size, pcb);
+    if (send(fd, stream, size, 0) != size) {
+        free(stream);
+        return false;
+    }
+    free(stream);
+    return true;
+}
+
+bool recv_pcb(int fd, t_pcb** pcb) {
+    size_t size_payload;
+    if (recv(fd, &size_payload, sizeof(size_t), 0) != sizeof(size_t))
+        return false;
+
+    void* stream = malloc(size_payload);
+    if (recv(fd, stream, size_payload, 0) != size_payload) {
+        free(stream);
+        return false;
+    }
+
+    deserializar_pcb(stream, pcb);
+
+    free(stream);
+    return true;
+}
+
+// Contexto de ejecucion
+static void* serializar_contexto_de_ejecucion(size_t* size, t_registros* registros, uint32_t pc) {
+
+    *size = 
+        sizeof(uint32_t) +   // pc
+        sizeof(t_registros); // registros serializados
+
+    void* stream = malloc(*size);
+
+    size_t offset = 0;
+
+    memcpy(stream + offset, &pc, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    memcpy(stream+ offset, &registros, sizeof(t_registros));
+    offset += sizeof(t_registros);
+
+    return stream;
+}
+
+static void deserializar_contexto_de_ejecucion(void* stream, t_registros** registros, uint32_t* pc) {
+    size_t offset = 0;
+
+    memcpy(&pc, stream + offset, sizeof(uint32_t)); // pc
+    offset += sizeof(uint32_t);
+
+    memcpy(&registros, stream + offset, sizeof(t_registros)); // registros
+}
+
+bool send_contexto_de_ejecucion(int fd, t_registros* registros, uint32_t pc) {
+    size_t size;
+    void* stream = serializar_contexto_de_ejecucion(&size, registros, pc);
+    if (send(fd, stream, size, 0) != size) {
+        free(stream);
+        return false;
+    }
+    free(stream);
+    return true;
+}
+
+bool recv_contexto_de_ejecucion(int fd, t_registros** registros, uint32_t* pc) {
+    size_t size_payload;
+    if (recv(fd, &size_payload, sizeof(size_t), 0) != sizeof(size_t))
+        return false;
+
+    void* stream = malloc(size_payload);
+    if (recv(fd, stream, size_payload, 0) != size_payload) {
+        free(stream);
+        return false;
+    }
+
+    deserializar_contexto_de_ejecucion(stream, registros, pc);
+
+    free(stream);
+    return true;
+}
+
 // INICIAR_PROCESO
 static void* serializar_iniciar_proceso(size_t* size, char* path) {
     size_t size_path = strlen(path) + 1;
