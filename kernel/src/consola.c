@@ -20,14 +20,23 @@ void atender_instruccion (char* leido) {
 	} else {
 		log_error(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
+
+	// Liberar cada elemento
+	int i = 0;
+    while (comando_consola[i] != NULL) {
+        free(comando_consola[i]);
+        i++;
+    }
+
+    // Liberar el array
+    free(comando_consola);
 }
 
 void iniciar_consola(t_log* logger) {
     char* leido;
 	leido = readline("> ");
 
-	while (strcmp(leido,"") != 0)
-	{
+	while (strcmp(leido,"") != 0) {
 		atender_instruccion(leido);
         free(leido);
 		leido = readline("> ");

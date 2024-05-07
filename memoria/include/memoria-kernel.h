@@ -6,6 +6,7 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "archivos.h"
 
 #include "../include/file-descriptors.h"
 

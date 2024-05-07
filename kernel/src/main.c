@@ -22,8 +22,9 @@ int main(int argc, char* argv[]) {
     fd_cpu_interrupt = crear_conexion(kernel_logger, IP_CPU, PUERTO_CPU_INTERRUPT,"Cpu - Interrupt");
     send_handshake(kernel_logger, fd_cpu_interrupt, HANDSHAKE_CPU_INTERRUPT, "Kernel/CPU (Interrupt)");
 
+    // Multiples interfaces I/O
     while (1) {
-        //Conectamos como servidor con el modulo I/O
+        // Conectamos como servidor con el modulo I/O
         log_info(kernel_logger, "Esperando al modulo Entrada Salida");
         fd_entradasalida = esperar_cliente(kernel_logger, fd_kernel, "Entrada Salida");
         if (recv_handshake(fd_entradasalida, HANDSHAKE_KERNEL)) {
@@ -35,10 +36,9 @@ int main(int argc, char* argv[]) {
         // Hilos
         pthread_t kernel_entradasalida;
         pthread_create(&kernel_entradasalida, NULL, (void *)conexion_kernel_entradasalida, NULL);
-        pthread_detach(kernel_entradasalida);
+        pthread_join(kernel_entradasalida, NULL);
     
         // Consola interactiva
-        // Hilos
         pthread_t consola_interactiva;
         pthread_create(&consola_interactiva, NULL, (void *)iniciar_consola, NULL);
         pthread_detach(consola_interactiva);

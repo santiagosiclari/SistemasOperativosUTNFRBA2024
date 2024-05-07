@@ -32,7 +32,7 @@ typedef enum {
 
     // Kernel -> Consola interactiva
     // EJECUTAR_SCRIPT 
-    INICIAR_PROCESO,
+    INICIAR_PROCESO, // Envia el path del proceso a Memoria
     // FINALIZAR_PROCESO
     // DETENER_PLANIFICACION
     // INICIAR_PLANIFICACION
@@ -53,6 +53,7 @@ typedef enum {
     // EXIT,
 
     // Memoria
+    RECIBIR_PC, // Recibe la instruccion a enviar para CPU
     // INICIAR_PROCESO_K_M
     // FINALIZAR_PROCESO_K_M
     // AMPLIAR_PROCESO
@@ -61,7 +62,7 @@ typedef enum {
     // ACCERDER_ESPACIO_USUARIO_IO_M
 
     // EntradaSalida (IO)
-    IO_GEN_SLEEP,
+    // IO_GEN_SLEEP,
     // IO_STDIN_READ
     // IO_STDOUT_WRITE
     // IO_FS_CREATE
@@ -121,6 +122,18 @@ bool recv_pcb(int fd, t_pcb** pcb);
 // Contexto de ejecucion
 bool send_contexto_de_ejecucion(int fd, t_registros* registros, uint32_t pc); // Hay q ver si agregar mas cosas como el PATH del proceso
 bool recv_contexto_de_ejecucion(int fd, t_registros** registros, uint32_t* pc);
+
+// Char* (String)
+bool send_string(int fd, char* string);
+bool recv_string(int fd, char** string);
+
+// PC -> Program Counter
+bool send_pc(int fd, uint32_t pc);
+bool recv_pc(int fd, uint32_t* pc);
+
+// PID
+bool send_pid(int fd, uint8_t pid);
+bool recv_pid(int fd, uint8_t* pid);
 
 // INICIAR_PROCESO
 bool send_iniciar_proceso(int fd, char* path);

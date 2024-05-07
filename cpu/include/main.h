@@ -5,11 +5,14 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#include <commons/string.h>
+
 #include "configs.h"
 #include "logs.h"
 #include "cpu-kernel-dispatch.h"
 #include "cpu-kernel-interrupt.h"
 #include "terminar-cpu.h"
+#include "instrucciones.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"

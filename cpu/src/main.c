@@ -19,40 +19,78 @@ int main(int argc, char* argv[]) {
     fd_memoria = crear_conexion(cpu_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
     send_handshake(cpu_logger, fd_memoria, HANDSHAKE_MEMORIA, "CPU/Memoria");
 
+    //  Espera conexiones de Kernel - dispatch
+    log_info(cpu_logger,"Esperando Modulo Kernel - Dispatch");
+    fd_kernel_dispatch = esperar_cliente(cpu_logger, fd_cpu_dispatch, "Kernel - Dispatch");
+    if (recv_handshake(fd_kernel_dispatch, HANDSHAKE_CPU_DISPATCH)) {
+        log_info(cpu_logger, "Handshake OK de %s\n", "Kernel/CPU (Dispatch)");
+    } else {
+        log_error(cpu_logger, "Handshake ERROR de %s\n", "Kernel/CPU (Dispatch)");
+    }
+
+    // Hilos
+    pthread_t cpu_kernel_dispatch;
+    pthread_create(&cpu_kernel_dispatch, NULL, (void *)conexion_cpu_kernel_dispatch, NULL);
+    pthread_detach(cpu_kernel_dispatch);
+
+    //  Espera conexiones de Kernel - dispatch
+    log_info(cpu_logger,"Esperando Modulo Kernel - Interrupt");
+    fd_kernel_interrupt = esperar_cliente(cpu_logger, fd_cpu_interrupt, "Kernel - Interrupt");
+    if (recv_handshake(fd_kernel_interrupt, HANDSHAKE_CPU_INTERRUPT)) {
+        log_info(cpu_logger, "Handshake OK de %s\n", "Kernel/CPU (Interrupt)");
+    } else {
+        log_error(cpu_logger, "Handshake ERROR de %s\n", "Kernel/CPU (Interrupt)");
+    }
+
+    // Hilos
+    pthread_t cpu_kernel_interrupt;
+    pthread_create(&cpu_kernel_interrupt, NULL, (void *)conexion_cpu_kernel_interrupt, NULL);
+    pthread_detach(cpu_kernel_interrupt);
+
     while (1) {
-        //  Espera conexiones de Kernel - dispatch
-        log_info(cpu_logger,"Esperando Modulo Kernel - Dispatch");
-        fd_kernel_dispatch = esperar_cliente(cpu_logger, fd_cpu_dispatch, "Kernel - Dispatch");
-        if (recv_handshake(fd_kernel_dispatch, HANDSHAKE_CPU_DISPATCH)) {
-            log_info(cpu_logger, "Handshake OK de %s\n", "Kernel/CPU (Dispatch)");
-        } else {
-            log_error(cpu_logger, "Handshake ERROR de %s\n", "Kernel/CPU (Dispatch)");
+        // Usar semaforos
+        // Falta que el kernel mande el PCB a CPU
+        t_pcb* pcb = malloc(sizeof(t_pcb));
+        if(!recv_pcb(fd_kernel_dispatch, &pcb)) {
+            log_error(cpu_logger, "Hubo un error al recibir el PCB del modulo Kernel (Dispatch)");
         }
-
-        // Hilos
-        pthread_t cpu_kernel_dispatch;
-        pthread_create(&cpu_kernel_dispatch, NULL, (void *)conexion_cpu_kernel_dispatch, NULL);
-        pthread_detach(cpu_kernel_dispatch);
-
-        //  Espera conexiones de Kernel - dispatch
-        log_info(cpu_logger,"Esperando Modulo Kernel - Interrupt");
-        fd_kernel_interrupt = esperar_cliente(cpu_logger, fd_cpu_interrupt, "Kernel - Interrupt");
-        if (recv_handshake(fd_kernel_interrupt, HANDSHAKE_CPU_INTERRUPT)) {
-            log_info(cpu_logger, "Handshake OK de %s\n", "Kernel/CPU (Interrupt)");
-        } else {
-            log_error(cpu_logger, "Handshake ERROR de %s\n", "Kernel/CPU (Interrupt)");
-        }
-
-        // Hilos
-        pthread_t cpu_kernel_interrupt;
-        pthread_create(&cpu_kernel_interrupt, NULL, (void *)conexion_cpu_kernel_interrupt, NULL);
-        pthread_detach(cpu_kernel_interrupt);
         
-        // Fetch
-        // if (recv_iniciar_proceso) {
-        //     // Usar semaforos
-        //     leer_archivo();
-        // }
+        // Ciclo de instruccion
+        uint8_t pid_interrumpido;
+        while (!recv_pid(fd_kernel_interrupt, &pid_interrumpido) && pid_interrumpido != pcb->pid) { // Revisar para ver si se sale del while
+            // Fetch (FALTA pensar como mandar el PC y de ahi que memoria mande la instruccion)
+            if(!send_pc(fd_memoria, pcb->pc)) {
+                log_error(cpu_logger, "Hubo un error al enviar el PC (Program Counter) al modulo de Memoria");
+            }
+
+            log_info(cpu_logger, "Iniciando el ciclo de instruccion: "); // aca pasariamos el PC del PCB
+            char* instruccion;
+            if (!recv_string(fd_memoria, &instruccion)) { // Recibir la instruccion
+                log_error(cpu_logger, "Hubo un error al recibir la instruccion del modulo de Memoria");
+            }
+
+            // Decode
+            char** instruccion_separada = string_split(instruccion, " ");
+            if (strcmp(instruccion_separada[0], "SET") == 0) {
+                pcb = cpu_set(pcb, instruccion_separada);
+            } else if (strcmp(instruccion_separada[0], "SUM") == 0) {
+                pcb = cpu_sum(pcb, instruccion_separada);
+            } else if (strcmp(instruccion_separada[0], "SUB") == 0) {
+                pcb = cpu_sub(pcb, instruccion_separada);
+            } else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
+                pcb = cpu_jnz(pcb, instruccion_separada);
+            } else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
+                pcb = cpu_io_gen_sleep(pcb, instruccion_separada);
+            } else {
+                printf("No se pudo encontrar la instruccion\n");
+            }
+        }
+
+        // Check Interrupt
+        if (pid_interrumpido == pcb->pid) {
+            // FALTA hacer funcionalidad de interrupcion
+            // Solo envia un paquete por kernel dispatch con el contexto de ejecucion (CREO)
+        }
     }
 
     // Terminar programa
