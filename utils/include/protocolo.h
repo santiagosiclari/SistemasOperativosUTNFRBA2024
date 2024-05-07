@@ -13,6 +13,8 @@
 #include <commons/log.h>
 #include <sys/socket.h>
 
+#include "../../utils/include/pcb.h"
+
 // Leer protocolo.txt en la carpeta utils para saber el inicio de cada modulo
 
 typedef enum {
@@ -40,6 +42,7 @@ typedef enum {
     // PROCESO_ESTADO
 
     // CPU (no hace falta ponerlas aca despues las sacamos)
+    RECIBIR_PCB,
     // SET,
     // MOV_IN,
     // MOV_OUT,
@@ -92,25 +95,6 @@ typedef struct {
 	t_buffer* buffer;
 } t_paquete;
 
-// Estructura de los registros
-typedef struct {
-    uint8_t AX, BX, CX, DX;
-    uint32_t EAX, EBX, ECX, EDX, SI, DI;
-} t_registros;
-
-// Estructura del PCB
-typedef struct {
-    uint8_t pid;
-    uint32_t pc; // Program Counter -> Puntero de instruccion
-    char estado; // Es un caracter, es decir N seria New, B Blocked, E Exec, etc.
-    uint8_t quantum;
-    // falta semaforo
-    // falta info de memoria
-    // falta info de la programacion (prioridad por ej.)
-    // falta info de entrada/salida (e/s)
-    t_registros* registros;
-} t_pcb;
-
 // Handshake
 void send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
 bool recv_handshake(int fd, int32_t handshakeModulo);
@@ -123,7 +107,7 @@ bool recv_pcb(int fd, t_pcb** pcb);
 bool send_contexto_de_ejecucion(int fd, t_registros* registros, uint32_t pc); // Hay q ver si agregar mas cosas como el PATH del proceso
 bool recv_contexto_de_ejecucion(int fd, t_registros** registros, uint32_t* pc);
 
-// Char* (String)
+// Char* (String) --> para instrucciones
 bool send_string(int fd, char* string);
 bool recv_string(int fd, char** string);
 

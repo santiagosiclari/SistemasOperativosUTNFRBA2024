@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "logs.h"
+
 #include <commons/collections/list.h>
 
 void leer_archivo(char* path);

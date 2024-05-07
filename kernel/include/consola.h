@@ -7,6 +7,7 @@
 #include <commons/string.h>
 
 #include "logs.h"
+#include "funciones-pcb.h"
 #include <readline/readline.h>
 
 #include <../../utils/include/file-descriptors.h>

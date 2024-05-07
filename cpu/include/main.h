@@ -37,4 +37,6 @@ char* PUERTO_ESCUCHA_INTERRUPT;//char para func
 int CANTIDAD_ENTRADAS_TLB;
 char* ALGORITMO_TLB;
 
+extern t_pcb* pcb;
+
 #endif

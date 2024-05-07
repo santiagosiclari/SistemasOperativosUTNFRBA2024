@@ -33,44 +33,80 @@ bool recv_handshake(int fd, int32_t handshakeModulo) {
 }
 
 // PCB
+// Serializar t_registros
+static void* serializar_registros(size_t* size, t_registros* registros) {
+    *size = sizeof(t_registros);
+    void* stream = malloc(*size);
+    memcpy(stream, registros, *size);
+    return stream;
+}
+
+// Deserializar t_registros
+static void deserializar_registros(void* stream, t_registros** registros) {
+    *registros = (t_registros*)malloc(sizeof(t_registros));
+    memcpy(*registros, stream, sizeof(t_registros));
+}
+
+// Serializar PCB
 static void* serializar_pcb(size_t* size, t_pcb* pcb) {
+    size_t size_registros;
+    void* serialized_registros = serializar_registros(&size_registros, pcb->registros);
 
     *size = 
-        sizeof(uint8_t) +    // pid
-        sizeof(uint32_t) +   // pc
-        sizeof(char) +       // estado
-        sizeof(uint8_t) +    // quantum
-        sizeof(t_registros); // registros serializados
+            sizeof(op_code) +   // Para el op_code
+            sizeof(uint8_t) +   // pid
+            sizeof(uint32_t) +  // pc
+            sizeof(char) +      // estado
+            sizeof(uint8_t) +   // quantum
+            sizeof(size_t) +    // Tamaño de registros
+            size_registros;     // Registros serializados
 
     void* stream = malloc(*size);
 
     size_t offset = 0;
+    op_code cop = RECIBIR_PCB;
+    memcpy(stream + offset, &cop, sizeof(op_code)); offset += sizeof(op_code); // op_code
+    memcpy(stream + offset, &pcb->pid, sizeof(uint8_t)); offset += sizeof(uint8_t);
+    memcpy(stream + offset, &pcb->pc, sizeof(uint32_t)); offset += sizeof(uint32_t);
+    memcpy(stream + offset, &pcb->estado, sizeof(char)); offset += sizeof(char);
+    memcpy(stream + offset, &pcb->quantum, sizeof(uint8_t)); offset += sizeof(uint8_t);
+    memcpy(stream + offset, &size_registros, sizeof(size_t)); offset += sizeof(size_t);
+    memcpy(stream + offset, serialized_registros, size_registros);
 
-    memcpy(stream + offset, &pcb->pid, sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-
-    memcpy(stream + offset, &pcb->pc, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-
-    memcpy(stream + offset, &pcb->estado, sizeof(char));
-    offset += sizeof(char);
-
-    memcpy(stream + offset, &pcb->quantum, sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-
-    memcpy(stream+ offset, &pcb->registros, sizeof(t_registros));
-    offset += sizeof(t_registros);
+    free(serialized_registros);
 
     return stream;
 }
 
+// Deserializar PCB
 static void deserializar_pcb(void* stream, t_pcb** pcb) {
-    size_t size_pcb;
-    memcpy(&size_pcb, stream, sizeof(size_t));
+    *pcb = (t_pcb*)malloc(sizeof(t_pcb));
 
-    t_pcb* r_pcb = malloc(size_pcb);
-    memcpy(r_pcb, stream+sizeof(size_t), size_pcb);
-    *pcb = r_pcb;
+    size_t offset = 0;
+    op_code received_op;
+    memcpy(&received_op, stream + offset, sizeof(op_code)); offset += sizeof(op_code);
+
+    if (received_op != RECIBIR_PCB) {
+        fprintf(stderr, "Error: Operación desconocida al deserializar PCB.\n");
+        free(*pcb);
+        *pcb = NULL;
+        return;
+    }
+
+    memcpy(&(*pcb)->pid, stream + offset, sizeof(uint8_t)); offset += sizeof(uint8_t);
+    memcpy(&(*pcb)->pc, stream + offset, sizeof(uint32_t)); offset += sizeof(uint32_t);
+    memcpy(&(*pcb)->estado, stream + offset, sizeof(char)); offset += sizeof(char);
+    memcpy(&(*pcb)->quantum, stream + offset, sizeof(uint8_t)); offset += sizeof(uint8_t);
+
+    size_t size_registros;
+    memcpy(&size_registros, stream + offset, sizeof(size_t)); offset += sizeof(size_t);
+
+    void* serialized_registros = malloc(size_registros);
+    memcpy(serialized_registros, stream + offset, size_registros);
+
+    deserializar_registros(serialized_registros, &(*pcb)->registros);
+
+    free(serialized_registros);
 }
 
 bool send_pcb(int fd, t_pcb* pcb) {
@@ -86,18 +122,42 @@ bool send_pcb(int fd, t_pcb* pcb) {
 
 bool recv_pcb(int fd, t_pcb** pcb) {
     size_t size_payload;
-    if (recv(fd, &size_payload, sizeof(size_t), 0) != sizeof(size_t))
-        return false;
+    ssize_t received;
 
+    // Recibir el tamaño del paquete
+    received = recv(fd, &size_payload, sizeof(size_payload), MSG_WAITALL);
+
+    if (received != sizeof(size_payload)) {
+        fprintf(stderr, "Error: Tamaño del paquete no recibido correctamente. Recibido: %ld\n", received);
+        return false;
+    }
+
+    // Asegurarse de que el tamaño recibido tenga sentido
+    if (size_payload <= 0) {
+        fprintf(stderr, "Error: Tamaño del paquete inválido: %ld\n", size_payload);
+        return false;
+    }
+
+    // Recibir el contenido del PCB
     void* stream = malloc(size_payload);
-    if (recv(fd, stream, size_payload, 0) != size_payload) {
+    received = recv(fd, stream, size_payload, MSG_WAITALL);
+
+    if (received != size_payload) {
+        fprintf(stderr, "Error: No se recibió todo el paquete. Recibido: %ld, esperado: %ld\n", received, size_payload);
         free(stream);
         return false;
     }
 
+    // Deserializar el PCB
     deserializar_pcb(stream, pcb);
 
     free(stream);
+
+    if (*pcb == NULL) {
+        fprintf(stderr, "Error: PCB deserializado es NULL.\n");
+        return false;
+    }
+
     return true;
 }
 

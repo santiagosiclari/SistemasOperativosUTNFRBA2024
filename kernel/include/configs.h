@@ -16,7 +16,7 @@ extern char* IP_CPU;
 extern char* PUERTO_CPU_DISPATCH;//pdf dice int
 extern char* PUERTO_CPU_INTERRUPT;//pdf dice int
 extern char* ALGORITMO_PLANIFICACION;
-extern int QUANTUM;
+extern u_int8_t QUANTUM;
 extern char** RECURSOS;//lista, luego usar common de string
 extern char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
 extern int GRADO_MULTIPROGRAMACION;

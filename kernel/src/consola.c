@@ -14,11 +14,17 @@ void atender_instruccion (char* leido) {
 				"INICIAR_PLANIFICACION\n"
 				"PROCESO_ESTADO\n\n");
 	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
+		t_pcb* pcb = crear_pcb();
+		if(!send_pcb(fd_cpu_dispatch, pcb)) {
+			log_error(kernel_logger, "Hubo un error al INICIAR_PROCESO: Envio de PCB");
+		} else {
+			log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
+		}
 		if(!send_iniciar_proceso(fd_memoria, comando_consola[1])) {
-			log_error(kernel_logger, "Hubo un error al enviar INICIAR_PROCESO");
+			log_error(kernel_logger, "Hubo un error al INICIAR_PROCESO: Envio de PATH");
 		}
 	} else {
-		log_error(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
+		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
 
 	// Liberar cada elemento

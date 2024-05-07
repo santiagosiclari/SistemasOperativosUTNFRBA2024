@@ -10,6 +10,7 @@
 #include "consola.h"
 #include "kernel-entradasalida.h"
 #include "terminar-kernel.h"
+#include "funciones-pcb.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
@@ -34,7 +35,7 @@ char* IP_CPU;
 char* PUERTO_CPU_DISPATCH;//pdf dice int
 char* PUERTO_CPU_INTERRUPT;//pdf dice int
 char* ALGORITMO_PLANIFICACION;
-int QUANTUM;
+uint8_t QUANTUM;
 char** RECURSOS;//lista, luego usar common de string
 char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
 int GRADO_MULTIPROGRAMACION;
