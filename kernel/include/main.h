@@ -14,6 +14,7 @@
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+#include "../../utils/include/funciones-serializacion.h"
 #include "../../utils/include/file-descriptors.h"
 
 int fd_kernel;
@@ -35,7 +36,7 @@ char* IP_CPU;
 char* PUERTO_CPU_DISPATCH;//pdf dice int
 char* PUERTO_CPU_INTERRUPT;//pdf dice int
 char* ALGORITMO_PLANIFICACION;
-uint8_t QUANTUM;
+int QUANTUM;
 char** RECURSOS;//lista, luego usar common de string
 char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
 int GRADO_MULTIPROGRAMACION;

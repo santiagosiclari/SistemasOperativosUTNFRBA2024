@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     pthread_detach(cpu_kernel_interrupt);
 
     while (1) {
-        // Usar semaforos        
+        // Usar semaforos 
         // Ciclo de instruccion
         char* instruccion;
         char** instruccion_separada;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
                 log_error(cpu_logger, "Hubo un error al recibir la instruccion del modulo de Memoria");
             }
 
-            log_info(cpu_logger, "Iniciando instruccion: %d", pcb->pc); // aca pasariamos el PC del PCB
+            log_info(cpu_logger, "Iniciando instruccion: %d", pcb->pc);
 
             // Decode
             instruccion_separada = string_split(instruccion, " ");
@@ -82,18 +82,21 @@ int main(int argc, char* argv[]) {
             } else {
                 log_warning(cpu_logger, "No se pudo encontrar la instruccion\n");
             }
+
+            free(instruccion);
+            free(instruccion_separada);
         }
 
         // Check Interrupt
         if (pid_interrumpido == pcb->pid) {
             // FALTA hacer funcionalidad de interrupcion
-            // Solo envia un paquete por kernel dispatch con el contexto de ejecucion (CREO)
+            // Envia un paquete por kernel dispatch con el contexto de ejecucion (CREO)
 
             
-        }
 
-        free(instruccion);
-        free(instruccion_separada);
+            free(instruccion);
+            free(instruccion_separada);
+        }
     }
 
     // Terminar programa

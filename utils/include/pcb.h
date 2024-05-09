@@ -16,11 +16,7 @@ typedef struct {
     uint8_t pid;
     uint32_t pc; // Program Counter -> Puntero de instruccion
     char estado; // Es un caracter, es decir N seria New, B Blocked, E Exec, etc.
-    uint8_t quantum;
-    // falta semaforo
-    // falta info de memoria
-    // falta info de la programacion (prioridad por ej.)
-    // falta info de entrada/salida (e/s)
+    int quantum;
     t_registros* registros;
 } t_pcb;
 
