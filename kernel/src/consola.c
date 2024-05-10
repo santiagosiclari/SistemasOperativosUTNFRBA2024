@@ -13,7 +13,9 @@ void atender_instruccion (char* leido) {
 				"MULTIPROGRAMACION [valor]\n"
 				"INICIAR_PLANIFICACION\n"
 				"PROCESO_ESTADO\n\n");
-	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
+
+	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0)
+	 {
 		t_pcb* pcb = crear_pcb();
 		if(!send_pcb(fd_cpu_dispatch, pcb)) {
 			log_error(kernel_logger, "Hubo un error al INICIAR_PROCESO: Envio de PCB");
@@ -26,7 +28,11 @@ void atender_instruccion (char* leido) {
 		} else {
 			log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
 		}
-	} else {
+
+		queue_push(colaNew,pcb);
+
+	} else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION"))
+	{
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
 

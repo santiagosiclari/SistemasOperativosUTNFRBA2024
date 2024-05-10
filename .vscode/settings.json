@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "consola.h": "c",
+        "planificador.h": "c"
+    }
+}

@@ -5,9 +5,11 @@
 #include <stdlib.h>
 
 #include <commons/string.h>
+#include <commons/collections/queue.h>
 
 #include "logs.h"
 #include "funciones-pcb.h"
+#include "planificador.h"
 #include <readline/readline.h>
 
 #include <../../utils/include/file-descriptors.h>

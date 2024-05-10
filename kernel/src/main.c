@@ -7,6 +7,11 @@ int main(int argc, char* argv[]) {
     // Inicializamos config
     init_kernel_config();
 
+    //Creamos colas
+    colaReady = queue_create();
+    colaBlocked = queue_create();
+    colaExec = queue_create();
+
     // Iniciar servidor
     fd_kernel = iniciar_servidor(kernel_logger, PUERTO_ESCUCHA, "Kernel");
 
@@ -58,7 +63,6 @@ int main(int argc, char* argv[]) {
         pthread_create(&consola_interactiva, NULL, (void *)iniciar_consola, NULL);
         pthread_join(consola_interactiva, NULL);
     }
-    
     // Terminar programa
     terminar_kernel();
 
