@@ -9,6 +9,8 @@
 
 #include <commons/collections/list.h>
 
-void leer_archivo(char* path);
+extern t_list* instrucciones;
+
+t_list* leer_archivo(char* path);
 
 #endif

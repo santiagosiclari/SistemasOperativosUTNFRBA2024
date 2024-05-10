@@ -1,16 +1,16 @@
-#include "../include/kernel-entradasalida.h"
+#include "../include/kernel-cpu-interrupt.h"
 
-void conexion_kernel_entradasalida() {
+void conexion_kernel_cpu_interrupt() {
     bool control = 1;
 	while (control) {
-		int cod_op = recibir_operacion(fd_entradasalida);
+		int cod_op = recibir_operacion(fd_cpu_interrupt);
 		switch (cod_op) {
 		case MENSAJE:
 			break;
 		case PAQUETE:
 			break;
 		case -1:
-			log_error(kernel_logger, "El IO se desconecto. Terminando servidor");
+			log_error(kernel_logger, "El servidor de CPU (Interrupt) no se encuentra activo.");
 			control = 0;
             break;
 		default:

@@ -8,9 +8,13 @@
 #include "logs.h"
 #include "archivos.h"
 
+#include <commons/collections/list.h>
+
 #include "../include/file-descriptors.h"
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+
+extern t_list* instrucciones;
 
 void conexion_memoria_cpu();
 

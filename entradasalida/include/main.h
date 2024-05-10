@@ -3,10 +3,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "configs.h"
 #include "logs.h"
 #include "terminar-entradasalida.h"
+#include "entradasalida-kernel.h"
+#include "entradasalida-memoria.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"

@@ -20,8 +20,11 @@ void atender_instruccion (char* leido) {
 		} else {
 			log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
 		}
-		if(!send_iniciar_proceso(fd_memoria, comando_consola[1])) {
+
+		if(!send_iniciar_proceso(fd_memoria, comando_consola[1], strlen(comando_consola[1]) + 1)) {
 			log_error(kernel_logger, "Hubo un error al INICIAR_PROCESO: Envio de PATH");
+		} else {
+			log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
 		}
 	} else {
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");

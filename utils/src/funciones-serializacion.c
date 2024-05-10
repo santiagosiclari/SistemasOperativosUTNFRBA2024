@@ -48,10 +48,6 @@ void cargar_string_al_buffer(t_buffer* buffer, char* string, uint32_t length) {
 }
 
 char* extraer_string_del_buffer(t_buffer* buffer, uint32_t length) {
-    if (buffer->offset >= buffer->size) {
-        printf("Error: buffer overflow al extraer uint8\n");
-        exit(EXIT_FAILURE);
-    }
     // Leer el largo del string
     memcpy(&length, buffer->stream + buffer->offset, sizeof(uint32_t));
     buffer->offset += sizeof(uint32_t);
@@ -70,16 +66,10 @@ void cargar_char_al_buffer(t_buffer* buffer, char value) {
 }
 
 char extraer_char_del_buffer(t_buffer* buffer) {
-    if (buffer->offset >= buffer->size) {
-        printf("Error: buffer overflow al extraer uint8\n");
-        exit(EXIT_FAILURE);
-    }
-    char* value = malloc(sizeof(char));
-    memcpy(value, buffer->stream + buffer->offset, sizeof(char));
+    char value;
+    memcpy(&value, buffer->stream + buffer->offset, sizeof(char));
     buffer->offset += sizeof(char);
-    char valorADevolver = *value;
-    free(value);
-    return valorADevolver;
+    return value;
 }
 
 void cargar_int_al_buffer(t_buffer* buffer, int value) {
@@ -88,16 +78,10 @@ void cargar_int_al_buffer(t_buffer* buffer, int value) {
 }
 
 int extraer_int_del_buffer(t_buffer* buffer) {
-    if (buffer->offset >= buffer->size) {
-        printf("Error: buffer overflow al extraer uint8\n");
-        exit(EXIT_FAILURE);
-    }
-    int* value = malloc(sizeof(int));
-    memcpy(value, buffer->stream + buffer->offset, sizeof(int));
+    int value;
+    memcpy(&value, buffer->stream + buffer->offset, sizeof(int));
     buffer->offset += sizeof(int);
-    int valorADevolver = *value;
-    free(value);
-    return valorADevolver;
+    return value;
 }
 
 void cargar_uint8_al_buffer(t_buffer* buffer, uint8_t value) {
@@ -106,16 +90,10 @@ void cargar_uint8_al_buffer(t_buffer* buffer, uint8_t value) {
 }
 
 uint8_t extraer_uint8_del_buffer(t_buffer* buffer) {
-    if (buffer->offset >= buffer->size) {
-        printf("Error: buffer overflow al extraer uint8\n");
-        exit(EXIT_FAILURE);
-    }
-    uint8_t* value = malloc(sizeof(uint8_t));
-    memcpy(value, buffer->stream + buffer->offset, sizeof(uint8_t));
+    uint8_t value;
+    memcpy(&value, buffer->stream + buffer->offset, sizeof(uint8_t));
     buffer->offset += sizeof(uint8_t);
-    uint8_t valorADevolver = *value;
-    free(value);
-    return valorADevolver;
+    return value;
 }
 
 void cargar_uint32_al_buffer(t_buffer* buffer, uint32_t value) {
@@ -124,14 +102,8 @@ void cargar_uint32_al_buffer(t_buffer* buffer, uint32_t value) {
 }
 
 uint32_t extraer_uint32_del_buffer(t_buffer* buffer) {
-    if (buffer->offset >= buffer->size) {
-        printf("Error: buffer overflow al extraer uint8\n");
-        exit(EXIT_FAILURE);
-    }
-    uint32_t* value = malloc(sizeof(uint32_t));
-    memcpy(value, buffer->stream + buffer->offset, sizeof(uint32_t));
+    uint32_t value;
+    memcpy(&value, buffer->stream + buffer->offset, sizeof(uint32_t));
     buffer->offset += sizeof(uint32_t);
-    uint32_t valorADevolver = *value;
-    free(value);
-    return valorADevolver;
+    return value;
 }

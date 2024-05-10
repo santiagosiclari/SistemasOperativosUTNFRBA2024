@@ -9,6 +9,7 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "cpu-memoria.h"
 #include "cpu-kernel-dispatch.h"
 #include "cpu-kernel-interrupt.h"
 #include "terminar-cpu.h"
@@ -36,7 +37,5 @@ char* PUERTO_ESCUCHA_DISPATCH;//char para func
 char* PUERTO_ESCUCHA_INTERRUPT;//char para func
 int CANTIDAD_ENTRADAS_TLB;
 char* ALGORITMO_TLB;
-
-t_pcb* pcb;
 
 #endif

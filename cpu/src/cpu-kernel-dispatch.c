@@ -21,6 +21,15 @@ void conexion_cpu_kernel_dispatch() {
 				exit(EXIT_FAILURE);
 			}
 
+			printf("PID: %d\n", pcb->pid);
+			printf("Program Counter: %d\n", pcb->pc);
+			printf("Estado: %c\n", pcb->estado);
+			printf("Quantum: %d\n", pcb->quantum);
+			printf("Registros:\n");
+			printf("AX: %d, BX: %d, CX: %d, DX: %d\n", pcb->registros->AX, pcb->registros->BX, pcb->registros->CX, pcb->registros->DX);
+			printf("EAX: %d, EBX: %d, ECX: %d, EDX: %d\n", pcb->registros->EAX, pcb->registros->EBX, pcb->registros->ECX, pcb->registros->EDX);
+			printf("SI: %d, DI: %d\n", pcb->registros->SI, pcb->registros->DI);
+
             break;
 		case -1:
 			log_error(cpu_logger, "El Kernel (Dispatch) se desconecto. Terminando servidor");

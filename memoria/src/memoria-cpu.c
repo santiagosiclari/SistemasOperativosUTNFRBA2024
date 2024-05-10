@@ -11,12 +11,26 @@ void conexion_memoria_cpu() {
 		case PAQUETE:
 			break;
 		case RECIBIR_PC:
-			uint32_t pc;
-			if(!recv_pc(fd_cpu, &pc)) {
+			if (instrucciones == NULL) {
+				log_warning(memoria_logger, "La lista de instrucciones se encuentra vacia");
+			}
+
+			uint32_t pc = 0;
+			if(!recv_pc(fd_cpu, pc)) {
 				log_error(memoria_logger, "Hubo un error al recibir el PC del modulo de CPU");
 			} else {
 				log_info(memoria_logger, "PC (Program Counter) recibido: %d", pc);
 			}
+
+			char* instruccion = list_get(instrucciones, pc);
+
+			if(!send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1)) {
+				log_error(memoria_logger, "Hubo un error al enviar la instruccion al CPU");
+			} else {
+				log_info(memoria_logger, "Instruccion enviada correctamente");
+			}
+
+			free(instruccion);
 			break;
 		case -1:
 			log_error(memoria_logger, "El CPU se desconecto. Terminando servidor");

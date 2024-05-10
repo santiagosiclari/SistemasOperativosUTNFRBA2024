@@ -8,9 +8,13 @@
 #include "configs.h"
 #include "logs.h"
 #include "consola.h"
+#include "kernel-memoria.h"
+#include "kernel-cpu-dispatch.h"
+#include "kernel-cpu-interrupt.h"
 #include "kernel-entradasalida.h"
 #include "terminar-kernel.h"
 #include "funciones-pcb.h"
+#include "planificacion-fifo.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"

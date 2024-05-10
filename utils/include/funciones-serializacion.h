@@ -39,9 +39,12 @@ typedef enum {
     // INICIAR_PLANIFICACION
     // MULTIPROGRAMACION
     // PROCESO_ESTADO
+    RECIBIR_CONTEXTO_DE_EJEC, // Recibir registros y PC del CPU
 
     // CPU (no hace falta ponerlas aca despues las sacamos)
-    RECIBIR_PCB,
+    RECIBIR_PCB, // Recibir PCB de Kernel
+    RECIBIR_PID, // Recibe el pid del proceso que se tiene que interrumpir
+    RECIBIR_INSTRUCCION, // Recibe la instruccion a ejecutar
     // SET,
     // MOV_IN,
     // MOV_OUT,
@@ -95,15 +98,10 @@ typedef struct {
 	t_buffer* buffer;
 } t_paquete;
 
-// void crear_buffer(t_paquete* paquete);
 t_paquete* crear_paquete(op_code co_op, t_buffer* buffer);
-// void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void* serializar_paquete(t_paquete* paquete, int bytes);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
-
-// void cargar_choclo_al_buffer(t_buffer* buffer, void* choclo, int size_choclo);
-// void* extraer_choclo_del_buffer(t_buffer* buffer);
 
 // Tipos de datos
 void cargar_string_al_buffer(t_buffer* buffer, char* string, uint32_t length);
@@ -112,6 +110,9 @@ char* extraer_string_del_buffer(t_buffer* buffer, uint32_t length);
 void cargar_char_al_buffer(t_buffer* buffer, char caracter);
 char extraer_char_del_buffer(t_buffer* buffer);
 
+// HACER
+// Despues hay q cambiar todos los int en config y usar uint8 o uint32
+// Sacariamos esto una vez hecho eso
 void cargar_int_al_buffer(t_buffer* buffer, int entero);
 int extraer_int_del_buffer(t_buffer* buffer);
 
