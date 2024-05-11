@@ -12,7 +12,7 @@ void conexion_cpu_memoria() {
 		case PAQUETE:
 			break;
 		case RECIBIR_INSTRUCCION:
-		    // Usar semaforos 
+		    // Usar semaforos
 			// Ciclo de instruccion
 			t_pcb* pcb;
 			char* instruccion = malloc(MAX_LENGTH);
@@ -24,7 +24,7 @@ void conexion_cpu_memoria() {
 			} else {
 				log_info(cpu_logger, "Se envio el PC %d a memoria", pcb->pc);
 			}
-				
+
 			// Recibir la instruccion
 			if (!recv_instruccion(fd_memoria, instruccion, MAX_LENGTH)) {
 				log_error(cpu_logger, "Hubo un error al recibir la instruccion del modulo de Memoria");
@@ -33,20 +33,20 @@ void conexion_cpu_memoria() {
 			log_info(cpu_logger, "Iniciando instruccion: %d", pcb->pc);
 
 			// Decode
-			instruccion_separada = string_split(instruccion, " ");
-			if (strcmp(instruccion_separada[0], "SET") == 0) {
-				pcb = cpu_set(pcb, instruccion_separada);
-			} else if (strcmp(instruccion_separada[0], "SUM") == 0) {
-				pcb = cpu_sum(pcb, instruccion_separada);
-			} else if (strcmp(instruccion_separada[0], "SUB") == 0) {
-				pcb = cpu_sub(pcb, instruccion_separada);
-			} else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
-				pcb = cpu_jnz(pcb, instruccion_separada);
-			} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
-				pcb = cpu_io_gen_sleep(pcb, instruccion_separada);
-			} else {
-				log_warning(cpu_logger, "No se pudo encontrar la instruccion\n");
-			}
+			// instruccion_separada = string_split(instruccion, " ");
+			// if (strcmp(instruccion_separada[0], "SET") == 0) {
+			// 	pcb = cpu_set(pcb, instruccion_separada);
+			// } else if (strcmp(instruccion_separada[0], "SUM") == 0) {
+			// 	pcb = cpu_sum(pcb, instruccion_separada);
+			// } else if (strcmp(instruccion_separada[0], "SUB") == 0) {
+			// 	pcb = cpu_sub(pcb, instruccion_separada);
+			// } else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
+			// 	pcb = cpu_jnz(pcb, instruccion_separada);
+			// } else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
+			// 	pcb = cpu_io_gen_sleep(pcb, instruccion_separada);
+			// } else {
+			// 	log_warning(cpu_logger, "No se pudo encontrar la instruccion\n");
+			// }
 
 			free(instruccion);
 			free(instruccion_separada);

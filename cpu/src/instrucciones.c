@@ -1,31 +1,173 @@
 #include "../include/instrucciones.h"
 
+size_t tamanioRegistro(registrosCPU registro){
+    if(registro >= AX && registro <= DX){
+        return sizeof(uint8_t);
+    } else{
+        return sizeof(uint32_t);
+    }
+}
+
+void* obtenerRegistro(registrosCPU registro){
+    void* lista_de_registros[11] = {
+        &miCPU.AX, &miCPU.BX, &miCPU.CX, &miCPU.DX,
+        &miCPU.EAX, &miCPU.EBX, &miCPU.ECX, &miCPU.EDX,
+        &miCPU.SI, &miCPU.DI, &miCPU.PC
+    };
+    if(registro >= 0 && registro < 11){
+        return (lista_de_registros[registro]);
+    } else{
+        return NULL;
+    }
+}
+
 // Execute
-t_pcb* cpu_set(t_pcb* pcb, char** instruccion_separada) {
+// SET (Registro, Valor): Asigna al registro el valor pasado como parámetro.
+// t_pcb* cpu_set(t_pcb* pcb, char** instruccion_separada) {
+// }
 
+// SUM (Registro Destino, Registro Origen): Suma al Registro Destino el Registro Origen y deja el resultado en el Registro Destino.
+// t_pcb* cpu_sum(t_pcb* pcb, char** instruccion_separada) {
+//     return pcb;
+// }
 
-    return pcb;
+// SUB (Registro Destino, Registro Origen): Resta al Registro Destino el Registro Origen y deja el resultado en el Registro Destino.
+// t_pcb* cpu_sub(t_pcb* pcb, char** instruccion_separada) {
+//     return pcb;
+// }
+
+// JNZ (Registro, Instrucción): Si el valor del registro es distinto de cero, actualiza el program counter al número de instrucción pasada por parámetro.
+// t_pcb* cpu_jnz(t_pcb* pcb, char** instruccion_separada) {
+//     return pcb;
+// }
+
+// IO_GEN_SLEEP (Interfaz, Unidades de trabajo): Esta instrucción solicita al Kernel que se envíe a una interfaz de I/O a que realice un sleep por una cantidad de unidades de trabajo.
+// t_pcb* cpu_io_gen_sleep(t_pcb* pcb, char** instruccion_separada) {
+//     return pcb;
+// }
+
+void set(registrosCPU registroDestino, int valor){ //No muestra errores. anda?
+    void *registro_destino = obtenerRegistro(registroDestino);
+
+     if(registro_destino == NULL){
+        printf("Erorr al recibir el registro\n");
+        return;
+    }
+
+    size_t tam_destino = tamanioRegistro(registroDestino);
+
+    if(tam_destino == sizeof(uint32_t)){
+        *(uint32_t *)registro_destino = valor;
+    } else{
+        *(uint32_t *)registro_destino = valor;
+    }
+
 }
-t_pcb* cpu_sum(t_pcb* pcb, char** instruccion_separada) {
 
+void sub(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
+    void *registro_destino = obtenerRegistro(registroDestino);
+    void *registro_origen = obtenerRegistro(registroOrigen);
 
-    return pcb;
+    if(registro_destino == NULL || registro_origen == NULL){
+        printf("Error al recibir los registros\n");
+        return;
+    }
+
+    size_t tam_destino = tamanioRegistro(registroDestino);
+    size_t tam_origen = tamanioRegistro(registroOrigen);
+
+    switch(tam_destino){
+        case sizeof(uint8_t):
+            switch (tam_origen){
+                case sizeof(uint8_t):
+                    *(uint8_t *)registro_destino -= *(uint8_t *)registro_origen;
+                    break;
+                case sizeof(uint32_t):
+                    *(uint8_t *)registro_destino -= *(uint32_t *)registro_origen;
+                    break;
+            }
+            break;
+        case sizeof(uint32_t):
+            switch (tam_origen){
+                case sizeof(uint8_t ):
+                    *(uint32_t *)registro_destino -= *(uint8_t *)registro_origen;
+                    break;
+                case sizeof(uint32_t):
+                    *(uint32_t *)registro_destino -= *(uint32_t *)registro_origen;
+                    break;
+            }
+            break;
+    }
 }
 
-t_pcb* cpu_sub(t_pcb* pcb, char** instruccion_separada) {
-    
+void sum(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
+    void *registro_destino = obtenerRegistro(registroDestino);
+    void *registro_origen = obtenerRegistro(registroOrigen);
 
-    return pcb;
+    if(registro_destino == NULL || registro_origen == NULL){
+        printf("Erorr al recibir los registros\n");
+        return;
+    }
+
+    size_t tam_destino = tamanioRegistro(registroDestino);
+    size_t tam_origen = tamanioRegistro(registroOrigen);
+
+    switch(tam_destino){
+        case sizeof(uint8_t):
+            switch (tam_origen){
+                case sizeof(uint8_t):
+                    *(uint8_t *)registro_destino += *(uint8_t *)registro_origen;
+                    break;
+                case sizeof(uint32_t):
+                    *(uint8_t *)registro_destino += *(uint32_t *)registro_origen;
+                    break;
+            }
+            break;
+        case sizeof(uint32_t):
+            switch (tam_origen){
+                case sizeof(uint8_t ):
+                    *(uint32_t *)registro_destino += *(uint8_t *)registro_origen;
+                    break;
+                case sizeof(uint32_t):
+                    *(uint32_t *)registro_destino += *(uint32_t *)registro_origen;
+                    break;
+            }
+            break;
+    }
 }
 
-t_pcb* cpu_jnz(t_pcb* pcb, char** instruccion_separada) {
+int jnz(registrosCPU registro, char* instruccion){ //Int para despues igualarlo a pcb->pc = jnz..
+    void *registro_destino = obtenerRegistro(registro);
 
+     if(registro_destino == NULL){
+        printf("Error al recibir el registro\n");
+        return -1;
+    }
 
-    return pcb;
+    size_t tam_registro = tamanioRegistro(registro);
+
+    int num_instruccion = atoi(instruccion);
+
+        // Evaluar el valor del registro
+    switch (tam_registro) {
+       case sizeof(uint8_t):
+            if (*(uint8_t*)registro_destino != 0) {
+                return num_instruccion;
+            } else {
+                printf("Registro es igual a 0\n");
+            }
+            break;
+        case sizeof(uint32_t):
+            if (*(uint32_t*)registro_destino != 0) {
+                return num_instruccion;
+            } else{
+                printf("Registro es igual a 0\n");
+            }
+            break;
+        default:
+            printf("Registro no válido\n");
+            break;
+    }
+    return 0;
 }
-
-t_pcb* cpu_io_gen_sleep(t_pcb* pcb, char** instruccion_separada) {
-
-
-    return pcb;
-}
+// //void io_gen_sleep(char* interfaz, int unidades_trabajo){}
