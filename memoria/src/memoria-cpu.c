@@ -1,5 +1,7 @@
 #include "../include/memoria-cpu.h"
 
+t_list* instrucciones;
+
 void conexion_memoria_cpu() {
     bool control = 1;
 	while (control) {
@@ -24,11 +26,8 @@ void conexion_memoria_cpu() {
 
 			char* instruccion = list_get(instrucciones, pc);
 
-			if(!send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1)) {
-				log_error(memoria_logger, "Hubo un error al enviar la instruccion al CPU");
-			} else {
-				log_info(memoria_logger, "Instruccion enviada correctamente");
-			}
+			send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1);
+			log_info(memoria_logger, "Instruccion %d enviada", pc);
 
 			free(instruccion);
 			break;

@@ -15,6 +15,8 @@
 #include <../../utils/include/file-descriptors.h>
 #include <../../utils/include/protocolo.h>
 
+extern t_queue* colaNew;
+
 void iniciar_consola(t_log* logger);
 
 #endif

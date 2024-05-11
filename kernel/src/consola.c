@@ -1,6 +1,7 @@
 #include <../include/consola.h>
 
 void atender_instruccion (char* leido) {
+
 	char** comando_consola = string_split(leido, " ");
 	
 	if(strcmp(comando_consola[0], "HELP") == 0) {
@@ -13,26 +14,26 @@ void atender_instruccion (char* leido) {
 				"MULTIPROGRAMACION [valor]\n"
 				"INICIAR_PLANIFICACION\n"
 				"PROCESO_ESTADO\n\n");
-
-	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0)
-	 {
+	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
 		t_pcb* pcb = crear_pcb();
-		if(!send_pcb(fd_cpu_dispatch, pcb)) {
-			log_error(kernel_logger, "Hubo un error al INICIAR_PROCESO: Envio de PCB");
-		} else {
-			log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
-		}
+		send_pcb(fd_cpu_dispatch, pcb);
+		log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
 
-		if(!send_iniciar_proceso(fd_memoria, comando_consola[1], strlen(comando_consola[1]) + 1)) {
-			log_error(kernel_logger, "Hubo un error al INICIAR_PROCESO: Envio de PATH");
-		} else {
-			log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
-		}
-
+    	// Creamos cola de New
+    	t_queue* colaNew = queue_create();
 		queue_push(colaNew,pcb);
 
-	} else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION"))
-	{
+		send_iniciar_proceso(fd_memoria, comando_consola[1], strlen(comando_consola[1]) + 1);
+		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
+	} else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0) {
+		if(strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0) {
+			planificacionFIFO();
+		} else if(strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+			// planifcacionRR();
+		} else if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+			// planifcacionVRR();
+		}
+	} else {
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
 
@@ -45,6 +46,7 @@ void atender_instruccion (char* leido) {
 
     // Liberar el array
     free(comando_consola);
+	// Falta liberar colas
 }
 
 void iniciar_consola(t_log* logger) {

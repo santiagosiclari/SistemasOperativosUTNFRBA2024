@@ -15,7 +15,6 @@
 #include "kernel-entradasalida.h"
 #include "terminar-kernel.h"
 #include "funciones-pcb.h"
-#include "planificacion-fifo.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
@@ -41,7 +40,7 @@ char* IP_CPU;
 char* PUERTO_CPU_DISPATCH;//pdf dice int
 char* PUERTO_CPU_INTERRUPT;//pdf dice int
 char* ALGORITMO_PLANIFICACION;
-int QUANTUM;
+uint32_t QUANTUM;
 char** RECURSOS;//lista, luego usar common de string
 char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
 int GRADO_MULTIPROGRAMACION;

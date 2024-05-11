@@ -17,6 +17,7 @@
 #include "../../utils/include/protocolo.h"
 
 extern t_pcb* pcb;
+extern uint8_t size_instrucciones;
 
 void conexion_cpu_memoria();
 

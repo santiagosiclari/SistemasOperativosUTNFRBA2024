@@ -14,7 +14,6 @@
 #include <sys/socket.h>
 
 #include "pcb.h"
-#include "funciones-serializacion.h"
 
 typedef enum {
 	MENSAJE,
@@ -40,6 +39,7 @@ typedef enum {
     // MULTIPROGRAMACION
     // PROCESO_ESTADO
     RECIBIR_CONTEXTO_DE_EJEC, // Recibir registros y PC del CPU
+    RECIBIR_SIZE_INSTRUCCIONES, // Para pedir la cantidad necesaria de instrucciones
 
     // CPU (no hace falta ponerlas aca despues las sacamos)
     RECIBIR_PCB, // Recibir PCB de Kernel
@@ -104,8 +104,8 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
 
 // Tipos de datos
-void cargar_string_al_buffer(t_buffer* buffer, char* string, uint32_t length);
-char* extraer_string_del_buffer(t_buffer* buffer, uint32_t length);
+void cargar_string_al_buffer(t_buffer* buffer, char* string);
+char* extraer_string_del_buffer(t_buffer* buffer);
 
 void cargar_char_al_buffer(t_buffer* buffer, char caracter);
 char extraer_char_del_buffer(t_buffer* buffer);

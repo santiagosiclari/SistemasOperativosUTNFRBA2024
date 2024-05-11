@@ -1,16 +1,10 @@
 #include "../include/main.h"
 
 int main(int argc, char* argv[]) {
-
     // Inicializamos logger y logger debug
     init_kernel_logs();
     // Inicializamos config
     init_kernel_config();
-
-    //Creamos colas
-    colaReady = queue_create();
-    colaBlocked = queue_create();
-    colaExec = queue_create();
 
     // Iniciar servidor
     fd_kernel = iniciar_servidor(kernel_logger, PUERTO_ESCUCHA, "Kernel");

@@ -38,8 +38,9 @@ void eliminar_paquete(t_paquete* paquete)
 	free(paquete);
 }
 
-void cargar_string_al_buffer(t_buffer* buffer, char* string, uint32_t length) {
-    // Agregar la longitud del string
+void cargar_string_al_buffer(t_buffer* buffer, char* string) {
+    // Agregar la longitud del string'
+    uint32_t length = strlen(string) + 1;
     memcpy(buffer->stream + buffer->offset, &length, sizeof(uint32_t));
     buffer->offset += sizeof(uint32_t);
     // Agregar el string
@@ -47,8 +48,9 @@ void cargar_string_al_buffer(t_buffer* buffer, char* string, uint32_t length) {
     buffer->offset += length;
 }
 
-char* extraer_string_del_buffer(t_buffer* buffer, uint32_t length) {
+char* extraer_string_del_buffer(t_buffer* buffer) {
     // Leer el largo del string
+    uint32_t length;
     memcpy(&length, buffer->stream + buffer->offset, sizeof(uint32_t));
     buffer->offset += sizeof(uint32_t);
 
