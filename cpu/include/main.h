@@ -18,6 +18,7 @@
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/file-descriptors.h"
+#include "../../entradasalida/include/configs.h"
 
 int fd_kernel_dispatch;
 int fd_kernel_interrupt;
@@ -29,6 +30,8 @@ t_log* cpu_logger;
 t_log* cpu_debug;
 
 t_config* cpu_config;
+
+t_registros miCPU;
 
 // Declaracion archivos de configuracion
 char* IP_MEMORIA;
