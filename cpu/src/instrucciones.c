@@ -58,10 +58,11 @@ void set(registrosCPU registroDestino, int valor){ //No muestra errores. anda?
 
     if(tam_destino == sizeof(uint32_t)){
         *(uint32_t *)registro_destino = valor;
+    } else if(tam_destino == sizeof(uint8_t)){
+        *(uint8_t *)registro_destino = valor;
     } else{
-        *(uint32_t *)registro_destino = valor;
+        printf("Error al leer el tamanio del registro\n");
     }
-
 }
 
 void sub(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
@@ -136,7 +137,7 @@ void sum(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestr
     }
 }
 
-int jnz(registrosCPU registro, char* instruccion){ //Int para despues igualarlo a pcb->pc = jnz..
+uint32_t jnz(registrosCPU registro, char* instruccion){ //uint32_t para despues igualarlo a pcb->pc = jnz..
     void *registro_destino = obtenerRegistro(registro);
 
      if(registro_destino == NULL){
@@ -146,7 +147,7 @@ int jnz(registrosCPU registro, char* instruccion){ //Int para despues igualarlo 
 
     size_t tam_registro = tamanioRegistro(registro);
 
-    int num_instruccion = atoi(instruccion);
+    uint32_t num_instruccion = atoi(instruccion);
 
         // Evaluar el valor del registro
     switch (tam_registro) {
@@ -170,4 +171,8 @@ int jnz(registrosCPU registro, char* instruccion){ //Int para despues igualarlo 
     }
     return 0;
 }
-// //void io_gen_sleep(char* interfaz, int unidades_trabajo){}
+// void io_gen_sleep(char* interfaz, int unidades_trabajo){
+//     int microseg_unidades_trabajo = unidades_trabajo * 1000;//para el usleep, milisegundos
+//     //faltaria hacer el envio del kernel a la interfaz
+//     usleep(microseg_unidades_trabajo);
+// }
