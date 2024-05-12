@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "../../utils/include/protocolo.h"
 
@@ -31,7 +32,7 @@ void set(registrosCPU registroDestino, int valor);
 void sum(registrosCPU registroDestino, registrosCPU registroOrigen);
 void sub(registrosCPU registroDestino, registrosCPU registroOrigen);
 // void io_gen_sleep(char* interfaz, int unidades_trabajo);
-int jnz(registrosCPU registro, char* instruccion);
+uint32_t jnz(registrosCPU registro, char* instruccion);
 
 size_t tamanioRegistro(registrosCPU registro);
 void* obtenerRegistro(registrosCPU registro);
