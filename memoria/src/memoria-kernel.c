@@ -1,5 +1,8 @@
 #include "../include/memoria-kernel.h"
 
+t_list* instrucciones;
+t_list* instrucciones_por_proceso;
+
 void conexion_memoria_kernel() {
     bool control = 1;
 	while (control) {
@@ -13,7 +16,7 @@ void conexion_memoria_kernel() {
 			uint32_t MAX_LENGTH = 128;
 			char* path = malloc(MAX_LENGTH);
 			char* path_recivido = malloc(MAX_LENGTH);
-			char* path_instrucciones = PATH_INSTRUCCIONES;
+			// char* path_instrucciones = PATH_INSTRUCCIONES;
 			char* path_concatenado = malloc(MAX_LENGTH);
 
 			// Recibe el path desde el kernel
@@ -29,13 +32,17 @@ void conexion_memoria_kernel() {
 			log_info(memoria_logger, "Path recivido: %s", path);
 
 			// Concatenar el PATH_INSTRUCCIONES con el path recibido
-			snprintf(path_concatenado, MAX_LENGTH, "%s%s", path_instrucciones, path);  // Concatena
+			snprintf(path_concatenado, MAX_LENGTH, "%s%s", PATH_INSTRUCCIONES, path);  // Concatena
 
 			// Loguear el path concatenado
 			log_info(memoria_logger, "Path concatenado: %s", path_concatenado);
 
 			// Leer el archivo y obtener las instrucciones (con la función que mencionaste)
 			instrucciones = leer_archivo(path_concatenado);
+
+			// Listar segun el PID recibido
+			// instrucciones_por_proceso = list_create();
+			// list_add_in_index(instrucciones_por_proceso, pid, instrucciones);
 
 			// Liberar espacio
 			free(path_concatenado);

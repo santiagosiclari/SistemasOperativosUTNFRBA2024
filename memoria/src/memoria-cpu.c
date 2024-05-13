@@ -1,7 +1,5 @@
 #include "../include/memoria-cpu.h"
 
-t_list* instrucciones;
-
 void conexion_memoria_cpu() {
     bool control = 1;
 	while (control) {
@@ -12,12 +10,17 @@ void conexion_memoria_cpu() {
 			break;
 		case PAQUETE:
 			break;
-		case RECIBIR_PC:
+		case RECIBIR_PC: // y el PID
+			uint8_t pid = 0;
+			uint32_t pc = 0;
+			// if(!recv_pid(fd_cpu, pc, pid)) { ... }
+
+			t_list* instrucciones = list_get(instrucciones_por_proceso, pid);
+
 			if (instrucciones == NULL) {
 				log_warning(memoria_logger, "La lista de instrucciones se encuentra vacia");
 			}
 
-			uint32_t pc = 0;
 			if(!recv_pc(fd_cpu, pc)) {
 				log_error(memoria_logger, "Hubo un error al recibir el PC del modulo de CPU");
 			} else {
@@ -28,6 +31,7 @@ void conexion_memoria_cpu() {
 
 			send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1);
 			log_info(memoria_logger, "Instruccion %d enviada", pc);
+			usleep(RETARDO_RESPUESTA);
 
 			free(instruccion);
 			break;

@@ -1,5 +1,7 @@
 #include "../include/cpu-kernel-dispatch.h"
 
+t_pcb* pcb_a_ejecutar;
+
 void conexion_cpu_kernel_dispatch() {
     bool control = 1;
 	while (control) {
@@ -40,11 +42,12 @@ void conexion_cpu_kernel_dispatch() {
 			uint8_t pid_a_ejecutar;
 			if(!recv_pid(fd_kernel_dispatch, pid_a_ejecutar)) {
 				log_error(cpu_logger, "Hubo un error al recibir el PID.");
+			} else {
+				log_info(cpu_logger, "PID a ejecutar: %d", pid_a_ejecutar);
 			}
 
 			t_queue* procesos_a_ejecutar = queue_create();
 			queue_push(procesos_a_ejecutar, &pid_a_ejecutar);
-			t_pcb* pcb_a_ejecutar;
 
 			// Wait semaforo
 			while(queue_size(procesos_a_ejecutar) > 0) {
@@ -58,7 +61,7 @@ void conexion_cpu_kernel_dispatch() {
 						// Fetch --> pedir instruccion
 						send_pc(fd_memoria, pcb_a_ejecutar->pc);
 						log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
-						pcb_a_ejecutar->pc++;
+						// pcb_a_ejecutar->pc++;
 					}
 				}
 			}

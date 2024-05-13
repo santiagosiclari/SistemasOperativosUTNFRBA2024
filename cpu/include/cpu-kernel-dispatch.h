@@ -14,7 +14,7 @@
 #include "../../utils/include/protocolo.h"
 
 extern uint8_t size_instrucciones;
-extern t_pcb* pcb;
+extern t_pcb* pcb_a_ejecutar;
 
 void conexion_cpu_kernel_dispatch();
 

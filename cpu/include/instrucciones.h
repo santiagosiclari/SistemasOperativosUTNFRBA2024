@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <commons/collections/dictionary.h>
+
 #include "../../utils/include/protocolo.h"
 
 // t_pcb* cpu_set(t_pcb* pcb, char** instruccion_separada);
@@ -14,28 +16,34 @@
 // t_pcb* cpu_io_gen_sleep(t_pcb* pcb, char** instruccion_separada);
 
 //Registros para determinar el tamanio
-typedef enum{
-    AX,
-    BX,
-    CX,
-    DX,
-    EAX,
-    EBX,
-    ECX,
-    EDX,
-    SI,
-    DI,
-    PC
-} registrosCPU;
+// typedef enum{
+//     AX,
+//     BX,
+//     CX,
+//     DX,
+//     EAX,
+//     EBX,
+//     ECX,
+//     EDX,
+//     SI,
+//     DI,
+//     PC
+// } registrosCPU;
 
-void set(registrosCPU registroDestino, int valor);
-void sum(registrosCPU registroDestino, registrosCPU registroOrigen);
-void sub(registrosCPU registroDestino, registrosCPU registroOrigen);
+// Prueba
+void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor);
+void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen);
+void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen);
+uint32_t funcion_jnz(t_dictionary* dictionary_registros, char* registro, int valor_pc);
+void funcion_io_gen_sleep(char* interfaz, int unidades_trabajo);
+
+// void set(registrosCPU registroDestino, int valor);
+// void sum(registrosCPU registroDestino, registrosCPU registroOrigen);
+// void sub(registrosCPU registroDestino, registrosCPU registroOrigen);
 // void io_gen_sleep(char* interfaz, int unidades_trabajo);
-uint32_t jnz(registrosCPU registro, char* instruccion);
+// uint32_t jnz(registrosCPU registro, char* instruccion);
 
-size_t tamanioRegistro(registrosCPU registro);
-void* obtenerRegistro(registrosCPU registro);
-
+// size_t tamanioRegistro(registrosCPU registro);
+// void* obtenerRegistro(registrosCPU registro);
 
 #endif

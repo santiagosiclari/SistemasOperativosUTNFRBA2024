@@ -14,6 +14,8 @@
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 
+extern t_list* instrucciones_por_proceso;
+
 void conexion_memoria_cpu();
 
 #endif

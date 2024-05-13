@@ -1,25 +1,25 @@
 #include "../include/instrucciones.h"
 
-size_t tamanioRegistro(registrosCPU registro){
-    if(registro >= AX && registro <= DX){
-        return sizeof(uint8_t);
-    } else{
-        return sizeof(uint32_t);
-    }
-}
+// size_t tamanioRegistro(registrosCPU registro){
+//     if(registro >= AX && registro <= DX){
+//         return sizeof(uint8_t);
+//     } else{
+//         return sizeof(uint32_t);
+//     }
+// }
 
-void* obtenerRegistro(registrosCPU registro){
-    void* lista_de_registros[11] = {
-        &miCPU.AX, &miCPU.BX, &miCPU.CX, &miCPU.DX,
-        &miCPU.EAX, &miCPU.EBX, &miCPU.ECX, &miCPU.EDX,
-        &miCPU.SI, &miCPU.DI, &miCPU.PC
-    };
-    if(registro >= 0 && registro < 11){
-        return (lista_de_registros[registro]);
-    } else{
-        return NULL;
-    }
-}
+// void* obtenerRegistro(registrosCPU registro){
+//     void* lista_de_registros[11] = {
+//         &miCPU.AX, &miCPU.BX, &miCPU.CX, &miCPU.DX,
+//         &miCPU.EAX, &miCPU.EBX, &miCPU.ECX, &miCPU.EDX,
+//         &miCPU.SI, &miCPU.DI, &miCPU.PC
+//     };
+//     if(registro >= 0 && registro < 11){
+//         return (lista_de_registros[registro]);
+//     } else{
+//         return NULL;
+//     }
+// }
 
 // Execute
 // SET (Registro, Valor): Asigna al registro el valor pasado como parámetro.
@@ -46,131 +46,211 @@ void* obtenerRegistro(registrosCPU registro){
 //     return pcb;
 // }
 
-void set(registrosCPU registroDestino, int valor){ //No muestra errores. anda?
-    void *registro_destino = obtenerRegistro(registroDestino);
-
-     if(registro_destino == NULL){
-        printf("Erorr al recibir el registro\n");
-        return;
-    }
-
-    size_t tam_destino = tamanioRegistro(registroDestino);
-
-    if(tam_destino == sizeof(uint32_t)){
-        *(uint32_t *)registro_destino = valor;
-    } else if(tam_destino == sizeof(uint8_t)){
-        *(uint8_t *)registro_destino = valor;
-    } else{
-        printf("Error al leer el tamanio del registro\n");
+void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor) {
+    if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
+        u_int32_t *r_destino = dictionary_get(dictionary_registros, registro);
+        *r_destino = valor;
+    } else if (strlen(registro) == 2) {
+        u_int8_t *r_destino = dictionary_get(dictionary_registros, registro);
+        *r_destino = valor;
     }
 }
 
-void sub(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
-    void *registro_destino = obtenerRegistro(registroDestino);
-    void *registro_origen = obtenerRegistro(registroOrigen);
-
-    if(registro_destino == NULL || registro_origen == NULL){
-        printf("Error al recibir los registros\n");
-        return;
+void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen) {
+    if (strlen(registro_destino) == 3 || !strcmp(registro_destino, "SI") || !strcmp(registro_destino, "DI")) {
+        u_int32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino += *r_origen;
+        } else if (strlen(registro_origen) == 2) {
+            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino += *r_origen;
+        }
     }
-
-    size_t tam_destino = tamanioRegistro(registroDestino);
-    size_t tam_origen = tamanioRegistro(registroOrigen);
-
-    switch(tam_destino){
-        case sizeof(uint8_t):
-            switch (tam_origen){
-                case sizeof(uint8_t):
-                    *(uint8_t *)registro_destino -= *(uint8_t *)registro_origen;
-                    break;
-                case sizeof(uint32_t):
-                    *(uint8_t *)registro_destino -= *(uint32_t *)registro_origen;
-                    break;
-            }
-            break;
-        case sizeof(uint32_t):
-            switch (tam_origen){
-                case sizeof(uint8_t ):
-                    *(uint32_t *)registro_destino -= *(uint8_t *)registro_origen;
-                    break;
-                case sizeof(uint32_t):
-                    *(uint32_t *)registro_destino -= *(uint32_t *)registro_origen;
-                    break;
-            }
-            break;
+    else if (strlen(registro_destino) == 2) {
+        u_int8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino += *r_origen;
+        } else if (strlen(registro_destino) == 2) {
+            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino += *r_origen;
+        }
     }
 }
 
-void sum(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
-    void *registro_destino = obtenerRegistro(registroDestino);
-    void *registro_origen = obtenerRegistro(registroOrigen);
-
-    if(registro_destino == NULL || registro_origen == NULL){
-        printf("Erorr al recibir los registros\n");
-        return;
-    }
-
-    size_t tam_destino = tamanioRegistro(registroDestino);
-    size_t tam_origen = tamanioRegistro(registroOrigen);
-
-    switch(tam_destino){
-        case sizeof(uint8_t):
-            switch (tam_origen){
-                case sizeof(uint8_t):
-                    *(uint8_t *)registro_destino += *(uint8_t *)registro_origen;
-                    break;
-                case sizeof(uint32_t):
-                    *(uint8_t *)registro_destino += *(uint32_t *)registro_origen;
-                    break;
-            }
-            break;
-        case sizeof(uint32_t):
-            switch (tam_origen){
-                case sizeof(uint8_t ):
-                    *(uint32_t *)registro_destino += *(uint8_t *)registro_origen;
-                    break;
-                case sizeof(uint32_t):
-                    *(uint32_t *)registro_destino += *(uint32_t *)registro_origen;
-                    break;
-            }
-            break;
+void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen) {
+    if (strlen(registro_destino) == 3 || !strcmp(registro_destino, "SI") || !strcmp(registro_destino, "DI")) {
+        u_int32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino -= *r_origen;
+        } else if (strlen(registro_origen) == 2) {
+            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino -= *r_origen;
+        }
+    } else if (strlen(registro_destino) == 2) {
+        u_int8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino -= *r_origen;
+        } else if (strlen(registro_destino) == 2) {
+            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            *r_destino -= *r_origen;
+        }
     }
 }
 
-uint32_t jnz(registrosCPU registro, char* instruccion){ //uint32_t para despues igualarlo a pcb->pc = jnz..
-    void *registro_destino = obtenerRegistro(registro);
-
-     if(registro_destino == NULL){
-        printf("Error al recibir el registro\n");
-        return -1;
+uint32_t funcion_jnz(t_dictionary* dictionary_registros, char* registro, int valor_pc) {
+    if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
+        u_int32_t *r_registro = dictionary_get(dictionary_registros, registro);
+        if(r_registro != 0) { 
+            return valor_pc;
+        } else {
+            return -1;
+        }
     }
 
-    size_t tam_registro = tamanioRegistro(registro);
-
-    uint32_t num_instruccion = atoi(instruccion);
-
-        // Evaluar el valor del registro
-    switch (tam_registro) {
-       case sizeof(uint8_t):
-            if (*(uint8_t*)registro_destino != 0) {
-                return num_instruccion;
-            } else {
-                printf("Registro es igual a 0\n");
-            }
-            break;
-        case sizeof(uint32_t):
-            if (*(uint32_t*)registro_destino != 0) {
-                return num_instruccion;
-            } else{
-                printf("Registro es igual a 0\n");
-            }
-            break;
-        default:
-            printf("Registro no válido\n");
-            break;
+    u_int8_t *r_registro = dictionary_get(dictionary_registros, registro);
+    if(r_registro != 0) { 
+        return valor_pc;
     }
-    return 0;
+
+    return -1;
 }
+
+void funcion_io_gen_sleep(char* interfaz, int unidades_trabajo) {
+    int microseg_unidades_trabajo = unidades_trabajo * 1000; // Para el usleep, milisegundos
+    // send_interfaz(fd_kernel_dispatch, interfaz);
+    usleep(microseg_unidades_trabajo);
+}
+
+// void set(registrosCPU registroDestino, int valor){ //No muestra errores. anda?
+//     void *registro_destino = obtenerRegistro(registroDestino);
+
+//      if(registro_destino == NULL){
+//         printf("Erorr al recibir el registro\n");
+//         return;
+//     }
+
+//     size_t tam_destino = tamanioRegistro(registroDestino);
+
+//     if(tam_destino == sizeof(uint32_t)){
+//         *(uint32_t *)registro_destino = valor;
+//     } else if(tam_destino == sizeof(uint8_t)){
+//         *(uint8_t *)registro_destino = valor;
+//     } else{
+//         printf("Error al leer el tamanio del registro\n");
+//     }
+// }
+
+// void sub(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
+//     void *registro_destino = obtenerRegistro(registroDestino);
+//     void *registro_origen = obtenerRegistro(registroOrigen);
+
+//     if(registro_destino == NULL || registro_origen == NULL){
+//         printf("Error al recibir los registros\n");
+//         return;
+//     }
+
+//     size_t tam_destino = tamanioRegistro(registroDestino);
+//     size_t tam_origen = tamanioRegistro(registroOrigen);
+
+//     switch(tam_destino){
+//         case sizeof(uint8_t):
+//             switch (tam_origen){
+//                 case sizeof(uint8_t):
+//                     *(uint8_t *)registro_destino -= *(uint8_t *)registro_origen;
+//                     break;
+//                 case sizeof(uint32_t):
+//                     *(uint8_t *)registro_destino -= *(uint32_t *)registro_origen;
+//                     break;
+//             }
+//             break;
+//         case sizeof(uint32_t):
+//             switch (tam_origen){
+//                 case sizeof(uint8_t ):
+//                     *(uint32_t *)registro_destino -= *(uint8_t *)registro_origen;
+//                     break;
+//                 case sizeof(uint32_t):
+//                     *(uint32_t *)registro_destino -= *(uint32_t *)registro_origen;
+//                     break;
+//             }
+//             break;
+//     }
+// }
+
+// void sum(registrosCPU registroDestino, registrosCPU registroOrigen){ //No muestra errores. anda?
+//     void *registro_destino = obtenerRegistro(registroDestino);
+//     void *registro_origen = obtenerRegistro(registroOrigen);
+
+//     if(registro_destino == NULL || registro_origen == NULL){
+//         printf("Erorr al recibir los registros\n");
+//         return;
+//     }
+
+//     size_t tam_destino = tamanioRegistro(registroDestino);
+//     size_t tam_origen = tamanioRegistro(registroOrigen);
+
+//     switch(tam_destino){
+//         case sizeof(uint8_t):
+//             switch (tam_origen){
+//                 case sizeof(uint8_t):
+//                     *(uint8_t *)registro_destino += *(uint8_t *)registro_origen;
+//                     break;
+//                 case sizeof(uint32_t):
+//                     *(uint8_t *)registro_destino += *(uint32_t *)registro_origen;
+//                     break;
+//             }
+//             break;
+//         case sizeof(uint32_t):
+//             switch (tam_origen){
+//                 case sizeof(uint8_t ):
+//                     *(uint32_t *)registro_destino += *(uint8_t *)registro_origen;
+//                     break;
+//                 case sizeof(uint32_t):
+//                     *(uint32_t *)registro_destino += *(uint32_t *)registro_origen;
+//                     break;
+//             }
+//             break;
+//     }
+// }
+
+// uint32_t jnz(registrosCPU registro, char* instruccion){ //uint32_t para despues igualarlo a pcb->pc = jnz..
+//     void *registro_destino = obtenerRegistro(registro);
+
+//      if(registro_destino == NULL){
+//         printf("Error al recibir el registro\n");
+//         return -1;
+//     }
+
+//     size_t tam_registro = tamanioRegistro(registro);
+
+//     uint32_t num_instruccion = atoi(instruccion);
+
+//         // Evaluar el valor del registro
+//     switch (tam_registro) {
+//        case sizeof(uint8_t):
+//             if (*(uint8_t*)registro_destino != 0) {
+//                 return num_instruccion;
+//             } else {
+//                 printf("Registro es igual a 0\n");
+//             }
+//             break;
+//         case sizeof(uint32_t):
+//             if (*(uint32_t*)registro_destino != 0) {
+//                 return num_instruccion;
+//             } else{
+//                 printf("Registro es igual a 0\n");
+//             }
+//             break;
+//         default:
+//             printf("Registro no válido\n");
+//             break;
+//     }
+//     return 0;
+// }
+// 
 // void io_gen_sleep(char* interfaz, int unidades_trabajo){
 //     int microseg_unidades_trabajo = unidades_trabajo * 1000;//para el usleep, milisegundos
 //     //faltaria hacer el envio del kernel a la interfaz

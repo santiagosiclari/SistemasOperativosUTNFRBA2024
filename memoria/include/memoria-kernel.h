@@ -14,6 +14,7 @@
 #include "../../utils/include/protocolo.h"
 
 extern t_list* instrucciones;
+extern t_list* instrucciones_por_proceso;
 
 void conexion_memoria_kernel();
 
