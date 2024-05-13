@@ -34,8 +34,10 @@
 void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor);
 void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen);
 void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen);
-uint32_t funcion_jnz(t_dictionary* dictionary_registros, char* registro, int valor_pc);
-void funcion_io_gen_sleep(char* interfaz, int unidades_trabajo);
+void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc);
+void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
+
+extern t_pcb* pcb_a_ejecutar;
 
 // void set(registrosCPU registroDestino, int valor);
 // void sum(registrosCPU registroDestino, registrosCPU registroOrigen);

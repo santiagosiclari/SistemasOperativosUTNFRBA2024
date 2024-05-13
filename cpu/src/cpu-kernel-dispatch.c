@@ -61,7 +61,6 @@ void conexion_cpu_kernel_dispatch() {
 						// Fetch --> pedir instruccion
 						send_pc(fd_memoria, pcb_a_ejecutar->pc);
 						log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
-						// pcb_a_ejecutar->pc++;
 					}
 				}
 			}

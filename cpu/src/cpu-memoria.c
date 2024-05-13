@@ -51,14 +51,11 @@ void conexion_cpu_memoria() {
 			} else if (strcmp(instruccion_separada[0], "SUB") == 0) {
 				funcion_sub(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 			} else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
-				uint32_t valor_pc = funcion_jnz(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
-				if (valor_pc == -1) {
-					log_error(cpu_logger, "El registro enviado en JNZ es igual a 0");
-				} else {
-					pcb_a_ejecutar->pc = valor_pc;
-				}
+				uint32_t valor_pc = atoi(instruccion_separada[2]);
+				funcion_jnz(dictionary_registros, instruccion_separada[1], valor_pc);
 			} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
-				// io_gen_sleep(pcb, instruccion_separada);
+				uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
+				funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);
 			} else {
 				log_warning(cpu_logger, "No se pudo encontrar la instruccion\n");
 			}

@@ -48,80 +48,85 @@
 
 void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor) {
     if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
-        u_int32_t *r_destino = dictionary_get(dictionary_registros, registro);
+        uint32_t *r_destino = dictionary_get(dictionary_registros, registro);
         *r_destino = valor;
     } else if (strlen(registro) == 2) {
-        u_int8_t *r_destino = dictionary_get(dictionary_registros, registro);
+        uint8_t *r_destino = dictionary_get(dictionary_registros, registro);
         *r_destino = valor;
     }
+
+    pcb_a_ejecutar->pc++;
 }
 
 void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen) {
     if (strlen(registro_destino) == 3 || !strcmp(registro_destino, "SI") || !strcmp(registro_destino, "DI")) {
-        u_int32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        uint32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
         if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
-            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         } else if (strlen(registro_origen) == 2) {
-            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         }
     }
     else if (strlen(registro_destino) == 2) {
-        u_int8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        uint8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
         if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
-            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         } else if (strlen(registro_destino) == 2) {
-            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         }
     }
+
+    pcb_a_ejecutar->pc++;
 }
 
 void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen) {
     if (strlen(registro_destino) == 3 || !strcmp(registro_destino, "SI") || !strcmp(registro_destino, "DI")) {
-        u_int32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        uint32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
         if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
-            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         } else if (strlen(registro_origen) == 2) {
-            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         }
     } else if (strlen(registro_destino) == 2) {
-        u_int8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
+        uint8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
         if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
-            u_int32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         } else if (strlen(registro_destino) == 2) {
-            u_int8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
+            uint8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         }
     }
+
+    pcb_a_ejecutar->pc++;
 }
 
-uint32_t funcion_jnz(t_dictionary* dictionary_registros, char* registro, int valor_pc) {
+void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc) {
     if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
-        u_int32_t *r_registro = dictionary_get(dictionary_registros, registro);
+        uint32_t *r_registro = dictionary_get(dictionary_registros, registro);
+        if(r_registro != 0) {
+            pcb_a_ejecutar->pc = valor_pc;
+        }
+    } else if (strlen(registro) == 2) {
+        uint8_t *r_registro = dictionary_get(dictionary_registros, registro);
         if(r_registro != 0) { 
-            return valor_pc;
-        } else {
-            return -1;
+            pcb_a_ejecutar->pc = valor_pc;
         }
     }
-
-    u_int8_t *r_registro = dictionary_get(dictionary_registros, registro);
-    if(r_registro != 0) { 
-        return valor_pc;
-    }
-
-    return -1;
 }
 
-void funcion_io_gen_sleep(char* interfaz, int unidades_trabajo) {
-    int microseg_unidades_trabajo = unidades_trabajo * 1000; // Para el usleep, milisegundos
-    // send_interfaz(fd_kernel_dispatch, interfaz);
+void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
+    uint32_t microseg_unidades_trabajo = unidades_trabajo * 1000; // Para el usleep, milisegundos
+    // pcb_a_ejecutar->flag_io = 1; // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    // send_pcb(fd_kernel_dispatch, pcb_a_ejecutar); // Envia el contexto de ejecucion
+    // send_interfaz_io_gen_sleep(fd_kernel_dispatch, interfaz, microseg_unidades_trabajo); // Envia el nombre de la interfaz
+    pcb_a_ejecutar->pc++;
     usleep(microseg_unidades_trabajo);
 }
 
