@@ -10,6 +10,7 @@
 #include "terminar-entradasalida.h"
 #include "entradasalida-kernel.h"
 #include "entradasalida-memoria.h"
+#include <readline/readline.h>
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"

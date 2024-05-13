@@ -36,6 +36,11 @@ int main(int argc, char* argv[]) {
     pthread_create(&kernel_cpu_interrupt, NULL, (void *)conexion_kernel_cpu_interrupt, NULL);
     pthread_detach(kernel_cpu_interrupt);
 
+    // Consola interactiva
+    pthread_t consola_interactiva;
+    pthread_create(&consola_interactiva, NULL, (void *)iniciar_consola, NULL);
+    pthread_detach(consola_interactiva);
+
     // Multiples interfaces I/O
     while (1) {
         // Conectamos como servidor con el modulo I/O
@@ -51,12 +56,8 @@ int main(int argc, char* argv[]) {
         pthread_t kernel_entradasalida;
         pthread_create(&kernel_entradasalida, NULL, (void *)conexion_kernel_entradasalida, NULL);
         pthread_detach(kernel_entradasalida);
-    
-        // Consola interactiva
-        pthread_t consola_interactiva;
-        pthread_create(&consola_interactiva, NULL, (void *)iniciar_consola, NULL);
-        pthread_join(consola_interactiva, NULL);
     }
+    
     // Terminar programa
     terminar_kernel();
 
