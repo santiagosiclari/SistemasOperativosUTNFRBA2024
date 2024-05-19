@@ -16,6 +16,8 @@
 #include "terminar-kernel.h"
 #include "funciones-pcb.h"
 
+#include <commons/collections/queue.h>
+
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/funciones-serializacion.h"
@@ -44,5 +46,10 @@ uint32_t QUANTUM;
 char** RECURSOS;//lista, luego usar common de string
 char** INSTANCIAS_RECURSOS;//lista, luego usar common de string
 int GRADO_MULTIPROGRAMACION;
+
+extern t_queue* colaNew;
+extern t_queue* colaReady;
+extern t_queue* colaBlocked;
+extern t_queue* colaExec;
 
 #endif

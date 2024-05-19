@@ -1,43 +1,46 @@
 #include "../include/planificador.h"
 
+pthread_mutex_t colaNewMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t colaReadyMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t colaBlockedMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t colaExecMutex = PTHREAD_MUTEX_INITIALIZER;
+
 void planificacionFIFO() {
-    // Cola New ya creada en consola
-    t_queue* colaReady = queue_create();
-    t_queue* colaBlocked = queue_create();
-    t_queue* colaExec = queue_create();
-
-    int grado_multitarea = GRADO_MULTIPROGRAMACION;
-    int tamanioColaReady = queue_size(colaReady);
-    int tamanioColaExc = queue_size(colaExec);
-    int tamanioColaBlocked = queue_size(colaBlocked);
-
-    if(tamanioColaReady > 0)
-    {
-        if(tamanioColaExc < grado_multitarea)
-        {
-          int i = 0;
-          while (tamanioColaExc < grado_multitarea && (tamanioColaReady - i) > 0)
-          {
-            //semaforo
-            t_pcb* pcb = queue_peek(colaReady);
+    if(queue_size(colaNew) > 0) {
+        if(queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
+          pthread_mutex_lock(&colaNewMutex);
+          t_pcb* pcb_nuevo = queue_pop(colaNew);
+          pcb_nuevo->estado = 'R';
+          queue_push(colaReady, pcb_nuevo);
+          log_info(kernel_logger, "Se paso el proceso %d de New a Ready", pcb_nuevo->pid);
+          pthread_mutex_unlock(&colaNewMutex);
+          while (queue_size(colaExec) == 0 || queue_size(colaReady) != 0) {
+            pthread_mutex_lock(&colaExecMutex);
+            t_pcb* pcb = queue_pop(colaReady);
             pcb->estado = 'E';
-            queue_pop(colaReady);
+            queue_push(colaExec, pcb);
 
             // Manda PID del proceso a ejecutar
             send_pid(fd_cpu_dispatch, pcb->pid);
+            log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
+            pthread_mutex_unlock(&colaExecMutex);
 
-            //semaforo
-            //avisar cambio de estado
-            queue_push(colaExec,pcb);
-            log_info(kernel_logger,"Se pasaron algunos procesos de ready a Exec");
-            i++;
-            tamanioColaExc++;
-          }
+            if (queue_size(colaBlocked) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
+              t_pcb* pcb_block = queue_pop(colaBlocked);
+              queue_push(colaReady, pcb_block);
+            }
 
-          if (tamanioColaBlocked > 0) {
-            //En esta parte se deberian pasar los procesos que se encuentran bloqueados 
-            //al final de la cola de Ready por ser planificacion FIFO
+            usleep(1000);
           }
         }
     }
+
+    queue_clean_and_destroy_elements(colaNew, free);
+    queue_clean_and_destroy_elements(colaReady, free);
+    queue_clean_and_destroy_elements(colaExec, free);
+    queue_clean_and_destroy_elements(colaBlocked, free);
+}
+
+void planificacionRR() {
+
 }

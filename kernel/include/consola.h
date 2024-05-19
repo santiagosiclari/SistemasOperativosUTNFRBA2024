@@ -16,6 +16,9 @@
 #include <../../utils/include/protocolo.h>
 
 extern t_queue* colaNew;
+extern t_queue* colaReady;
+extern t_queue* colaBlocked;
+extern t_queue* colaExec;
 
 void iniciar_consola(t_log* logger);
 

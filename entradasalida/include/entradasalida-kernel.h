@@ -13,4 +13,6 @@
 
 void conexion_entradasalida_kernel();
 
+extern char* nombre;
+
 #endif

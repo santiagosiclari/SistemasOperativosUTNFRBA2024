@@ -1,10 +1,21 @@
 #include "../include/main.h"
 
+t_queue* colaNew;
+t_queue* colaReady;
+t_queue* colaBlocked;
+t_queue* colaExec;
+
 int main(int argc, char* argv[]) {
     // Inicializamos logger y logger debug
     init_kernel_logs();
     // Inicializamos config
     init_kernel_config();
+
+    // Inicializamos colas para planificacion
+    colaNew = queue_create();
+    colaReady = queue_create();
+    colaBlocked = queue_create();
+    colaExec = queue_create();
 
     // Iniciar servidor
     fd_kernel = iniciar_servidor(kernel_logger, PUERTO_ESCUCHA, "Kernel");

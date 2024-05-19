@@ -3,10 +3,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <commons/collections/queue.h>
+#include <commons/collections/list.h>
 
 #include "configs.h"
 #include "logs.h"
+#include "semaphore.h"
 #include "../../utils/include/pcb.h"
 
 #include "../../utils/include/file-descriptors.h"

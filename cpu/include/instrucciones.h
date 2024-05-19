@@ -36,6 +36,7 @@ void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, cha
 void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen);
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc);
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
+void funcion_exit();
 
 extern t_pcb* pcb_a_ejecutar;
 

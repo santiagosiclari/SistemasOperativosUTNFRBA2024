@@ -122,12 +122,16 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
 }
 
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
-    uint32_t microseg_unidades_trabajo = unidades_trabajo * 1000; // Para el usleep, milisegundos
-    // pcb_a_ejecutar->flag_io = 1; // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
-    // send_pcb(fd_kernel_dispatch, pcb_a_ejecutar); // Envia el contexto de ejecucion
-    // send_interfaz_io_gen_sleep(fd_kernel_dispatch, interfaz, microseg_unidades_trabajo); // Envia el nombre de la interfaz
+    pcb_a_ejecutar->flag_io = 1; // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    send_pcb(fd_kernel_dispatch, pcb_a_ejecutar); // Envia el contexto de ejecucion
+    // Enviar el pcb como contexto de ejecucion directamente en la funcion de send_io_gen_sleep
+    send_io_gen_sleep(fd_kernel_dispatch, unidades_trabajo, interfaz, strlen(interfaz) + 1); // Envia el nombre de la interfaz
     pcb_a_ejecutar->pc++;
-    usleep(microseg_unidades_trabajo);
+}
+
+void funcion_exit() {
+    send_pid_a_borrar(fd_kernel_dispatch, pcb_a_ejecutar->pid);
+    free(pcb_a_ejecutar);
 }
 
 // void set(registrosCPU registroDestino, int valor){ //No muestra errores. anda?

@@ -14,15 +14,18 @@ void conexion_memoria_kernel() {
 			break;
 		case INICIAR_PROCESO:
 			uint32_t MAX_LENGTH = 128;
+			uint8_t pid = 0;
 			char* path = malloc(MAX_LENGTH);
 			char* path_recivido = malloc(MAX_LENGTH);
 			// char* path_instrucciones = PATH_INSTRUCCIONES;
 			char* path_concatenado = malloc(MAX_LENGTH);
 
 			// Recibe el path desde el kernel
-			if (!recv_iniciar_proceso(fd_kernel, path_recivido)) {
+			if (!recv_iniciar_proceso(fd_kernel, pid, path_recivido)) {
 				log_error(memoria_logger, "Hubo un error al recibir INICIAR_PROCESO");
 				free(path);
+				free(path_recivido);
+				free(path_concatenado);
 				return;
 			}
 
@@ -41,12 +44,13 @@ void conexion_memoria_kernel() {
 			instrucciones = leer_archivo(path_concatenado);
 
 			// Listar segun el PID recibido
-			// instrucciones_por_proceso = list_create();
-			// list_add_in_index(instrucciones_por_proceso, pid, instrucciones);
+			instrucciones_por_proceso = list_create();
+			list_add_in_index(instrucciones_por_proceso, pid, instrucciones);
 
 			// Liberar espacio
-			free(path_concatenado);
 			free(path);
+			free(path_recivido);
+			free(path_concatenado);
             break;
 		case -1:
 			log_error(memoria_logger, "El Kernel se desconecto. Terminando servidor");

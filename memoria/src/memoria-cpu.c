@@ -10,28 +10,24 @@ void conexion_memoria_cpu() {
 			break;
 		case PAQUETE:
 			break;
-		case RECIBIR_PC: // y el PID
+		case RECIBIR_PC_PID:
 			uint8_t pid = 0;
 			uint32_t pc = 0;
-			// if(!recv_pid(fd_cpu, pc, pid)) { ... }
+			if(!recv_pc_pid(fd_cpu, pc, pid)) { 
+				log_error(memoria_logger, "Hubo un error al recibir el PC de un proceso");
+			}
 
 			t_list* instrucciones = list_get(instrucciones_por_proceso, pid);
 
 			if (instrucciones == NULL) {
 				log_warning(memoria_logger, "La lista de instrucciones se encuentra vacia");
 			}
-
-			if(!recv_pc(fd_cpu, pc)) {
-				log_error(memoria_logger, "Hubo un error al recibir el PC del modulo de CPU");
-			} else {
-				log_info(memoria_logger, "PC (Program Counter) recibido: %d", pc);
-			}
-
+			
 			char* instruccion = list_get(instrucciones, pc);
-
+			
+			usleep(RETARDO_RESPUESTA);
 			send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1);
 			log_info(memoria_logger, "Instruccion %d enviada", pc);
-			usleep(RETARDO_RESPUESTA);
 
 			free(instruccion);
 			break;

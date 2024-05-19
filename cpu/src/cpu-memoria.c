@@ -56,12 +56,14 @@ void conexion_cpu_memoria() {
 			} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 				uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
 				funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);
+			} else if (strcmp(instruccion_separada[0], "EXIT") == 0) {
+				funcion_exit();
 			} else {
-				log_warning(cpu_logger, "No se pudo encontrar la instruccion\n");
+				log_warning(cpu_logger, "No se pudo encontrar la instruccion: %s\n", instruccion_separada[0]);
 			}
 
 			free(instruccion);
-			// free(instruccion_separada);
+			free(instruccion_separada);
 			break;
 		case RECIBIR_SIZE_INSTRUCCIONES:
 			if(!recv_size_instrucciones(fd_memoria, size_instrucciones)) {

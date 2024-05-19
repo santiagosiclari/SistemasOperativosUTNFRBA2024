@@ -6,10 +6,13 @@
 
 #include "configs.h"
 #include "logs.h"
+#include <commons/collections/queue.h>
 
 #include "../../utils/include/file-descriptors.h"
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+
+extern t_queue* colaExec;
 
 void conexion_kernel_cpu_dispatch();
 

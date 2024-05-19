@@ -35,4 +35,6 @@ char* PATH_BASE_DIALFS;
 int BLOCK_SIZE;
 int BLOCK_COUNT;
 
+extern char* nombre;
+
 #endif

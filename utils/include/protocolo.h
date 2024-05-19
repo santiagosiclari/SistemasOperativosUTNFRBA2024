@@ -23,45 +23,58 @@
 void send_handshake(t_log* logger, int fd, int32_t handshake, const char* connection_name);
 bool recv_handshake(int fd, int32_t handshakeModulo);
 
-// PC -> Program Counter
-t_buffer* serializar_pc(uint32_t pc);
-uint32_t deserializar_pc(t_buffer *buffer, uint32_t pc);
-void send_pc(int fd, uint32_t pc);
-bool recv_pc(int fd, uint32_t pc);
+// Serializacion generica de uint32
+t_buffer* serializar_uint32(uint32_t entero);
+uint32_t deserializar_uint32(t_buffer* buffer, uint32_t entero);
 
 // Serializacion generica de uint8
 t_buffer* serializar_uint8(uint8_t entero);
 uint8_t deserializar_uint8(t_buffer *buffer, uint8_t entero);
+
 // send y recv de pid
 void send_pid(int fd, uint8_t pid);
 bool recv_pid(int fd, uint8_t pid);
+
+// PID a borrar (EXIT)
+void send_pid_a_borrar(int fd, uint8_t pid_a_borrar);
+bool recv_pid_a_borrar(int fd, uint8_t pid_a_borrar);
+
+// send y recv pc y pid
+t_buffer* serializar_pc_pid(uint32_t pc, uint8_t pid);
+void send_pc_pid(int fd, uint32_t pc, uint8_t pid);
+bool recv_pc_pid(int fd, uint32_t pc, uint8_t pid);
+
 // send y recv de size instrucciones
 void send_size_instrucciones(int fd, uint8_t size);
 bool recv_size_instrucciones(int fd, uint8_t size);
 
-// PCB
+// PCB --> tambien contexto de ejecucion
 t_buffer* serializar_pcb(t_pcb* pcb);
 t_pcb* deserializar_pcb(t_buffer *buffer, t_pcb* pcb);
 void send_pcb(int fd, t_pcb* pcb);
 bool recv_pcb(int fd, t_pcb* pcb);
 
-// Contexto de ejecucion
-t_buffer* serializar_contexto_de_ejecucion(t_registros* registros, uint32_t pc);
-t_registros* deserializar_registros(t_buffer *buffer, t_registros* registros);
-// Funcion de deserializar PC ya hecha
-void send_contexto_de_ejecucion(int fd, t_registros* registros, uint32_t pc);
-bool recv_contexto_de_ejecucion(int fd, t_registros* registros, uint32_t pc);
-
-// Serializacion de string --> para instruccion, path, etc.
+// Serializacion de string --> para INICIAR_PROCESO, instrucciones, etc.
 t_buffer* serializar_string(char* string, uint32_t length);
 char* deserializar_string(t_buffer *buffer);
 
 // INICIAR_PROCESO
-void send_iniciar_proceso(int fd, char* path, uint32_t length);
-bool recv_iniciar_proceso(int fd, char* path);
+t_buffer* serializar_iniciar_proceso(uint8_t pid, char* string, uint32_t length);
+void send_iniciar_proceso(int fd, uint8_t pid, char* path, uint32_t length);
+bool recv_iniciar_proceso(int fd, uint8_t pid, char* path);
 
 // Instruccion
 void send_instruccion(int fd, char* instruccion, uint32_t length);
 bool recv_instruccion(int fd, char* instruccion);
+
+// IOs
+// Finalizar IO
+void send_fin_io(int fd, char* nombre, uint32_t length);
+bool recv_fin_io(int fd, char* nombre);
+
+// IO_GEN_SLEEP
+t_buffer* serializar_io_gen_sleep(uint32_t sleep, char* string, uint32_t length);
+void send_io_gen_sleep(int fd, uint32_t unidades_trabajo, char* nombre, uint32_t length);
+bool recv_io_gen_sleep(int fd, uint32_t unidades_trabajo, char* nombre);
 
 #endif

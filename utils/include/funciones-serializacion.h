@@ -32,7 +32,7 @@ typedef enum {
 
     // Kernel -> Consola interactiva
     // EJECUTAR_SCRIPT 
-    INICIAR_PROCESO, // Envia el path del proceso a Memoria
+    INICIAR_PROCESO, // Envia el path y el pid del proceso a Memoria
     // FINALIZAR_PROCESO
     // DETENER_PLANIFICACION
     // INICIAR_PLANIFICACION
@@ -44,6 +44,7 @@ typedef enum {
     // CPU (no hace falta ponerlas aca despues las sacamos)
     RECIBIR_PCB, // Recibir PCB de Kernel
     RECIBIR_PID, // Recibe el pid del proceso que se tiene que interrumpir
+    RECIBIR_PID_A_BORRAR, // Recibe el pid del proceso a borrar
     RECIBIR_INSTRUCCION, // Recibe la instruccion a ejecutar
     // SET,
     // MOV_IN,
@@ -58,7 +59,7 @@ typedef enum {
     // EXIT,
 
     // Memoria
-    RECIBIR_PC, // Recibe la instruccion a enviar para CPU
+    RECIBIR_PC_PID, // Recibe la instruccion a enviar de un proceso para CPU
     // INICIAR_PROCESO_K_M
     // FINALIZAR_PROCESO_K_M
     // AMPLIAR_PROCESO
@@ -67,7 +68,8 @@ typedef enum {
     // ACCERDER_ESPACIO_USUARIO_IO_M
 
     // EntradaSalida (IO)
-    // IO_GEN_SLEEP,
+    FIN_IO,
+    IO_GEN_SLEEP,
     // IO_STDIN_READ
     // IO_STDOUT_WRITE
     // IO_FS_CREATE
