@@ -11,10 +11,10 @@ void conexion_entradasalida_kernel() {
 			break;
 		case IO_GEN_SLEEP:
 			uint32_t MAX_LENGTH = 128;
-			uint32_t unidades_de_trabajo = 0;
+			uint32_t unidades_de_trabajo;
 			char* nombre_interfaz = malloc(MAX_LENGTH);
 			char* nombre_recivido = malloc(MAX_LENGTH);
-			if(!recv_io_gen_sleep(fd_kernel, unidades_de_trabajo, nombre_recivido)) {
+			if(!recv_io_gen_sleep(fd_kernel, &unidades_de_trabajo, nombre_recivido)) {
 				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_GEN_SLEEP");
 			}
 			strcpy(nombre_interfaz, nombre_recivido);

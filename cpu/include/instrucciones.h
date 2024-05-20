@@ -39,6 +39,7 @@ void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
 void funcion_exit();
 
 extern t_pcb* pcb_a_ejecutar;
+extern t_log* cpu_logger;
 
 // void set(registrosCPU registroDestino, int valor);
 // void sum(registrosCPU registroDestino, registrosCPU registroOrigen);

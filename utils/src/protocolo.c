@@ -48,11 +48,6 @@ t_buffer* serializar_uint32(uint32_t entero) {
     return buffer;
 }
 
-uint32_t deserializar_uint32(t_buffer* buffer, uint32_t entero) {
-    entero = extraer_uint32_del_buffer(buffer);
-    return entero;
-}
-
 t_buffer* serializar_uint8(uint8_t entero) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
@@ -66,11 +61,6 @@ t_buffer* serializar_uint8(uint8_t entero) {
     return buffer;
 }
 
-uint8_t deserializar_uint8(t_buffer* buffer, uint8_t entero) {
-    entero = extraer_uint8_del_buffer(buffer);
-    return entero;
-}
-
 // PID
 void send_pid(int fd, uint8_t pid) {
     t_buffer *buffer = serializar_uint8(pid);
@@ -79,7 +69,7 @@ void send_pid(int fd, uint8_t pid) {
     eliminar_paquete(a_enviar);
 }
 
-bool recv_pid(int fd, uint8_t pid) {
+bool recv_pid(int fd, uint8_t* pid) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -96,7 +86,7 @@ bool recv_pid(int fd, uint8_t pid) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    deserializar_uint8(paquete->buffer, pid);
+    *pid = extraer_uint8_del_buffer(paquete->buffer);
 
     eliminar_paquete(paquete);
 
@@ -111,7 +101,7 @@ void send_pid_a_borrar(int fd, uint8_t pid_a_borrar) {
     eliminar_paquete(a_enviar);
 }
 
-bool recv_pid_a_borrar(int fd, uint8_t pid_a_borrar) {
+bool recv_pid_a_borrar(int fd, uint8_t* pid_a_borrar) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -128,7 +118,7 @@ bool recv_pid_a_borrar(int fd, uint8_t pid_a_borrar) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    deserializar_uint8(paquete->buffer, pid_a_borrar);
+    *pid_a_borrar = extraer_uint8_del_buffer(paquete->buffer);
 
     eliminar_paquete(paquete);
 
@@ -159,7 +149,7 @@ void send_pc_pid(int fd, uint32_t pc, uint8_t pid) {
     eliminar_paquete(a_enviar);
 }
 
-bool recv_pc_pid(int fd, uint32_t pc, uint8_t pid) {
+bool recv_pc_pid(int fd, uint32_t* pc, uint8_t* pid) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -176,8 +166,8 @@ bool recv_pc_pid(int fd, uint32_t pc, uint8_t pid) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    deserializar_uint32(paquete->buffer, pc);
-    deserializar_uint8(paquete->buffer, pid);
+    *pc = extraer_uint32_del_buffer(paquete->buffer);
+    *pid = extraer_uint8_del_buffer(paquete->buffer);
 
     eliminar_paquete(paquete);
 
@@ -192,7 +182,7 @@ void send_size_instrucciones(int fd, uint8_t size) {
     eliminar_paquete(a_enviar);
 }
 
-bool recv_size_instrucciones(int fd, uint8_t size) {
+bool recv_size_instrucciones(int fd, uint8_t* size) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -209,7 +199,7 @@ bool recv_size_instrucciones(int fd, uint8_t size) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    deserializar_uint8(paquete->buffer, size);
+    *size = extraer_uint8_del_buffer(paquete->buffer);
 
     eliminar_paquete(paquete);
 
@@ -355,7 +345,7 @@ void send_iniciar_proceso(int fd, uint8_t pid, char* path, uint32_t length) {
     eliminar_paquete(a_enviar);
 }
 
-bool recv_iniciar_proceso(int fd, uint8_t pid, char* path) {
+bool recv_iniciar_proceso(int fd, uint8_t* pid, char* path) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -376,7 +366,7 @@ bool recv_iniciar_proceso(int fd, uint8_t pid, char* path) {
         return false;
     }
 
-    deserializar_uint8(paquete->buffer, pid);
+    *pid = extraer_uint8_del_buffer(paquete->buffer);
 
     char* received_path = deserializar_string(paquete->buffer);
     strcpy(path, received_path);
@@ -456,31 +446,31 @@ bool recv_fin_io(int fd, char* nombre) {
 }
 
 // IO_GEN_SLEEP
-t_buffer* serializar_io_gen_sleep(uint32_t sleep, char* nombre, uint32_t length) {
+t_buffer* serializar_io_gen_sleep(uint32_t unidades_trabajo, char* nombre, uint32_t length) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size =
-        sizeof(uint32_t) + // sleep
+        sizeof(uint32_t) + // unidades_trabajo
         sizeof(uint32_t) + // longitud del nombre
         length;            // nombre
 
     buffer->offset = 0;
     buffer->stream = malloc(buffer->size);
 
-    cargar_uint32_al_buffer(buffer, sleep);
+    cargar_uint32_al_buffer(buffer, unidades_trabajo);
     cargar_string_al_buffer(buffer, nombre);
 
     return buffer;
 }
 
-void send_io_gen_sleep(int fd, uint32_t sleep, char* nombre, uint32_t length) {
-    t_buffer *buffer = serializar_io_gen_sleep(sleep, nombre, length);
+void send_io_gen_sleep(int fd, uint32_t unidades_trabajo, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_io_gen_sleep(unidades_trabajo, nombre, length);
     t_paquete *a_enviar = crear_paquete(IO_GEN_SLEEP, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_io_gen_sleep(int fd, uint32_t sleep, char* nombre) {
+bool recv_io_gen_sleep(int fd, uint32_t* unidades_trabajo, char* nombre) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -497,7 +487,7 @@ bool recv_io_gen_sleep(int fd, uint32_t sleep, char* nombre) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    deserializar_uint32(paquete->buffer, sleep);
+    *unidades_trabajo = extraer_uint32_del_buffer(paquete->buffer);
 
     char* received_nombre = deserializar_string(paquete->buffer);
     strcpy(nombre, received_nombre);

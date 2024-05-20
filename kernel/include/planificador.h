@@ -7,6 +7,7 @@
 #include "semaphore.h"
 
 #include <pthread.h>
+#include <semaphore.h>
 
 #include <commons/collections/queue.h>
 
@@ -19,5 +20,7 @@ extern t_queue* colaExec;
 
 void planificacionFIFO();
 void planificacionRR();
+
+extern pthread_mutex_t colaExecMutex;
 
 #endif

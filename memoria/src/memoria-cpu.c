@@ -11,9 +11,9 @@ void conexion_memoria_cpu() {
 		case PAQUETE:
 			break;
 		case RECIBIR_PC_PID:
-			uint8_t pid = 0;
-			uint32_t pc = 0;
-			if(!recv_pc_pid(fd_cpu, pc, pid)) { 
+			uint8_t pid;
+			uint32_t pc;
+			if(!recv_pc_pid(fd_cpu, &pc, &pid)) { 
 				log_error(memoria_logger, "Hubo un error al recibir el PC de un proceso");
 			}
 

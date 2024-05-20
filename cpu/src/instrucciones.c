@@ -130,8 +130,11 @@ void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
 }
 
 void funcion_exit() {
+    log_info(cpu_logger, "El proceso finalizo");
     send_pid_a_borrar(fd_kernel_dispatch, pcb_a_ejecutar->pid);
+    free(pcb_a_ejecutar->registros);
     free(pcb_a_ejecutar);
+    pcb_a_ejecutar = NULL;
 }
 
 // void set(registrosCPU registroDestino, int valor){ //No muestra errores. anda?
