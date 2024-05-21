@@ -508,7 +508,24 @@ bool recv_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-   deserializar_pcb(paquete->buffer, pcb_fin_io);
+    // Datos del pcb
+    pcb_fin_io->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_fin_io->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_fin_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_fin_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_fin_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
 
     char* received_nombre = deserializar_string(paquete->buffer);
     strcpy(nombre, received_nombre);
@@ -585,7 +602,24 @@ bool recv_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t* unidades_trabajo, char* 
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    deserializar_pcb(paquete->buffer, pcb_io);
+    // Datos del pcb
+    pcb_io->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
 
     *unidades_trabajo = extraer_uint32_del_buffer(paquete->buffer);
 
