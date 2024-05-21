@@ -74,7 +74,7 @@ void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, cha
         if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
             uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
-        } else if (strlen(registro_destino) == 2) {
+        } else if (strlen(registro_origen) == 2) {
             uint8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         }
@@ -98,7 +98,7 @@ void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, cha
         if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
             uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
-        } else if (strlen(registro_destino) == 2) {
+        } else if (strlen(registro_origen) == 2) {
             uint8_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         }

@@ -52,8 +52,12 @@ void conexion_cpu_memoria() {
 					int valor = atoi(instruccion_separada[2]);
 					funcion_set(dictionary_registros, instruccion_separada[1], valor);
 				} else if (strcmp(instruccion_separada[0], "SUM") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[2]);
 					funcion_sum(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 				} else if (strcmp(instruccion_separada[0], "SUB") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[2]);
 					funcion_sub(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 				} else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
 					uint32_t valor_pc = atoi(instruccion_separada[2]);
