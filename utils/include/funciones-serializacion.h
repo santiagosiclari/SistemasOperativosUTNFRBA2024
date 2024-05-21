@@ -46,6 +46,7 @@ typedef enum {
     RECIBIR_PID, // Recibe el pid del proceso que se tiene que interrumpir
     RECIBIR_PID_A_BORRAR, // Recibe el pid del proceso a borrar
     RECIBIR_INSTRUCCION, // Recibe la instruccion a ejecutar
+    RECIBIR_PID_A_INTERRUMPIR, // Recibe el pid a interrumpir
     // SET,
     // MOV_IN,
     // MOV_OUT,

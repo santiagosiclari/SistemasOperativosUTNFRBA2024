@@ -1,6 +1,6 @@
 #include "../include/cpu-memoria.h"
 
-uint8_t size_instrucciones;
+pthread_mutex_t pcbEjecutarMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void crear_diccionario(t_dictionary* dictionary_registros) {
     dictionary_put(dictionary_registros, "AX", &pcb_a_ejecutar->registros->AX);
@@ -47,6 +47,7 @@ void conexion_cpu_memoria() {
 				log_info(cpu_logger, "Iniciando instruccion: %s - Nro: %d", instruccion, pcb_a_ejecutar->pc);
 
 				// Decode
+				pthread_mutex_lock(&pcbEjecutarMutex);
 				instruccion_separada = string_split(instruccion, " ");
 				if (strcmp(instruccion_separada[0], "SET") == 0) {
 					int valor = atoi(instruccion_separada[2]);
@@ -70,6 +71,7 @@ void conexion_cpu_memoria() {
 				} else {
 					log_warning(cpu_logger, "No se pudo encontrar la instruccion: %s\n", instruccion_separada[0]);
 				}
+				pthread_mutex_unlock(&pcbEjecutarMutex);
 
 				// Ver si es EXIT
 				if(pcb_a_ejecutar == NULL) {
@@ -88,15 +90,14 @@ void conexion_cpu_memoria() {
 
 				// Printea el PCB
 				log_info(cpu_logger, "PID: %d\nProgram Counter: %d\nEstado: %c\nQuantum: %d\nFlag IO: %d\nRegistros:\nAX: %d, BX: %d, CX: %d, DX: %d\nEAX: %d, EBX: %d, ECX: %d, EDX: %d\nSI: %d, DI: %d",
-				pcb_a_ejecutar->pid, pcb_a_ejecutar->pc, pcb_a_ejecutar->estado, pcb_a_ejecutar->quantum, pcb_a_ejecutar->flag_io,
+				pcb_a_ejecutar->pid, pcb_a_ejecutar->pc, pcb_a_ejecutar->estado, pcb_a_ejecutar->quantum, pcb_a_ejecutar->flag_int,
 				pcb_a_ejecutar->registros->AX, pcb_a_ejecutar->registros->BX, pcb_a_ejecutar->registros->CX, pcb_a_ejecutar->registros->DX,
 				pcb_a_ejecutar->registros->EAX, pcb_a_ejecutar->registros->EBX, pcb_a_ejecutar->registros->ECX, pcb_a_ejecutar->registros->EDX,
 				pcb_a_ejecutar->registros->SI, pcb_a_ejecutar->registros->DI);
 				
 				// Interrupcion por IO
-				if(pcb_a_ejecutar->flag_io == 1) {
+				if(pcb_a_ejecutar->flag_int == 1) {
 					log_info(cpu_logger, "Proceso %d fue interrumpido por una IO", pcb_a_ejecutar->pid);
-					// send pcb a kernel --> contexto de ejecucion
 					free(instruccion);
 					free(instruccion_recibida);
 					for (int i = 0; instruccion_separada[i] != NULL; i++) {
@@ -108,9 +109,9 @@ void conexion_cpu_memoria() {
 				}
 
 				// Interrupcion por fin de Quantum
-				if(pcb_a_ejecutar->flag_io == 2) {
+				if(pcb_a_ejecutar->flag_int == 2) {
 					log_info(cpu_logger, "Proceso %d finalizo su quantum", pcb_a_ejecutar->pid);
-					// send pcb a kernel --> contexto de ejecucion
+					send_pcb(fd_kernel_dispatch, pcb_a_ejecutar);
 					free(instruccion);
 					free(instruccion_recibida);
 					for (int i = 0; instruccion_separada[i] != NULL; i++) {
@@ -134,14 +135,6 @@ void conexion_cpu_memoria() {
 			}
 			free(instruccion_separada);
 			dictionary_destroy(dictionary_registros);
-
-			break;
-		case RECIBIR_SIZE_INSTRUCCIONES:
-			if(!recv_size_instrucciones(fd_memoria, &size_instrucciones)) {
-				log_error(cpu_logger, "Hubo un error al recibir la cantidad de instrucciones a ejecutar");
-			} else {
-				log_info(cpu_logger, "Cantidad de instrucciones a ejecutar %d", size_instrucciones);
-			}
 			break;
 		case -1:
 			log_error(cpu_logger, "El servidor de Memoria no se encuentra activo.");

@@ -17,7 +17,7 @@ typedef struct {
     uint32_t pc; // Program Counter -> Puntero de instruccion
     char estado; // Es un caracter, es decir N seria New, B Blocked, E Exec, etc.
     uint32_t quantum;
-    uint8_t flag_io; // Cuando Kernel recibe el Contexto de Ejecucion, revisa porque fue interrumpido --> si flag_io == 1 es por una interrupcion de IO
+    uint8_t flag_int; // Cuando Kernel recibe el Contexto de Ejecucion, revisa porque fue interrumpido --> si flag_int == 1 es por una interrupcion de IO y si flag_int == 2 es por otra interrupcion
     t_registros* registros;
 } t_pcb;
 

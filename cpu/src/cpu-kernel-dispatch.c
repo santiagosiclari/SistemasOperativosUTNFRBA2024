@@ -31,7 +31,7 @@ void conexion_cpu_kernel_dispatch() {
 
 			// Printea el PCB
 			log_info(cpu_logger, "PID: %d\nProgram Counter: %d\nEstado: %c\nQuantum: %d\nFlag IO: %d\nRegistros:\nAX: %d, BX: %d, CX: %d, DX: %d\nEAX: %d, EBX: %d, ECX: %d, EDX: %d\nSI: %d, DI: %d",
-			pcb->pid, pcb->pc, pcb->estado, pcb->quantum, pcb->flag_io,
+			pcb->pid, pcb->pc, pcb->estado, pcb->quantum, pcb->flag_int,
 			pcb->registros->AX, pcb->registros->BX, pcb->registros->CX, pcb->registros->DX,
 			pcb->registros->EAX, pcb->registros->EBX, pcb->registros->ECX, pcb->registros->EDX,
 			pcb->registros->SI, pcb->registros->DI);

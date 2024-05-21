@@ -24,7 +24,7 @@ t_pcb* crear_pcb() {
     nuevo_pcb->pc = 0;              // Inicialmente, el Program Counter está en 0.
     nuevo_pcb->estado = 'N';        // El estado inicial es 'Nuevo'.
     nuevo_pcb->quantum = QUANTUM;   // Valor predeterminado para el quantum.
-    nuevo_pcb->flag_io = 0;         // Valor predeterminado en el cual no hubo interrupcion
+    nuevo_pcb->flag_int = 0;        // Valor predeterminado en el cual no hubo interrupcion
 
     // Asignar e inicializar los registros
     nuevo_pcb->registros = malloc(sizeof(t_registros));

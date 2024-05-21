@@ -125,6 +125,38 @@ bool recv_pid_a_borrar(int fd, uint8_t* pid_a_borrar) {
     return true;
 }
 
+// Interrupcion (por conexion interrupt) --> a CPU
+void send_interrupcion(int fd, uint8_t pid_a_interrumpir) {
+    t_buffer *buffer = serializar_uint8(pid_a_interrumpir);
+    t_paquete *a_enviar = crear_paquete(RECIBIR_PID_A_INTERRUMPIR, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_interrupcion(int fd, uint8_t* pid_a_interrumpir) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    *pid_a_interrumpir = extraer_uint8_del_buffer(paquete->buffer);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
 // send y recv pc y pid (juntos) --> para fetch
 t_buffer* serializar_pc_pid(uint32_t pc, uint8_t pid) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
@@ -216,7 +248,7 @@ t_buffer* serializar_pcb(t_pcb* pcb) {
         sizeof(uint32_t) +   // pc
         sizeof(char) +       // estado
         sizeof(uint32_t) +   // quantum
-        sizeof(uint8_t) +    // flag_io
+        sizeof(uint8_t) +    // flag_int
         sizeof(t_registros); // tamaño de registros
 
     buffer->offset = 0;
@@ -226,7 +258,7 @@ t_buffer* serializar_pcb(t_pcb* pcb) {
     cargar_uint32_al_buffer(buffer, pcb->pc);
     cargar_char_al_buffer(buffer, pcb->estado);
     cargar_uint32_al_buffer(buffer, pcb->quantum);
-    cargar_uint8_al_buffer(buffer, pcb->flag_io);
+    cargar_uint8_al_buffer(buffer, pcb->flag_int);
 
     // Registros
     cargar_uint8_al_buffer(buffer, pcb->registros->AX);
@@ -250,7 +282,7 @@ t_pcb* deserializar_pcb(t_buffer *buffer, t_pcb *pcb) {
     pcb->pc = extraer_uint32_del_buffer(buffer);
     pcb->estado = extraer_char_del_buffer(buffer);
     pcb->quantum = extraer_uint32_del_buffer(buffer);
-    pcb->flag_io = extraer_uint8_del_buffer(buffer);
+    pcb->flag_int = extraer_uint8_del_buffer(buffer);
 
     // Registros
     pcb->registros->AX = extraer_uint8_del_buffer(buffer);
@@ -412,14 +444,54 @@ bool recv_instruccion(int fd, char* instruccion) {
 
 // Interfaces IO
 // Fin de IO
-void send_fin_io(int fd, char* nombre, uint32_t length) {
-    t_buffer *buffer = serializar_string(nombre, length);
+t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(t_registros) + // tamaño de registros
+        sizeof(uint32_t) +    // longitud del nombre
+        length;               // nombre
+
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_fin_io->pid);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->pc);
+    cargar_char_al_buffer(buffer, pcb_fin_io->estado);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_fin_io->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->DI);
+
+    cargar_string_al_buffer(buffer, nombre);
+
+    return buffer;
+}
+
+void send_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_fin_io(pcb_fin_io, nombre, length);
     t_paquete *a_enviar = crear_paquete(FIN_IO, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_fin_io(int fd, char* nombre) {
+bool recv_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -435,6 +507,8 @@ bool recv_fin_io(int fd, char* nombre) {
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+   deserializar_pcb(paquete->buffer, pcb_fin_io);
 
     char* received_nombre = deserializar_string(paquete->buffer);
     strcpy(nombre, received_nombre);
@@ -446,16 +520,40 @@ bool recv_fin_io(int fd, char* nombre) {
 }
 
 // IO_GEN_SLEEP
-t_buffer* serializar_io_gen_sleep(uint32_t unidades_trabajo, char* nombre, uint32_t length) {
+t_buffer* serializar_io_gen_sleep(t_pcb* pcb_io, uint32_t unidades_trabajo, char* nombre, uint32_t length) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size =
-        sizeof(uint32_t) + // unidades_trabajo
-        sizeof(uint32_t) + // longitud del nombre
-        length;            // nombre
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(t_registros) + // tamaño de registros
+        sizeof(uint32_t) +    // unidades_trabajo
+        sizeof(uint32_t) +    // longitud del nombre
+        length;               // nombre
 
     buffer->offset = 0;
     buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_io->pid);
+    cargar_uint32_al_buffer(buffer, pcb_io->pc);
+    cargar_char_al_buffer(buffer, pcb_io->estado);
+    cargar_uint32_al_buffer(buffer, pcb_io->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_io->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->DI);
 
     cargar_uint32_al_buffer(buffer, unidades_trabajo);
     cargar_string_al_buffer(buffer, nombre);
@@ -463,14 +561,14 @@ t_buffer* serializar_io_gen_sleep(uint32_t unidades_trabajo, char* nombre, uint3
     return buffer;
 }
 
-void send_io_gen_sleep(int fd, uint32_t unidades_trabajo, char* nombre, uint32_t length) {
-    t_buffer *buffer = serializar_io_gen_sleep(unidades_trabajo, nombre, length);
+void send_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t unidades_trabajo, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_io_gen_sleep(pcb_io, unidades_trabajo, nombre, length);
     t_paquete *a_enviar = crear_paquete(IO_GEN_SLEEP, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_io_gen_sleep(int fd, uint32_t* unidades_trabajo, char* nombre) {
+bool recv_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t* unidades_trabajo, char* nombre) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -486,6 +584,8 @@ bool recv_io_gen_sleep(int fd, uint32_t* unidades_trabajo, char* nombre) {
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    deserializar_pcb(paquete->buffer, pcb_io);
 
     *unidades_trabajo = extraer_uint32_del_buffer(paquete->buffer);
 

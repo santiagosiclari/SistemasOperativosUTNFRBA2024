@@ -14,7 +14,12 @@
 #include "../../utils/include/protocolo.h"
 
 extern t_queue* colaExec;
+extern t_queue* colaReady;
+extern t_queue* colaBlocked;
+
 extern pthread_mutex_t colaExecMutex;
+extern pthread_mutex_t colaReadyMutex;
+extern pthread_mutex_t colaBlockedMutex;
 
 void conexion_kernel_cpu_dispatch();
 

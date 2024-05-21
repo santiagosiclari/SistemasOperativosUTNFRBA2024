@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "configs.h"
 #include "logs.h"
@@ -18,7 +19,7 @@
 #include "../../utils/include/protocolo.h"
 
 extern t_pcb* pcb_a_ejecutar;
-extern uint8_t size_instrucciones;
+extern pthread_mutex_t pcbEjecutarMutex;
 
 void conexion_cpu_memoria();
 void crear_diccionario(t_dictionary* dictionary_registros);

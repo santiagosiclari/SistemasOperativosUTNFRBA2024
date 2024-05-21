@@ -10,6 +10,25 @@ void conexion_cpu_kernel_interrupt() {
 			break;
 		case PAQUETE:
 			break;
+		case RECIBIR_PID_A_INTERRUMPIR:
+			uint8_t pid_a_interrumpir;
+			if (!recv_interrupcion(fd_kernel_interrupt, &pid_a_interrumpir)) {
+				log_error(cpu_logger, "Hubo un error al recibir el PID a interrumpir");
+			}
+
+			pthread_mutex_lock(&pcbEjecutarMutex);
+			if (pcb_a_ejecutar != NULL) {
+				if(pid_a_interrumpir == pcb_a_ejecutar->pid) {
+					pcb_a_ejecutar->flag_int = 2; // 2 --> interrupcion por quantum
+					pthread_mutex_unlock(&pcbEjecutarMutex);
+					break;
+				}
+			} else {
+				pthread_mutex_unlock(&pcbEjecutarMutex);
+				break;
+			}
+
+			break;
 		case -1:
 			log_error(cpu_logger, "El Kernel (Interrupt) se desconecto. Terminando servidor");
 			control = 0;

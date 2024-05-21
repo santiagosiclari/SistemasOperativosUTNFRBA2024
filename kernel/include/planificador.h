@@ -21,6 +21,9 @@ extern t_queue* colaExec;
 void planificacionFIFO();
 void planificacionRR();
 
+extern pthread_mutex_t colaNewMutex;
+extern pthread_mutex_t colaReadyMutex;
+extern pthread_mutex_t colaBlockedMutex;
 extern pthread_mutex_t colaExecMutex;
 
 #endif

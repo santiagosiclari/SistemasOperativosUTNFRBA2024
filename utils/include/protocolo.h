@@ -31,6 +31,10 @@ bool recv_pid(int fd, uint8_t* pid);
 void send_pid_a_borrar(int fd, uint8_t pid_a_borrar);
 bool recv_pid_a_borrar(int fd, uint8_t* pid_a_borrar);
 
+// PID a interrumpir
+void send_interrupcion(int fd, uint8_t pid_a_interrumpir);
+bool recv_interrupcion(int fd, uint8_t* pid_a_interrumpir);
+
 // send y recv pc y pid
 t_buffer* serializar_pc_pid(uint32_t pc, uint8_t pid);
 void send_pc_pid(int fd, uint32_t pc, uint8_t pid);
@@ -61,12 +65,13 @@ bool recv_instruccion(int fd, char* instruccion);
 
 // IOs
 // Finalizar IO
-void send_fin_io(int fd, char* nombre, uint32_t length);
-bool recv_fin_io(int fd, char* nombre);
+t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length);
+void send_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre, uint32_t length);
+bool recv_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre);
 
 // IO_GEN_SLEEP
-t_buffer* serializar_io_gen_sleep(uint32_t unidades_trabajo, char* string, uint32_t length);
-void send_io_gen_sleep(int fd, uint32_t unidades_trabajo, char* nombre, uint32_t length);
-bool recv_io_gen_sleep(int fd, uint32_t* unidades_trabajo, char* nombre);
+t_buffer* serializar_io_gen_sleep(t_pcb* pcb_io, uint32_t unidades_trabajo, char* nombre, uint32_t length);
+void send_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t unidades_trabajo, char* nombre, uint32_t length);
+bool recv_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t* unidades_trabajo, char* nombre);
 
 #endif
