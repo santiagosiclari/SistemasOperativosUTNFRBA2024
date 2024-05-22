@@ -18,12 +18,18 @@ void conexion_kernel_cpu_dispatch() {
 				log_info(kernel_logger, "Proceso a finalizar: %d", pid_a_borrar);
 			}
 
+			log_info(kernel_logger, "Espera al mutexExec para borrar");
+    		pthread_mutex_lock(&colaExecMutex);
+			log_info(kernel_logger, "Entra al mutexExec para borrar");
 			if(!queue_is_empty(colaExec)) {
-    			pthread_mutex_lock(&colaExecMutex);
 				t_pcb* pcb_borrado = queue_pop(colaExec);
-    			pthread_mutex_unlock(&colaExecMutex);
+    			
 				free(pcb_borrado);
 			}
+			pthread_mutex_unlock(&colaExecMutex);
+
+			log_info(kernel_logger, "Proceso eliminado");
+
 			break;
 		case RECIBIR_PCB:
 			// PCB interrumpido por fin de quantum

@@ -110,13 +110,17 @@ void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, cha
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc) {
     if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
         uint32_t *r_registro = dictionary_get(dictionary_registros, registro);
-        if(r_registro != 0) {
+        if(*r_registro != 0) {
             pcb_a_ejecutar->pc = valor_pc;
+        } else {
+            pcb_a_ejecutar->pc++;
         }
     } else if (strlen(registro) == 2) {
         uint8_t *r_registro = dictionary_get(dictionary_registros, registro);
-        if(r_registro != 0) { 
+        if(*r_registro != 0) { 
             pcb_a_ejecutar->pc = valor_pc;
+        } else {
+            pcb_a_ejecutar->pc++;
         }
     }
 }
@@ -129,7 +133,6 @@ void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
 }
 
 void funcion_exit() {
-    log_info(cpu_logger, "El proceso finalizo");
     send_pid_a_borrar(fd_kernel_dispatch, pcb_a_ejecutar->pid);
     free(pcb_a_ejecutar->registros);
     free(pcb_a_ejecutar);

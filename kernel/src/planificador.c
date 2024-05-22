@@ -44,8 +44,6 @@ void planificacionFIFO() {
             send_pid(fd_cpu_dispatch, pcb->pid);
             log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
         }
-        
-        usleep(100);
     }
 }
 
@@ -78,7 +76,5 @@ void planificacionRR() {
             // Quantum
             controlar_quantum(pcb);
         }
-
-        usleep(100);
     }
 }

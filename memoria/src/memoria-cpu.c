@@ -23,13 +23,13 @@ void conexion_memoria_cpu() {
 				log_warning(memoria_logger, "La lista de instrucciones se encuentra vacia");
 			}
 			
-			char* instruccion = list_get(instrucciones, pc);
-			
 			usleep(RETARDO_RESPUESTA);
+
+			char* instruccion = list_get(instrucciones, pc);
 			send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1);
 			log_info(memoria_logger, "Instruccion %d enviada", pc);
 
-			free(instruccion);
+			// free(instruccion);
 			break;
 		case -1:
 			log_error(memoria_logger, "El CPU se desconecto. Terminando servidor");

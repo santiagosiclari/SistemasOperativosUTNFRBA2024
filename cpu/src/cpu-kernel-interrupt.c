@@ -23,11 +23,8 @@ void conexion_cpu_kernel_interrupt() {
 					pthread_mutex_unlock(&pcbEjecutarMutex);
 					break;
 				}
-			} else {
-				pthread_mutex_unlock(&pcbEjecutarMutex);
-				break;
 			}
-
+			pthread_mutex_unlock(&pcbEjecutarMutex);
 			break;
 		case -1:
 			log_error(cpu_logger, "El Kernel (Interrupt) se desconecto. Terminando servidor");
