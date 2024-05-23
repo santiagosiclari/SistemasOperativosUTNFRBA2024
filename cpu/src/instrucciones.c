@@ -127,9 +127,9 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
 
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
     pcb_a_ejecutar->flag_int = 1; // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->pc++;
     // Enviar el pcb como contexto de ejecucion directamente en la funcion de send_io_gen_sleep
     send_io_gen_sleep(fd_kernel_dispatch, pcb_a_ejecutar, unidades_trabajo, interfaz, strlen(interfaz) + 1); // Envia pcb y el nombre de la interfaz
-    pcb_a_ejecutar->pc++;
 }
 
 void funcion_exit() {

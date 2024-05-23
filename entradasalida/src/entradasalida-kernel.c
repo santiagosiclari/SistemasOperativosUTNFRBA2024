@@ -23,7 +23,7 @@ void conexion_entradasalida_kernel() {
 			strcpy(nombre_interfaz, nombre_recivido);
 
 			if(strcmp(nombre_interfaz, nombre) != 0) {
-				log_info(entradasalida_logger, "El nombre recivido no coincide con la interfaz. Puede estar ejecutandose en otro lado.");
+				log_info(entradasalida_logger, "El nombre recibido no coincide con la interfaz. Puede estar ejecutandose en otro lado.");
 				free(pcb_io->registros);
 				free(pcb_io);
 				free(nombre_interfaz);
@@ -41,8 +41,8 @@ void conexion_entradasalida_kernel() {
 			// Avisa que ya no esta mas interrumpido el proceso
 			send_fin_io(fd_kernel, pcb_io, nombre, strlen(nombre) + 1);
 
-			free(pcb_io->registros);
-			free(pcb_io);
+			// free(pcb_io->registros);
+			// free(pcb_io);
 			free(nombre_interfaz);
 			free(nombre_recivido);
 			break;

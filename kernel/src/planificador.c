@@ -45,6 +45,11 @@ void planificacionFIFO() {
             log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
         }
     }
+
+    queue_clean_and_destroy_elements(colaNew, free);
+    queue_clean_and_destroy_elements(colaReady, free);
+    queue_clean_and_destroy_elements(colaExec, free);
+    queue_clean_and_destroy_elements(colaBlocked, free);
 }
 
 void planificacionRR() {
@@ -77,4 +82,9 @@ void planificacionRR() {
             controlar_quantum(pcb);
         }
     }
+
+    queue_clean_and_destroy_elements(colaNew, free);
+    queue_clean_and_destroy_elements(colaReady, free);
+    queue_clean_and_destroy_elements(colaExec, free);
+    queue_clean_and_destroy_elements(colaBlocked, free);
 }

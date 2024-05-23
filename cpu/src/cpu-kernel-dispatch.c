@@ -47,6 +47,7 @@ void conexion_cpu_kernel_dispatch() {
 			}
 
 			pcb_a_ejecutar = list_get(procesos, pid_a_ejecutar);
+			pcb_a_ejecutar->flag_int = 0; // Por si vuelve de interrupcion
 
 			// Fetch --> pedir la primera instruccion y despues pasa al while en cpu-memoria.c
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);

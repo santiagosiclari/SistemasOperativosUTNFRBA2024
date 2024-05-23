@@ -10,7 +10,7 @@ void conexion_kernel_cpu_dispatch() {
 		case PAQUETE:
 			break;
 		case RECIBIR_PID_A_BORRAR:
-			// Recibo proceso a ejecutar
+			// Recibo proceso a eliminar
 			uint8_t pid_a_borrar;
 			if(!recv_pid_a_borrar(fd_cpu_dispatch, &pid_a_borrar)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
@@ -18,12 +18,9 @@ void conexion_kernel_cpu_dispatch() {
 				log_info(kernel_logger, "Proceso a finalizar: %d", pid_a_borrar);
 			}
 
-			log_info(kernel_logger, "Espera al mutexExec para borrar");
     		pthread_mutex_lock(&colaExecMutex);
-			log_info(kernel_logger, "Entra al mutexExec para borrar");
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_borrado = queue_pop(colaExec);
-    			
 				free(pcb_borrado);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
@@ -42,7 +39,9 @@ void conexion_kernel_cpu_dispatch() {
 			}
 
 			pthread_mutex_lock(&colaExecMutex);
-			queue_pop(colaExec);
+			if(queue_size(colaExec) != 0) {
+				queue_pop(colaExec);
+			}
 			pthread_mutex_unlock(&colaExecMutex);
 
 			pthread_mutex_lock(&colaReadyMutex);
@@ -76,8 +75,8 @@ void conexion_kernel_cpu_dispatch() {
 
 			free(nombre_interfaz);
             free(nombre_recivido);
-			free(pcb_io_gen_sleep->registros);
-            free(pcb_io_gen_sleep);
+			// free(pcb_io_gen_sleep->registros);
+            // free(pcb_io_gen_sleep);
 			break;
 		case -1:
 			log_error(kernel_logger, "El servidor de CPU (Dispatch) no se encuentra activo.");

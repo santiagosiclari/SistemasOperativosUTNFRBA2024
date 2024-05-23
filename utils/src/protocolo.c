@@ -249,7 +249,7 @@ t_buffer* serializar_pcb(t_pcb* pcb) {
         sizeof(char) +       // estado
         sizeof(uint32_t) +   // quantum
         sizeof(uint8_t) +    // flag_int
-        sizeof(t_registros); // tamaño de registros
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6; // tamaño de registros
 
     buffer->offset = 0;
     buffer->stream = malloc(buffer->size);
@@ -453,7 +453,7 @@ t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
         sizeof(char) +        // estado
         sizeof(uint32_t) +    // quantum
         sizeof(uint8_t) +     // flag_int
-        sizeof(t_registros) + // tamaño de registros
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
         sizeof(uint32_t) +    // longitud del nombre
         length;               // nombre
 
@@ -546,7 +546,7 @@ t_buffer* serializar_io_gen_sleep(t_pcb* pcb_io, uint32_t unidades_trabajo, char
         sizeof(char) +        // estado
         sizeof(uint32_t) +    // quantum
         sizeof(uint8_t) +     // flag_int
-        sizeof(t_registros) + // tamaño de registros
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
         sizeof(uint32_t) +    // unidades_trabajo
         sizeof(uint32_t) +    // longitud del nombre
         length;               // nombre
