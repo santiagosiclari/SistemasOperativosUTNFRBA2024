@@ -47,7 +47,7 @@
 // }
 
 void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor) {
-    if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
+    if (strlen(registro) == 3 || strcmp(registro, "SI") || strcmp(registro, "DI") || strcmp(registro, "PC")) {
         uint32_t *r_destino = dictionary_get(dictionary_registros, registro);
         *r_destino = valor;
     } else if (strlen(registro) == 2) {
@@ -59,9 +59,9 @@ void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor) 
 }
 
 void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen) {
-    if (strlen(registro_destino) == 3 || !strcmp(registro_destino, "SI") || !strcmp(registro_destino, "DI")) {
+    if (strlen(registro_destino) == 3 || strcmp(registro_destino, "SI") || strcmp(registro_destino, "DI") || strcmp(registro_destino, "PC")) {
         uint32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
-        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+        if (strlen(registro_origen) == 3 || strcmp(registro_origen, "SI") || strcmp(registro_origen, "DI") || strcmp(registro_destino, "PC")) {
             uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         } else if (strlen(registro_origen) == 2) {
@@ -71,7 +71,7 @@ void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, cha
     }
     else if (strlen(registro_destino) == 2) {
         uint8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
-        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+        if (strlen(registro_origen) == 3 || strcmp(registro_origen, "SI") || strcmp(registro_origen, "DI") || strcmp(registro_destino, "PC")) {
             uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino += *r_origen;
         } else if (strlen(registro_origen) == 2) {
@@ -84,9 +84,9 @@ void funcion_sum(t_dictionary* dictionary_registros, char* registro_destino, cha
 }
 
 void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, char* registro_origen) {
-    if (strlen(registro_destino) == 3 || !strcmp(registro_destino, "SI") || !strcmp(registro_destino, "DI")) {
+    if (strlen(registro_destino) == 3 || strcmp(registro_destino, "SI") || strcmp(registro_destino, "DI") || strcmp(registro_destino, "PC")) {
         uint32_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
-        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+        if (strlen(registro_origen) == 3 || strcmp(registro_origen, "SI") || strcmp(registro_origen, "DI") || strcmp(registro_destino, "PC")) {
             uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         } else if (strlen(registro_origen) == 2) {
@@ -95,7 +95,7 @@ void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, cha
         }
     } else if (strlen(registro_destino) == 2) {
         uint8_t *r_destino = dictionary_get(dictionary_registros, registro_destino);
-        if (strlen(registro_origen) == 3 || !strcmp(registro_origen, "SI") || !strcmp(registro_origen, "DI")) {
+        if (strlen(registro_origen) == 3 || strcmp(registro_origen, "SI") || strcmp(registro_origen, "DI") || strcmp(registro_destino, "PC")) {
             uint32_t *r_origen = dictionary_get(dictionary_registros, registro_origen);
             *r_destino -= *r_origen;
         } else if (strlen(registro_origen) == 2) {
@@ -108,7 +108,7 @@ void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, cha
 }
 
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc) {
-    if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI")) {
+    if (strlen(registro) == 3 || strcmp(registro, "SI") || strcmp(registro, "DI") || strcmp(registro, "PC")) {
         uint32_t *r_registro = dictionary_get(dictionary_registros, registro);
         if(*r_registro != 0) {
             pcb_a_ejecutar->pc = valor_pc;

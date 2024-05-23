@@ -13,6 +13,7 @@ void crear_diccionario(t_dictionary* dictionary_registros) {
     dictionary_put(dictionary_registros, "EDX", &pcb_a_ejecutar->registros->EDX);
     dictionary_put(dictionary_registros, "SI", &pcb_a_ejecutar->registros->SI);
     dictionary_put(dictionary_registros, "DI", &pcb_a_ejecutar->registros->DI);
+    dictionary_put(dictionary_registros, "PC", &pcb_a_ejecutar->pc);
 }
 
 void conexion_cpu_memoria() {
