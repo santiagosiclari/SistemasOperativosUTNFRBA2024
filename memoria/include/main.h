@@ -15,11 +15,12 @@
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/file-descriptors.h"
+#include "../../utils/include/io.h"
 
 //variables para conexiones
 int fd_kernel;
 int fd_memoria;
-int fd_entradasalida;
+uint8_t fd_entradasalida;
 int fd_cpu;
 
 t_config* memoria_config;
@@ -33,5 +34,7 @@ int   RETARDO_RESPUESTA;
 
 t_log* memoria_logger;
 t_log* memoria_debug;
+
+extern t_list* listaInterfaces;
 
 #endif

@@ -11,6 +11,9 @@
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+#include "../../utils/include/io.h"
+
+extern t_list* listaInterfaces;
 
 void conexion_memoria_entradasalida();
 

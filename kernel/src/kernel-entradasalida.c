@@ -11,21 +11,42 @@ void conexion_kernel_entradasalida() {
 			break;
 		case PAQUETE:
 			break;
+		case RECIBIR_NOMBRE_IO:
+			t_interfaz* interfaz = malloc(sizeof(t_interfaz));
+			uint8_t MAX_LENGTH = 128;
+			char* nombre = malloc(MAX_LENGTH);
+			char* nombre_recibido = malloc(MAX_LENGTH);
+			
+			// Recibo nombre de la interfaz conectada
+			if(!recv_interfaz(fd_entradasalida, nombre_recibido)) {
+				log_error(kernel_logger, "Hubo un erro al recibir el nombre de la interfaz.");
+			}
+			strcpy(nombre, nombre_recibido);
+
+			// Guarda en una lista por cada interfaz (t_interfaz)
+			interfaz->nombre = nombre;
+			interfaz->socket = fd_entradasalida;
+			list_add(listaInterfaces, interfaz);
+
+			// Liberar memoria
+			break;
 		case FIN_IO:
 			pthread_mutex_lock(&reciboFinDeIO);
 			t_pcb* pcb_fin_io = malloc(sizeof(t_pcb));
 			pcb_fin_io->registros = malloc(sizeof(t_registros));
-			uint32_t MAX_LENGTH = 128;
-			char* nombre = malloc(MAX_LENGTH);
-			char* nombre_recibido = malloc(MAX_LENGTH);
+			char* nombre_fin_io = malloc(MAX_LENGTH);
+			char* nombre_fin_io_recibido = malloc(MAX_LENGTH);
 
-			if(!recv_fin_io(fd_entradasalida, pcb_fin_io, nombre_recibido)) {
+			// Busca el socket de la interfaz
+			uint8_t fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
+			
+			if(!recv_fin_io(fd_interfaz, pcb_fin_io, nombre_fin_io_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir el fin de una IO");
 			}
-			strcpy(nombre, nombre_recibido);
+			strcpy(nombre_fin_io, nombre_fin_io_recibido);
 			
 			pthread_mutex_lock(&colaBlockedMutex);
-			log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre, pcb_fin_io->pid);
+			log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre_fin_io, pcb_fin_io->pid);
 			if(!queue_is_empty(colaBlocked)) {
 				queue_pop(colaBlocked);
 			}
@@ -46,8 +67,8 @@ void conexion_kernel_entradasalida() {
 
 			// free(pcb_fin_io->registros);
 			// free(pcb_fin_io);
-			free(nombre);
-			free(nombre_recibido);
+			free(nombre_fin_io);
+			free(nombre_fin_io_recibido);
 			break;
 		case -1:
 			log_error(kernel_logger, "El IO se desconecto. Terminando servidor");

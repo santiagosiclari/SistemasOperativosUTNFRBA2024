@@ -1,6 +1,10 @@
 #include "../include/kernel-cpu-dispatch.h"
 
+char* nombre_interfaz;
+
 void conexion_kernel_cpu_dispatch() {
+	uint8_t MAX_LENGTH = 128;
+	nombre_interfaz = malloc(MAX_LENGTH);
     bool control = 1;
 	while (control) {
 		int cod_op = recibir_operacion(fd_cpu_dispatch);
@@ -20,8 +24,7 @@ void conexion_kernel_cpu_dispatch() {
 
     		pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
-				t_pcb* pcb_borrado = queue_pop(colaExec);
-				free(pcb_borrado);
+				queue_pop(colaExec);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 
@@ -50,17 +53,20 @@ void conexion_kernel_cpu_dispatch() {
 			pthread_mutex_unlock(&colaReadyMutex);
 			break;
 		case IO_GEN_SLEEP:
+			// mutex
 			t_pcb* pcb_io_gen_sleep = malloc(sizeof(t_pcb));
 			pcb_io_gen_sleep->registros = malloc(sizeof(t_registros));
-			uint32_t MAX_LENGTH = 128;
 			uint32_t unidades_de_trabajo;
-			char* nombre_interfaz = malloc(MAX_LENGTH);
-			char* nombre_recivido = malloc(MAX_LENGTH);
-			if(!recv_io_gen_sleep(fd_cpu_dispatch, pcb_io_gen_sleep, &unidades_de_trabajo, nombre_recivido)) {
+			char* nombre_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_gen_sleep(fd_cpu_dispatch, pcb_io_gen_sleep, &unidades_de_trabajo, nombre_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_GEN_SLEEP");
 			}
+			strcpy(nombre_interfaz, nombre_recibido);
+			
+			// Busca el socket de la interfaz
+			uint8_t fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
 
-			strcpy(nombre_interfaz, nombre_recivido);
 			log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_io_gen_sleep->pid);
 
             pthread_mutex_lock(&colaExecMutex);
@@ -71,10 +77,10 @@ void conexion_kernel_cpu_dispatch() {
 			queue_push(colaBlocked, pcb_io_gen_sleep);
 			pthread_mutex_unlock(&colaBlockedMutex);
 
-			send_io_gen_sleep(fd_entradasalida, pcb_io_gen_sleep, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
+			send_io_gen_sleep(fd_interfaz, pcb_io_gen_sleep, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
 
-			free(nombre_interfaz);
-            free(nombre_recivido);
+			// free(nombre_interfaz);
+            free(nombre_recibido);
 			// free(pcb_io_gen_sleep->registros);
             // free(pcb_io_gen_sleep);
 			break;

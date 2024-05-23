@@ -443,6 +443,40 @@ bool recv_instruccion(int fd, char* instruccion) {
 }
 
 // Interfaces IO
+// Envio de nombre de interfaz
+void send_interfaz(int fd, char* nombre_interfaz, uint32_t length) {
+    t_buffer *buffer = serializar_string(nombre_interfaz, length);
+    t_paquete *a_enviar = crear_paquete(RECIBIR_NOMBRE_IO, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_interfaz(int fd, char* nombre_interfaz) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    char* nombre_interfaz_recibido = deserializar_string(paquete->buffer);
+    strcpy(nombre_interfaz, nombre_interfaz_recibido);
+    free(nombre_interfaz_recibido);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
 // Fin de IO
 t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
     t_buffer *buffer = malloc(sizeof(t_buffer));

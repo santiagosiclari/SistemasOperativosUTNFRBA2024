@@ -10,6 +10,25 @@ void conexion_memoria_entradasalida() {
 			break;
 		case PAQUETE:
 			break;
+		case RECIBIR_NOMBRE_IO:
+			t_interfaz* interfaz = malloc(sizeof(t_interfaz));
+			uint8_t MAX_LENGTH = 128;
+			char* nombre = malloc(MAX_LENGTH);
+			char* nombre_recibido = malloc(MAX_LENGTH);
+			
+			// Recibo nombre de la interfaz conectada
+			if(!recv_interfaz(fd_entradasalida, nombre_recibido)) {
+				log_error(memoria_logger, "Hubo un erro al recibir el nombre de la interfaz.");
+			}
+			strcpy(nombre, nombre_recibido);
+
+			// Guarda en una lista por cada interfaz (t_interfaz)
+			interfaz->nombre = nombre;
+			interfaz->socket = fd_entradasalida;
+			list_add(listaInterfaces, interfaz);
+
+			// Liberar memoria
+			break;
 		case -1:
 			log_error(memoria_logger, "El IO se desconecto. Terminando servidor");
 			control = 0;

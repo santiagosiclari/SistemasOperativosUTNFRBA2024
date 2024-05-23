@@ -2,7 +2,7 @@
 
 // Variable global
 char* nombre;
-char* config;
+// char* config;
 
 int main(int argc, char* argv[]) {
 
@@ -14,9 +14,9 @@ int main(int argc, char* argv[]) {
 	nombre = readline("> ");
     log_info(entradasalida_logger, "Nombre de la I/O leido: %s\n", nombre);
 	
-    log_info(entradasalida_logger, "Ingrese el archivo de configuracion:"); // ./memoria.config
-	config = readline("> ");
-    log_info(entradasalida_logger, "Archivo de config leido: %s\n", config);
+    // log_info(entradasalida_logger, "Ingrese el archivo de configuracion:"); // ./memoria.config
+	// config = readline("> ");
+    // log_info(entradasalida_logger, "Archivo de config leido: %s\n", config);
 
     // Inicializamos config
     init_entradasalida_config();
@@ -35,6 +35,10 @@ int main(int argc, char* argv[]) {
     fd_memoria = crear_conexion(entradasalida_logger, IP_MEMORIA, PUERTO_MEMORIA, "Memoria");
     send_handshake(entradasalida_logger, fd_memoria, HANDSHAKE_MEMORIA, "IO/Memoria");
 
+    // Envia a Kernel y Memoria el nombre
+    send_interfaz(fd_kernel, nombre, strlen(nombre) + 1);
+    send_interfaz(fd_memoria, nombre, strlen(nombre) + 1);
+
     // Hilos
     pthread_t entradasalida_memoria;
     pthread_create(&entradasalida_memoria, NULL, (void *)conexion_entradasalida_memoria, NULL);
@@ -42,7 +46,7 @@ int main(int argc, char* argv[]) {
 
     // Terminar programa
     free(nombre);
-    free(config);
+    // free(config);
     terminar_entradasalida();
 
     return 0;

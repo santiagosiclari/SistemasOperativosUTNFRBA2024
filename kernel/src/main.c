@@ -5,6 +5,8 @@ t_queue* colaReady;
 t_queue* colaBlocked;
 t_queue* colaExec;
 
+t_list* listaInterfaces;
+
 int main(int argc, char* argv[]) {
     // Inicializamos logger y logger debug
     init_kernel_logs();
@@ -16,6 +18,9 @@ int main(int argc, char* argv[]) {
     colaReady = queue_create();
     colaBlocked = queue_create();
     colaExec = queue_create();
+
+    // Creamos lista de interfaces
+    listaInterfaces = list_create();
 
     // Iniciar servidor
     fd_kernel = iniciar_servidor(kernel_logger, PUERTO_ESCUCHA, "Kernel");
@@ -57,6 +62,7 @@ int main(int argc, char* argv[]) {
         // Conectamos como servidor con el modulo I/O
         log_info(kernel_logger, "Esperando al modulo Entrada Salida");
         fd_entradasalida = esperar_cliente(kernel_logger, fd_kernel, "Entrada Salida");
+
         if (recv_handshake(fd_entradasalida, HANDSHAKE_KERNEL)) {
             log_info(kernel_logger, "Handshake OK de %s\n", "IO/Kernel");
         } else {

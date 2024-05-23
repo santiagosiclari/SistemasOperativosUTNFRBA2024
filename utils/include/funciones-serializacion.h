@@ -71,6 +71,7 @@ typedef enum {
     // EntradaSalida (IO)
     FIN_IO,
     IO_GEN_SLEEP,
+    RECIBIR_NOMBRE_IO,
     // IO_STDIN_READ
     // IO_STDOUT_WRITE
     // IO_FS_CREATE

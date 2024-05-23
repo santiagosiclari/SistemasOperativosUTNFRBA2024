@@ -1,5 +1,7 @@
 #include "../include/main.h"
 
+t_list* listaInterfaces;
+
 int main(int argc, char* argv[]) {
 
     // Inicializamos logger y logger debug
@@ -8,8 +10,9 @@ int main(int argc, char* argv[]) {
     // Inicializamos config
     init_memoria_config();
 
-    // Conexiones
+    listaInterfaces = list_create();
 
+    // Conexiones
     // Iniciar servidor
     fd_memoria = iniciar_servidor(memoria_logger, PUERTO_ESCUCHA, "Memoria");
 

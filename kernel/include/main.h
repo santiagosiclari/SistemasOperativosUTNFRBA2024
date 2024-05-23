@@ -22,10 +22,11 @@
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/funciones-serializacion.h"
 #include "../../utils/include/file-descriptors.h"
+#include "../../utils/include/io.h"
 
 int fd_kernel;
 int fd_memoria;
-int fd_entradasalida;
+uint8_t fd_entradasalida;
 int fd_cpu_dispatch;
 int fd_cpu_interrupt;
 
@@ -51,5 +52,7 @@ extern t_queue* colaNew;
 extern t_queue* colaReady;
 extern t_queue* colaBlocked;
 extern t_queue* colaExec;
+
+extern t_list* listaInterfaces;
 
 #endif

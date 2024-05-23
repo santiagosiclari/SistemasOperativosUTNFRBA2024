@@ -1,6 +1,8 @@
 #ifndef FD_H_ 
 #define FD_H_
 
+#include <inttypes.h>
+
 // Variables globales de los FD
 // Kernel
 extern int fd_kernel;
@@ -14,6 +16,6 @@ extern int fd_cpu;
 // Memoria
 extern int fd_memoria;
 // IO
-extern int fd_entradasalida;
+extern uint8_t fd_entradasalida;
 
 #endif
