@@ -5,6 +5,8 @@ pthread_mutex_t colaReadyMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaBlockedMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaExecMutex = PTHREAD_MUTEX_INITIALIZER;
 
+int control_planificacion;
+
 void* quantum(void* arg){
     t_pcb* pcb = (t_pcb*)arg;
     usleep(pcb->quantum);
@@ -19,7 +21,10 @@ void controlar_quantum(t_pcb* pcb) {
 }
 
 void planificacionFIFO() {
-    while (!queue_is_empty(colaReady) || !queue_is_empty(colaNew) || !queue_is_empty(colaExec) || !queue_is_empty(colaBlocked)) {
+    // El control_planificacion se cambia a 0 una vez que se elimina el proceso y todas las queues estan vacias
+    // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
+    control_planificacion = 1;
+    while (control_planificacion) {
         while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
@@ -53,7 +58,10 @@ void planificacionFIFO() {
 }
 
 void planificacionRR() {
-    while (!queue_is_empty(colaReady) || !queue_is_empty(colaNew) || !queue_is_empty(colaExec) || !queue_is_empty(colaBlocked)) {
+    // El control_planificacion se cambia a 0 una vez que se elimina el proceso y todas las queues estan vacias
+    // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
+    control_planificacion = 1;
+    while (control_planificacion) {
         while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);

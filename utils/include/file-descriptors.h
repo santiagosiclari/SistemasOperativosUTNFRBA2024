@@ -16,6 +16,6 @@ extern int fd_cpu;
 // Memoria
 extern int fd_memoria;
 // IO
-extern uint8_t fd_entradasalida;
+extern int fd_entradasalida;
 
 #endif

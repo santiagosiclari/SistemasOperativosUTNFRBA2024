@@ -20,7 +20,7 @@
 //variables para conexiones
 int fd_kernel;
 int fd_memoria;
-uint8_t fd_entradasalida;
+int fd_entradasalida;
 int fd_cpu;
 
 t_config* memoria_config;

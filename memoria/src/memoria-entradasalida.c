@@ -28,6 +28,7 @@ void conexion_memoria_entradasalida() {
 			list_add(listaInterfaces, interfaz);
 
 			// Liberar memoria
+			free(nombre_recibido);
 			break;
 		case -1:
 			log_error(memoria_logger, "El IO se desconecto. Terminando servidor");

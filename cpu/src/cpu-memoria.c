@@ -130,6 +130,7 @@ void conexion_cpu_memoria() {
 
 			// Libera la instruccion anterior
 			free(instruccion);
+			free(instruccion_recibida);
 			// Liberar el arreglo de la instrucción separada
 			for (int i = 0; instruccion_separada[i] != NULL; i++) {
 				free(instruccion_separada[i]);

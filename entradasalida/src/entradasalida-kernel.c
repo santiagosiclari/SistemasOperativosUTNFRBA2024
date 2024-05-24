@@ -43,8 +43,8 @@ void conexion_entradasalida_kernel() {
 
 			// free(pcb_io->registros);
 			// free(pcb_io);
-			free(nombre_interfaz);
-			free(nombre_recivido);
+			// free(nombre_interfaz);
+			// free(nombre_recivido);
 			break;
 		case -1:
 			log_error(entradasalida_logger, "El servidor de Kernel no se encuentra activo.");

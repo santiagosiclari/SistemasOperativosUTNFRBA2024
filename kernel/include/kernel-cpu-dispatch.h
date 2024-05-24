@@ -15,9 +15,12 @@
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/io.h"
 
+extern t_queue* colaNew;
 extern t_queue* colaExec;
 extern t_queue* colaReady;
 extern t_queue* colaBlocked;
+
+extern int control_planificacion;
 
 extern t_list* listaInterfaces;
 

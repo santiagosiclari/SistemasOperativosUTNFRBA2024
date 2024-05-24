@@ -14,6 +14,11 @@
 #include <commons/config.h>
 #include <commons/log.h>
 
+extern t_list* listaInterfaces;
+
+extern t_list* instrucciones;
+extern t_list* instrucciones_por_proceso;
+
 void terminar_memoria();
 
 #endif

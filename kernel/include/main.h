@@ -26,7 +26,7 @@
 
 int fd_kernel;
 int fd_memoria;
-uint8_t fd_entradasalida;
+int fd_entradasalida;
 int fd_cpu_dispatch;
 int fd_cpu_interrupt;
 

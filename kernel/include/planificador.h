@@ -18,6 +18,8 @@ extern t_queue* colaReady;
 extern t_queue* colaBlocked;
 extern t_queue* colaExec;
 
+extern int control_planificacion;
+
 void planificacionFIFO();
 void planificacionRR();
 

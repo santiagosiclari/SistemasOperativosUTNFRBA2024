@@ -25,6 +25,9 @@ void conexion_kernel_cpu_dispatch() {
     		pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
 				queue_pop(colaExec);
+				if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked)) {
+					control_planificacion = 0; // No hay más procesos pendientes, termina la planificación
+				}
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 

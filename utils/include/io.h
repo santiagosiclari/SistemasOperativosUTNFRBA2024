@@ -6,7 +6,7 @@
 #include <string.h>
 
 typedef struct {
-    uint8_t socket;
+    int socket;
     char* nombre;
 } t_interfaz;
 
