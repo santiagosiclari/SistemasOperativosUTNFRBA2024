@@ -60,10 +60,10 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		case IO_GEN_SLEEP:
 			pthread_mutex_lock(&mutexIO);
-			if (pcb_io_gen_sleep != NULL) {
-				free(pcb_io_gen_sleep->registros);
-				free(pcb_io_gen_sleep);
-			}
+			// if (pcb_io_gen_sleep != NULL) {
+			// 	free(pcb_io_gen_sleep->registros);
+			// 	free(pcb_io_gen_sleep);
+			// }
 			pcb_io_gen_sleep = malloc(sizeof(t_pcb));
 			pcb_io_gen_sleep->registros = malloc(sizeof(t_registros));
 			uint32_t unidades_de_trabajo;
@@ -80,7 +80,9 @@ void conexion_kernel_cpu_dispatch() {
 			log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_io_gen_sleep->pid);
 
             pthread_mutex_lock(&colaExecMutex);
-			queue_pop(colaExec);
+			if(!queue_is_empty(colaExec)) {
+				queue_pop(colaExec);
+			}
 			pthread_mutex_unlock(&colaExecMutex);
 
 			pthread_mutex_lock(&colaBlockedMutex);

@@ -26,14 +26,15 @@ void conexion_cpu_memoria() {
 		case PAQUETE:
 			break;
 		case RECIBIR_INSTRUCCION:
+			t_dictionary* dictionary_registros;
 			int MAX_LENGTH = 128;
 			char* instruccion = malloc(MAX_LENGTH);
 			char* instruccion_recibida = malloc(MAX_LENGTH);
 			char** instruccion_separada;
-			t_dictionary* dictionary_registros = dictionary_create();
-			crear_diccionario(dictionary_registros);
-
 			if(pcb_a_ejecutar != NULL) {
+				dictionary_registros = dictionary_create();
+				crear_diccionario(dictionary_registros);
+
 				// Recibir la instruccion
 				if (!recv_instruccion(fd_memoria, instruccion_recibida)) {
 					log_error(cpu_logger, "Hubo un error al recibir la instruccion del modulo de Memoria");

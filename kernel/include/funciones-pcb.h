@@ -10,6 +10,5 @@
 
 void asignar_pid(t_pcb* pcb);
 t_pcb* crear_pcb();
-void destruir_pcb(t_pcb* pcb);
 
 #endif

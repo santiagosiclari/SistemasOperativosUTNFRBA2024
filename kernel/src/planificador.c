@@ -7,6 +7,17 @@ pthread_mutex_t colaExecMutex = PTHREAD_MUTEX_INITIALIZER;
 
 int control_planificacion;
 
+void destruir_pcb(void* ptr_pcb) {
+    t_pcb* pcb = (t_pcb*)ptr_pcb;
+    // Liberar recursos del PCB
+    if (pcb && pcb->registros) {
+        free(pcb->registros);
+    }
+    if (pcb) {
+        free(pcb);
+    }
+}
+
 void* quantum(void* arg){
     t_pcb* pcb = (t_pcb*)arg;
     usleep(pcb->quantum);
@@ -51,10 +62,10 @@ void planificacionFIFO() {
         }
     }
 
-    queue_clean_and_destroy_elements(colaNew, free);
-    queue_clean_and_destroy_elements(colaReady, free);
-    queue_clean_and_destroy_elements(colaExec, free);
-    queue_clean_and_destroy_elements(colaBlocked, free);
+    queue_clean_and_destroy_elements(colaNew, destruir_pcb);
+    queue_clean_and_destroy_elements(colaReady, destruir_pcb);
+    queue_clean_and_destroy_elements(colaExec, destruir_pcb);
+    queue_clean_and_destroy_elements(colaBlocked, destruir_pcb);
 }
 
 void planificacionRR() {
@@ -87,12 +98,14 @@ void planificacionRR() {
             log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
             
             // Quantum
-            controlar_quantum(pcb);
+            if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
+                controlar_quantum(pcb);
+            }
         }
     }
 
-    queue_clean_and_destroy_elements(colaNew, free);
-    queue_clean_and_destroy_elements(colaReady, free);
-    queue_clean_and_destroy_elements(colaExec, free);
-    queue_clean_and_destroy_elements(colaBlocked, free);
+    queue_clean_and_destroy_elements(colaNew, destruir_pcb);
+    queue_clean_and_destroy_elements(colaReady, destruir_pcb);
+    queue_clean_and_destroy_elements(colaExec, destruir_pcb);
+    queue_clean_and_destroy_elements(colaBlocked, destruir_pcb);
 }

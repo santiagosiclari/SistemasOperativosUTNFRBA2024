@@ -48,13 +48,3 @@ t_pcb* crear_pcb() {
 
     return nuevo_pcb;
 }
-
-void destruir_pcb(t_pcb* pcb) {
-    // Liberar recursos del PCB
-    if (pcb && pcb->registros) {
-        free(pcb->registros);
-    }
-    if (pcb) {
-        free(pcb);
-    }
-}
