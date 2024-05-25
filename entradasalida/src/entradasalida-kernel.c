@@ -12,10 +12,10 @@ void conexion_entradasalida_kernel() {
 		case PAQUETE:
 			break;
 		case IO_GEN_SLEEP:
-			// if (pcb_io != NULL) {
-			// 	free(pcb_io->registros);
-			// 	free(pcb_io);
-			// }
+			if (pcb_io != NULL) {
+				free(pcb_io->registros);
+				free(pcb_io);
+			}
 			pcb_io = malloc(sizeof(t_pcb));
 			pcb_io->registros = malloc(sizeof(t_registros));
 			uint32_t MAX_LENGTH = 128;

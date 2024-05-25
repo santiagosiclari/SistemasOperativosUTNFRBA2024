@@ -60,6 +60,7 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		case IO_GEN_SLEEP:
 			pthread_mutex_lock(&mutexIO);
+			// Revisar --> cuando hago free da errores
 			// if (pcb_io_gen_sleep != NULL) {
 			// 	free(pcb_io_gen_sleep->registros);
 			// 	free(pcb_io_gen_sleep);
@@ -75,19 +76,22 @@ void conexion_kernel_cpu_dispatch() {
 			strcpy(nombre_interfaz, nombre_recibido);
 			
 			// Busca el socket de la interfaz
-			uint8_t fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
-
-			log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_io_gen_sleep->pid);
+			int fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
+				log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_io_gen_sleep->pid);
 				queue_pop(colaExec);
+				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+				}
+				pthread_mutex_lock(&colaBlockedMutex);
+				pcb_io_gen_sleep->estado = 'B';
+				queue_push(colaBlocked, pcb_io_gen_sleep);
+				pthread_mutex_unlock(&colaBlockedMutex);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
-
-			pthread_mutex_lock(&colaBlockedMutex);
-			queue_push(colaBlocked, pcb_io_gen_sleep);
-			pthread_mutex_unlock(&colaBlockedMutex);
 
 			send_io_gen_sleep(fd_interfaz, pcb_io_gen_sleep, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
 			pthread_mutex_unlock(&mutexIO);

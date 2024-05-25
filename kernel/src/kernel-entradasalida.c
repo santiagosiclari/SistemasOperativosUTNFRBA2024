@@ -3,7 +3,6 @@
 void conexion_kernel_entradasalida() {
 	uint8_t MAX_LENGTH = 128;
     bool control = 1;
-	log_info(kernel_logger, "FD de interfaz de entradasalida: %d", fd_entradasalida);
 	while (control) {
 		int cod_op = recibir_operacion(fd_entradasalida);
 		switch (cod_op) {

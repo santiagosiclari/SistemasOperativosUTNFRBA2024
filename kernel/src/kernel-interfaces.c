@@ -18,10 +18,11 @@ void conexion_kernel_interfaces(void* arg) {
 			break;
         case FIN_IO:
 			pthread_mutex_lock(&reciboFinDeIO);
-			if (pcb_fin_io != NULL) {
-				free(pcb_fin_io->registros);
-				free(pcb_fin_io);
-			}
+			// Revisar --> cuando hago free da errores
+			// if (pcb_fin_io != NULL) {
+			// 	free(pcb_fin_io->registros);
+			// 	free(pcb_fin_io);
+			// }
 			pcb_fin_io = malloc(sizeof(t_pcb));
 			pcb_fin_io->registros = malloc(sizeof(t_registros));
 			char* nombre_fin_io = malloc(MAX_LENGTH);
@@ -38,15 +39,16 @@ void conexion_kernel_interfaces(void* arg) {
 			pthread_mutex_lock(&colaBlockedMutex);
 			log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre_fin_io, pcb_fin_io->pid);
 			if(!queue_is_empty(colaBlocked)) {
-				queue_pop(colaBlocked);
+				t_pcb* pcb_recibido = queue_pop(colaBlocked);
+				if (pcb_recibido != NULL && pcb_recibido->pid == pcb_fin_io->pid) {
+					pthread_mutex_lock(&colaReadyMutex);
+					pcb_fin_io->estado = 'R';
+					pcb_fin_io->flag_int = 0;
+					queue_push(colaReady, pcb_fin_io);
+					pthread_mutex_unlock(&colaReadyMutex);
+				}
 			}
 			pthread_mutex_unlock(&colaBlockedMutex);
-
-			pthread_mutex_lock(&colaReadyMutex);
-			pcb_fin_io->estado = 'R';
-			pcb_fin_io->flag_int = 0;
-			queue_push(colaReady, pcb_fin_io);
-			pthread_mutex_unlock(&colaReadyMutex);
 			pthread_mutex_unlock(&reciboFinDeIO);
 
 			// // Printea el PCB

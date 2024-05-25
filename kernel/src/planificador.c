@@ -5,6 +5,8 @@ pthread_mutex_t colaReadyMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaBlockedMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaExecMutex = PTHREAD_MUTEX_INITIALIZER;
 
+pthread_t quantum_thread;
+
 int control_planificacion;
 
 void destruir_pcb(void* ptr_pcb) {
@@ -18,17 +20,18 @@ void destruir_pcb(void* ptr_pcb) {
     }
 }
 
-void* quantum(void* arg){
+void* quantum(void* arg) {
     t_pcb* pcb = (t_pcb*)arg;
+    
     usleep(pcb->quantum);
     send_interrupcion(fd_cpu_interrupt, pcb->pid);
+
     return NULL;
 }
 
 void controlar_quantum(t_pcb* pcb) {
-    pthread_t quantum_thread;
     pthread_create(&quantum_thread, NULL, (void *)quantum, (void *)pcb);
-    pthread_join(quantum_thread, NULL);
+    pthread_detach(quantum_thread);
 }
 
 void planificacionFIFO() {
