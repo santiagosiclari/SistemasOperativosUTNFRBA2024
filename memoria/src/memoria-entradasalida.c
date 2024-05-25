@@ -27,8 +27,18 @@ void conexion_memoria_entradasalida() {
 			interfaz->socket = fd_entradasalida;
 			list_add(listaInterfaces, interfaz);
 
+			// Crear hilo de conexion de cada interfaz
+            pthread_t memoria_interfaces;
+            int* fd_interfaz = malloc(sizeof(int));
+            *fd_interfaz = interfaz->socket;
+            pthread_create(&memoria_interfaces, NULL, (void *)conexion_memoria_interfaces, (void *)fd_interfaz);
+            pthread_detach(memoria_interfaces);
+			
 			// Liberar memoria
 			free(nombre_recibido);
+
+			// Termina este servidor y se va al de la interfaz en especifico
+			control = 0;
 			break;
 		case -1:
 			log_error(memoria_logger, "El IO se desconecto. Terminando servidor");

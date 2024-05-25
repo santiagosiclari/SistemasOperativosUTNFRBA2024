@@ -1,5 +1,7 @@
 #include "../include/entradasalida-kernel.h"
 
+t_pcb* pcb_io;
+
 void conexion_entradasalida_kernel() {
     bool control = 1;
 	while (control) {
@@ -10,24 +12,28 @@ void conexion_entradasalida_kernel() {
 		case PAQUETE:
 			break;
 		case IO_GEN_SLEEP:
-			t_pcb* pcb_io = malloc(sizeof(t_pcb));
+			if (pcb_io != NULL) {
+				free(pcb_io->registros);
+				free(pcb_io);
+			}
+			pcb_io = malloc(sizeof(t_pcb));
 			pcb_io->registros = malloc(sizeof(t_registros));
 			uint32_t MAX_LENGTH = 128;
 			uint32_t unidades_de_trabajo;
 			char* nombre_interfaz = malloc(MAX_LENGTH);
-			char* nombre_recivido = malloc(MAX_LENGTH);
+			char* nombre_recibido = malloc(MAX_LENGTH);
 
-			if(!recv_io_gen_sleep(fd_kernel, pcb_io, &unidades_de_trabajo, nombre_recivido)) {
+			if(!recv_io_gen_sleep(fd_kernel, pcb_io, &unidades_de_trabajo, nombre_recibido)) {
 				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_GEN_SLEEP");
 			}
-			strcpy(nombre_interfaz, nombre_recivido);
+			strcpy(nombre_interfaz, nombre_recibido);
 
 			if(strcmp(nombre_interfaz, nombre) != 0) {
-				log_info(entradasalida_logger, "El nombre recibido no coincide con la interfaz. Puede estar ejecutandose en otro lado.");
+				log_info(entradasalida_logger, "El nombre recibido no coincide con la interfaz.");
 				free(pcb_io->registros);
 				free(pcb_io);
 				free(nombre_interfaz);
-				free(nombre_recivido);
+				free(nombre_recibido);
 				break;
 			}
 
@@ -41,10 +47,9 @@ void conexion_entradasalida_kernel() {
 			// Avisa que ya no esta mas interrumpido el proceso
 			send_fin_io(fd_kernel, pcb_io, nombre, strlen(nombre) + 1);
 
-			// free(pcb_io->registros);
-			// free(pcb_io);
-			// free(nombre_interfaz);
-			// free(nombre_recivido);
+			// Liberar memoria
+			free(nombre_interfaz);
+			free(nombre_recibido);
 			break;
 		case -1:
 			log_error(entradasalida_logger, "El servidor de Kernel no se encuentra activo.");

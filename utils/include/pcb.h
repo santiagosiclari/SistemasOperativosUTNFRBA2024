@@ -8,7 +8,7 @@
 // Estructura de los registros
 typedef struct {
     uint8_t AX, BX, CX, DX;
-    uint32_t EAX, EBX, ECX, EDX, SI, DI, PC;
+    uint32_t EAX, EBX, ECX, EDX, SI, DI;
 } t_registros;
 
 // Estructura del PCB

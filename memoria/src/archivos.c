@@ -22,11 +22,11 @@ t_list* leer_archivo(char* path) {
 	    log_info(memoria_logger, "Instruccion: %s", instruccion);
         list_add(instrucciones, instruccion); // Agregar a la lista
         contador++;
-        free(linea);
     }
 
     log_info(memoria_logger, "Lectura de archivo finalizada");
 
     fclose(archivo); // Cerrar el archivo
+    free(linea); // Libero memoria
     return instrucciones; // Devolver la lista de instrucciones
 }

@@ -14,6 +14,7 @@
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/io.h"
+#include "../../utils/include/pcb.h"
 
 extern t_queue* colaNew;
 extern t_queue* colaExec;

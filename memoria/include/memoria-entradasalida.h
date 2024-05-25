@@ -8,6 +8,7 @@
 #include "logs.h"
 
 #include "../include/file-descriptors.h"
+#include "../include/memoria-interfaces.h"
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"

@@ -1,6 +1,9 @@
 #include "../include/kernel-cpu-dispatch.h"
 
 char* nombre_interfaz;
+t_pcb* pcb_io_gen_sleep;
+
+pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 
 void conexion_kernel_cpu_dispatch() {
 	uint8_t MAX_LENGTH = 128;
@@ -56,8 +59,12 @@ void conexion_kernel_cpu_dispatch() {
 			pthread_mutex_unlock(&colaReadyMutex);
 			break;
 		case IO_GEN_SLEEP:
-			// mutex
-			t_pcb* pcb_io_gen_sleep = malloc(sizeof(t_pcb));
+			pthread_mutex_lock(&mutexIO);
+			if (pcb_io_gen_sleep != NULL) {
+				free(pcb_io_gen_sleep->registros);
+				free(pcb_io_gen_sleep);
+			}
+			pcb_io_gen_sleep = malloc(sizeof(t_pcb));
 			pcb_io_gen_sleep->registros = malloc(sizeof(t_registros));
 			uint32_t unidades_de_trabajo;
 			char* nombre_recibido = malloc(MAX_LENGTH);
@@ -81,11 +88,9 @@ void conexion_kernel_cpu_dispatch() {
 			pthread_mutex_unlock(&colaBlockedMutex);
 
 			send_io_gen_sleep(fd_interfaz, pcb_io_gen_sleep, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
+			pthread_mutex_unlock(&mutexIO);
 
-			// free(nombre_interfaz);
             free(nombre_recibido);
-			// free(pcb_io_gen_sleep->registros);
-            // free(pcb_io_gen_sleep);
 			break;
 		case -1:
 			log_error(kernel_logger, "El servidor de CPU (Dispatch) no se encuentra activo.");
@@ -96,4 +101,5 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		}
 	}
+	free(nombre_interfaz);
 }
