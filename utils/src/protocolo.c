@@ -478,16 +478,10 @@ bool recv_interfaz(int fd, char* nombre_interfaz) {
 }
 
 // Fin de IO
-t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
+t_buffer* serializar_fin_io(char* nombre, uint32_t length) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size =
-        sizeof(uint8_t) +     // pid
-        sizeof(uint32_t) +    // pc
-        sizeof(char) +        // estado
-        sizeof(uint32_t) +    // quantum
-        sizeof(uint8_t) +     // flag_int
-        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
         sizeof(uint32_t) +    // longitud del nombre
         length;               // nombre
 
@@ -495,37 +489,19 @@ t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
     buffer->offset = 0;
     buffer->stream = malloc(buffer->size);
 
-    cargar_uint8_al_buffer(buffer, pcb_fin_io->pid);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->pc);
-    cargar_char_al_buffer(buffer, pcb_fin_io->estado);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->quantum);
-    cargar_uint8_al_buffer(buffer, pcb_fin_io->flag_int);
-
-    // Registros
-    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->AX);
-    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->BX);
-    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->CX);
-    cargar_uint8_al_buffer(buffer, pcb_fin_io->registros->DX);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->EAX);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->EBX);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->ECX);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->EDX);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->SI);
-    cargar_uint32_al_buffer(buffer, pcb_fin_io->registros->DI);
-
     cargar_string_al_buffer(buffer, nombre);
 
     return buffer;
 }
 
-void send_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre, uint32_t length) {
-    t_buffer *buffer = serializar_fin_io(pcb_fin_io, nombre, length);
+void send_fin_io(int fd, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_fin_io(nombre, length);
     t_paquete *a_enviar = crear_paquete(FIN_IO, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre) {
+bool recv_fin_io(int fd, char* nombre) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -541,25 +517,6 @@ bool recv_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre) {
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
-
-    // Datos del pcb
-    pcb_fin_io->pid = extraer_uint8_del_buffer(paquete->buffer);
-    pcb_fin_io->pc = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->estado = extraer_char_del_buffer(paquete->buffer);
-    pcb_fin_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
-
-    // Registros
-    pcb_fin_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
-    pcb_fin_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
 
     char* received_nombre = deserializar_string(paquete->buffer);
     strcpy(nombre, received_nombre);

@@ -69,9 +69,9 @@ void send_interfaz(int fd, char* nombre_interfaz, uint32_t length);
 bool recv_interfaz(int fd, char* nombre_interfaz);
 
 // Finalizar IO
-t_buffer* serializar_fin_io(t_pcb* pcb_fin_io, char* nombre, uint32_t length);
-void send_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre, uint32_t length);
-bool recv_fin_io(int fd, t_pcb* pcb_fin_io, char* nombre);
+t_buffer* serializar_fin_io(char* nombre, uint32_t length);
+void send_fin_io(int fd, char* nombre, uint32_t length);
+bool recv_fin_io(int fd, char* nombre);
 
 // IO_GEN_SLEEP
 t_buffer* serializar_io_gen_sleep(t_pcb* pcb_io, uint32_t unidades_trabajo, char* nombre, uint32_t length);

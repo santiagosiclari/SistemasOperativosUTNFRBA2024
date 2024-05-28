@@ -24,10 +24,12 @@ void conexion_memoria_cpu() {
 			}
 			
 			usleep(RETARDO_RESPUESTA);
-
-			char* instruccion = list_get(instrucciones, pc);
-			send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1);
-			log_info(memoria_logger, "Instruccion %d enviada", pc);
+			
+			if (pc <= list_size(instrucciones)) {
+				char* instruccion = list_get(instrucciones, pc);
+				send_instruccion(fd_cpu, instruccion, strlen(instruccion) + 1);
+				log_info(memoria_logger, "Instruccion %d enviada", pc);
+			}
 
 			// free(instruccion);
 			break;

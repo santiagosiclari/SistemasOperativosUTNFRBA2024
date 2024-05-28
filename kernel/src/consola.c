@@ -17,7 +17,10 @@ void atender_instruccion (char* leido) {
 		t_pcb* pcb = crear_pcb();
 		send_pcb(fd_cpu_dispatch, pcb);
 		log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
+
+        pthread_mutex_lock(&colaNewMutex);
 		queue_push(colaNew, pcb);
+        pthread_mutex_unlock(&colaNewMutex);
 
 		send_iniciar_proceso(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
 		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
@@ -42,7 +45,6 @@ void atender_instruccion (char* leido) {
 
     // Liberar el array
     free(comando_consola);
-	// Falta liberar colas
 }
 
 void iniciar_consola(t_log* logger) {

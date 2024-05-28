@@ -1,7 +1,5 @@
 #include "../include/entradasalida-kernel.h"
 
-t_pcb* pcb_io;
-
 void conexion_entradasalida_kernel() {
     bool control = 1;
 	while (control) {
@@ -12,11 +10,7 @@ void conexion_entradasalida_kernel() {
 		case PAQUETE:
 			break;
 		case IO_GEN_SLEEP:
-			if (pcb_io != NULL) {
-				free(pcb_io->registros);
-				free(pcb_io);
-			}
-			pcb_io = malloc(sizeof(t_pcb));
+			t_pcb* pcb_io = malloc(sizeof(t_pcb));
 			pcb_io->registros = malloc(sizeof(t_registros));
 			uint32_t MAX_LENGTH = 128;
 			uint32_t unidades_de_trabajo;
@@ -39,15 +33,17 @@ void conexion_entradasalida_kernel() {
 
 			uint32_t usleep_final = TIEMPO_UNIDAD_TRABAJO * unidades_de_trabajo;
 			
-			log_info(entradasalida_logger, "Realizando el usleep de %d", usleep_final);
+			log_info(entradasalida_logger, "Realizando el usleep de %d - PID: %d", usleep_final, pcb_io->pid);
 			// Hace el sleep
 			usleep(usleep_final);
-			log_info(entradasalida_logger, "Finalizo el usleep de %d", usleep_final);
+			log_info(entradasalida_logger, "Finalizo el usleep de %d - PID: %d", usleep_final, pcb_io->pid);
 
 			// Avisa que ya no esta mas interrumpido el proceso
-			send_fin_io(fd_kernel, pcb_io, nombre, strlen(nombre) + 1);
+			send_fin_io(fd_kernel, nombre, strlen(nombre) + 1);
 
 			// Liberar memoria
+			free(pcb_io->registros);
+			free(pcb_io);
 			free(nombre_interfaz);
 			free(nombre_recibido);
 			break;

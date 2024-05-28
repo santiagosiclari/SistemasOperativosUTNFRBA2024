@@ -1,7 +1,6 @@
 #include "../include/kernel-cpu-dispatch.h"
 
 char* nombre_interfaz;
-t_pcb* pcb_io_gen_sleep;
 
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 
@@ -60,12 +59,7 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		case IO_GEN_SLEEP:
 			pthread_mutex_lock(&mutexIO);
-			// Revisar --> cuando hago free da errores
-			// if (pcb_io_gen_sleep != NULL) {
-			// 	free(pcb_io_gen_sleep->registros);
-			// 	free(pcb_io_gen_sleep);
-			// }
-			pcb_io_gen_sleep = malloc(sizeof(t_pcb));
+			t_pcb* pcb_io_gen_sleep = malloc(sizeof(t_pcb));
 			pcb_io_gen_sleep->registros = malloc(sizeof(t_registros));
 			uint32_t unidades_de_trabajo;
 			char* nombre_recibido = malloc(MAX_LENGTH);
@@ -73,6 +67,9 @@ void conexion_kernel_cpu_dispatch() {
 			if(!recv_io_gen_sleep(fd_cpu_dispatch, pcb_io_gen_sleep, &unidades_de_trabajo, nombre_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_GEN_SLEEP");
 			}
+			// No es necesario de utilizar --> Esta asi para que la IO sepa que proceso interrumpir
+			free(pcb_io_gen_sleep->registros);
+			free(pcb_io_gen_sleep);
 			strcpy(nombre_interfaz, nombre_recibido);
 			
 			// Busca el socket de la interfaz
@@ -80,20 +77,21 @@ void conexion_kernel_cpu_dispatch() {
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
-				log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_io_gen_sleep->pid);
-				queue_pop(colaExec);
+				t_pcb* pcb_recibido = queue_pop(colaExec);
+				log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_recibido->pid);
 				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 				}
 				pthread_mutex_lock(&colaBlockedMutex);
-				pcb_io_gen_sleep->estado = 'B';
-				queue_push(colaBlocked, pcb_io_gen_sleep);
+				pcb_recibido->estado = 'B';
+				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
+				// Envia PCB y lo necesario para la IO
+				send_io_gen_sleep(fd_interfaz, pcb_recibido, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 
-			send_io_gen_sleep(fd_interfaz, pcb_io_gen_sleep, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
 			pthread_mutex_unlock(&mutexIO);
 
             free(nombre_recibido);
