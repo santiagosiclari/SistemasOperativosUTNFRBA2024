@@ -13,6 +13,7 @@ int obtener_marco_asignado(uint8_t pid, int pagina, t_list *tabla_paginas);
 int obtener_marco_libre(t_bitarray* marcos_ocupados);
 void liberar_marco(t_bitarray* marcos_ocupados, int marco);
 void* direccion_de_marco(void* espacio_usuario, int marco, size_t tam_frame);
+int contar_marcos_libres(t_bitarray* marcos_ocupados);
 bool leer_memoria(void* espacio_usuario, uint32_t direccion_fisica, uint32_t tamanio, void* datos);
 bool escribir_memoria(void* espacio_usuario, uint32_t direccion_fisica, uint32_t tamanio, void* datos);
 

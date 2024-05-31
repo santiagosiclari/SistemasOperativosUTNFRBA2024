@@ -44,6 +44,18 @@ void conexion_memoria_cpu() {
 
             if (tabla_paginas == NULL) {
                 // Primera vez que se recibe una solicitud para este proceso
+                log_info(memoria_logger, "Creacion de Tabla de Paginas");
+                log_info(memoria_logger, "PID: %d - Tamaño: %d", pid, paginas_necesarias * TAM_PAGINA);
+
+                // Verificar si hay suficientes marcos disponibles antes de crear la tabla de páginas
+                int marcos_disponibles = contar_marcos_libres(marcos_ocupados);
+
+                if (paginas_necesarias > marcos_disponibles) {
+                    log_error(memoria_logger, "Out Of Memory: No hay suficientes marcos libres para el nuevo proceso");
+                    // send_out_of_memory(fd_cpu, pid_resize); // Falta hacer
+                    break;
+                }
+
                 tabla_paginas = list_create();
                 for (int i = 0; i < paginas_necesarias; i++) {
                     int marco = obtener_marco_libre(marcos_ocupados);
@@ -60,7 +72,19 @@ void conexion_memoria_cpu() {
                 // Ajustar la tabla de páginas existente
                 int paginas_actuales = list_size(tabla_paginas);
                 if (paginas_necesarias > paginas_actuales) {
+                    // Verificar si hay suficientes marcos disponibles antes de ampliar
+                    int marcos_disponibles = contar_marcos_libres(marcos_ocupados);
+                    int marcos_necesarios = paginas_necesarias - paginas_actuales;
+
+                    if (marcos_necesarios > marcos_disponibles) {
+                        log_error(memoria_logger, "Out Of Memory: No hay suficientes marcos libres para ampliar el proceso");
+                        // send_out_of_memory(fd_cpu, pid_resize); // Falta hacer
+                        break;
+                    }
+
                     // Aumentar tamaño --> añadir más marcos
+                    log_info(memoria_logger, "Ampliacion del Proceso");
+                    log_info(memoria_logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", pid, paginas_actuales * TAM_PAGINA, tamanio);
                     for (int i = paginas_actuales; i < paginas_necesarias; i++) {
                         int marco = obtener_marco_libre(marcos_ocupados);
                         if (marco != -1) {
@@ -73,6 +97,8 @@ void conexion_memoria_cpu() {
                     }
                 } else if (paginas_necesarias < paginas_actuales) {
                     // Disminuir tamaño --> liberar marcos
+                    log_info(memoria_logger, "Reduccion del Proceso");
+                    log_info(memoria_logger, "PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d", pid, paginas_actuales * TAM_PAGINA, tamanio);
                     for (int i = paginas_actuales - 1; i >= paginas_necesarias; i--) {
                         int marco = (intptr_t)list_remove(tabla_paginas, i);
                         liberar_marco(marcos_ocupados, marco);
