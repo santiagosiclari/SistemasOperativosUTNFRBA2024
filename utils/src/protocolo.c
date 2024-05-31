@@ -442,6 +442,70 @@ bool recv_instruccion(int fd, char* instruccion) {
     return true;
 }
 
+// TAM_PAGINA
+void send_tam_pagina(int fd, uint32_t tam_pagina) {
+    t_buffer *buffer = serializar_uint32(tam_pagina);
+    t_paquete *a_enviar = crear_paquete(RECIBIR_TAM_PAGINA, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_tam_pagina(int fd, uint32_t* tam_pagina) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    *tam_pagina = extraer_uint32_del_buffer(paquete->buffer);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
+// Resize
+void send_tamanio(int fd, uint32_t tamanio) {
+    t_buffer *buffer = serializar_uint32(tamanio);
+    t_paquete *a_enviar = crear_paquete(RECIBIR_TAMANIO, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_tamanio(int fd, uint32_t* tamanio) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    *tamanio = extraer_uint32_del_buffer(paquete->buffer);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
 // Interfaces IO
 // Envio de nombre de interfaz
 void send_interfaz(int fd, char* nombre_interfaz, uint32_t length) {

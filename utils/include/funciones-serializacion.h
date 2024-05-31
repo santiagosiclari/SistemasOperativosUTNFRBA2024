@@ -46,6 +46,7 @@ typedef enum {
     RECIBIR_PID, // Recibe el pid del proceso que se tiene que interrumpir
     RECIBIR_PID_A_BORRAR, // Recibe el pid del proceso a borrar
     RECIBIR_INSTRUCCION, // Recibe la instruccion a ejecutar
+    RECIBIR_TAM_PAGINA, // Recibe el tamaño de pagina para usar en la MMU
     RECIBIR_PID_A_INTERRUMPIR, // Recibe el pid a interrumpir
     // SET,
     // MOV_IN,
@@ -61,6 +62,7 @@ typedef enum {
 
     // Memoria
     RECIBIR_PC_PID, // Recibe la instruccion a enviar de un proceso para CPU
+    RECIBIR_TAMANIO, // Funcion RESIZE
     // INICIAR_PROCESO_K_M
     // FINALIZAR_PROCESO_K_M
     // AMPLIAR_PROCESO

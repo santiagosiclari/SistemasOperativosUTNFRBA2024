@@ -1,6 +1,10 @@
 #include "../include/main.h"
 
 t_list* listaInterfaces;
+void* espacio_usuario;
+t_bitarray* marcos_ocupados;
+int cant_paginas_marcos; // (?) No se si hace falta que sea global
+t_list* tabla_paginas_por_proceso;
 
 int main(int argc, char* argv[]) {
 
@@ -10,7 +14,21 @@ int main(int argc, char* argv[]) {
     // Inicializamos config
     init_memoria_config();
 
+    // Inicializamos estructuras de memoria y demas
+    // init_memoria(); --> Falta hacer --> deberia tener todo lo q esta abajo hasta el bitarray
+    
+    // Nombres de IOs
     listaInterfaces = list_create();
+
+    // Inicializamos estructuras de memoria
+    // Espacio contiguo de memoria
+    espacio_usuario = malloc(TAM_MEMORIA); // Espacio usuario
+
+    // Indica marcos libres y ocupados
+    cant_paginas_marcos = TAM_MEMORIA / TAM_PAGINA; // Cantidad de paginas --> Siempre es multiplo del tam de memoria
+    char* block_size = malloc(cant_paginas_marcos);
+    marcos_ocupados = bitarray_create_with_mode(block_size, cant_paginas_marcos, LSB_FIRST); // Marcos disponibles
+    tabla_paginas_por_proceso = list_create();
 
     // Conexiones
     // Iniciar servidor
@@ -22,6 +40,8 @@ int main(int argc, char* argv[]) {
     fd_cpu = esperar_cliente(memoria_logger, fd_memoria, "CPU");
     if (recv_handshake(fd_cpu, HANDSHAKE_MEMORIA)) {
         log_info(memoria_logger, "Handshake OK de %s\n", "CPU/Memoria");
+        // Envia el TAM_PAGINA para que la CPU lo use despues
+        send_tam_pagina(fd_cpu, TAM_PAGINA);
     } else {
         log_error(memoria_logger, "Handshake ERROR de %s\n", "CPU/Memoria");
     }

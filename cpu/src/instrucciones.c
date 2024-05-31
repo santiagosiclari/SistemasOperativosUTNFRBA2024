@@ -1,5 +1,60 @@
 #include "../include/instrucciones.h"
 
+// int mmu(int dir_logica) {
+//     // Realizo calculos
+// 	// int numeroPagina = floor(dir_logica / tam_pagina);
+// 	// int desplazamiento = dir_logica - numeroPagina * tam_pagina;
+
+// 	// t_tlb* tlb_encontrada = buscar_en_tlb(numeroPagina);
+// 	// if (tlb_encontrada != NULL){
+//     //     log_info(cpu_logger, "PID: %d- TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numeroPagina);
+// 	// 	   return (tlb_encontrada->numMarco) + desplazamiento;
+// 	// } else {
+// 	// 	log_info(cpu_logger, "PID: %d- TLB MISS - Pagina: %d", pcb_a_ejecutar->pid, numeroPagina);
+// 	// 	send --> mandar_numero_actualizado(conexion_memoria, numeroPagina, BUSCAR_MARCO);
+
+//     //     Esto lo vamos a hacer en los hilos de cpu-memoria
+// 	// 	op_code codOp = recibir_operacion(conexion_memoria);
+// 	// 	if(codOp == NUMERO){
+//     //  		log_debug(cpu_logger,"Entre a numero bien");
+// 	// 		int marco = 0;
+// 	// 		marco = recibir_numero(conexion_memoria);
+// 	// 		if(list_size(listaTLB)<config.cantidad_entradas_tlb){
+// 	// 			agregar_a_tlb(pcb_a_ejecutar->pid,numeroPagina,marco);
+// 	// 		}else{
+// 	// 			//el algoritmoSustitucion debe estar en un hilo?
+// 	// 			algoritmoSustitucion(pcb_a_ejecutar->pid,numeroPagina,marco);
+// 	// 		}
+// 	// 	  	return marco+desplazamiento;
+//     // 	}
+// 	// }
+
+// 	return -1;
+// }
+
+int mmu(int dir_logica) {
+    // Realizo calculos
+    uint32_t numero_pagina = dir_logica / tam_pagina;
+    uint32_t desplazamiento = dir_logica - numero_pagina * tam_pagina;
+
+    t_tlb* entrada_tlb = buscar_en_tlb(pcb_a_ejecutar->pid, numero_pagina);
+    if (entrada_tlb != NULL) {
+        // TLB Hit
+        log_info(cpu_logger, "PID: %d- TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
+        return (entrada_tlb->marco * tam_pagina) + desplazamiento;
+    } else {
+        // TLB Miss
+        log_info(cpu_logger, "PID: %d- TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
+        // send_num_pagina(fd_memoria, entrada_tlb->pid, numero_pagina);
+        return -1; // Significa que es un TLB Miss y esta esperando recibir el marco
+
+        // Esto se hace cuando recibe el codop RECIBIR_MARCO
+        // int marco = solicitar_marco_a_memoria(pid, numero_pagina);
+        // agregar_a_tlb(pid, numero_pagina, marco);
+        // return (marco * tam_pagina) + desplazamiento;
+    }
+}
+
 void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor) {
     if (strlen(registro) == 3 || !strcmp(registro, "SI") || !strcmp(registro, "DI") || !strcmp(registro, "PC")) {
         uint32_t *r_destino = dictionary_get(dictionary_registros, registro);
@@ -76,6 +131,11 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
             pcb_a_ejecutar->pc++;
         }
     }
+}
+
+void funcion_resize(uint32_t tamanio) {
+    send_tamanio(fd_memoria, tamanio);
+    log_info(cpu_logger, "Funcion Resize enviada a memoria: %d", tamanio);
 }
 
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {

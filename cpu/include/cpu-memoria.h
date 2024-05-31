@@ -19,6 +19,8 @@
 #include "../../utils/include/protocolo.h"
 
 extern t_pcb* pcb_a_ejecutar;
+extern uint32_t tam_pagina;
+extern t_list* lista_tlb;
 extern pthread_mutex_t pcbEjecutarMutex;
 
 void conexion_cpu_memoria();

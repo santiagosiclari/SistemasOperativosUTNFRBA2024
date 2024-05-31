@@ -1,5 +1,7 @@
 #include "../include/cpu-memoria.h"
 
+uint32_t tam_pagina;
+t_list* lista_tlb;
 pthread_mutex_t pcbEjecutarMutex = PTHREAD_MUTEX_INITIALIZER;
 
 void crear_diccionario(t_dictionary* dictionary_registros) {
@@ -18,12 +20,19 @@ void crear_diccionario(t_dictionary* dictionary_registros) {
 
 void conexion_cpu_memoria() {
     bool control = 1;
+	lista_tlb = list_create();
 	while (control) {
 		int cod_op = recibir_operacion(fd_memoria);
 		switch (cod_op) {
 		case MENSAJE:
 			break;
 		case PAQUETE:
+			break;
+		case RECIBIR_TAM_PAGINA:
+			if (!recv_tam_pagina(fd_memoria, &tam_pagina)) {
+				log_error(cpu_logger, "Hubo un problema al recibir el TAM_PAGINA");
+				break;
+			}
 			break;
 		case RECIBIR_INSTRUCCION:
 			t_dictionary* dictionary_registros;
@@ -65,6 +74,9 @@ void conexion_cpu_memoria() {
 				} else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
 					uint32_t valor_pc = atoi(instruccion_separada[2]);
 					funcion_jnz(dictionary_registros, instruccion_separada[1], valor_pc);
+				} else if (strcmp(instruccion_separada[0], "RESIZE") == 0) {
+					uint32_t tamanio = atoi(instruccion_separada[1]);
+					funcion_resize(tamanio);
 				} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 					uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
 					funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);

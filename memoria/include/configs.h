@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <commons/config.h>
 
@@ -11,7 +12,7 @@ extern t_config* memoria_config;
 // Declaracion archivos de configuracion
 extern char* PUERTO_ESCUCHA; //pdf dice int
 extern int TAM_MEMORIA;
-extern int TAM_PAGINA;
+extern uint32_t TAM_PAGINA;
 extern char* PATH_INSTRUCCIONES;
 extern int RETARDO_RESPUESTA;
 

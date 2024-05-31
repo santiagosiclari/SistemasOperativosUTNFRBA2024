@@ -63,6 +63,14 @@ bool recv_iniciar_proceso(int fd, uint8_t* pid, char* path);
 void send_instruccion(int fd, char* instruccion, uint32_t length);
 bool recv_instruccion(int fd, char* instruccion);
 
+// TAM_PAGINA
+void send_tam_pagina(int fd, uint32_t tam_pagina);
+bool recv_tam_pagina(int fd, uint32_t* tam_pagina);
+
+// RESIZE
+void send_tamanio(int fd, uint32_t tamanio);
+bool recv_tamanio(int fd, uint32_t* tamanio);
+
 // IOs
 // Nombre de interfaz
 void send_interfaz(int fd, char* nombre_interfaz, uint32_t length);
