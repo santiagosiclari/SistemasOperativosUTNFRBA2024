@@ -52,7 +52,7 @@ void conexion_memoria_cpu() {
 
                 if (paginas_necesarias > marcos_disponibles) {
                     log_error(memoria_logger, "Out Of Memory: No hay suficientes marcos libres para el nuevo proceso");
-                    // send_out_of_memory(fd_cpu, pid_resize); // Falta hacer
+                    send_out_of_memory(fd_cpu, pid_resize);
                     break;
                 }
 
@@ -78,7 +78,7 @@ void conexion_memoria_cpu() {
 
                     if (marcos_necesarios > marcos_disponibles) {
                         log_error(memoria_logger, "Out Of Memory: No hay suficientes marcos libres para ampliar el proceso");
-                        // send_out_of_memory(fd_cpu, pid_resize); // Falta hacer
+                        send_out_of_memory(fd_cpu, pid_resize);
                         break;
                     }
 
@@ -106,31 +106,49 @@ void conexion_memoria_cpu() {
                     }
                 }
             }
+            break;
+        case ESCRIBIR_MEMORIA:
+            uint8_t pid_a_escribir;
+            uint32_t direccion_fisica, tamanio_a_escribir;
+            void* datos;
+            if (!recv_escribir_memoria(fd_cpu, &pid_a_escribir, &direccion_fisica, &datos, &tamanio_a_escribir)) {
+                log_error(memoria_logger, "Hubo un error al recibir la instruccion de escribir memoria.");
+                break;
+            }
 
-			// Esto se hace cuando recibe una instruccion que necesite escribir en memoria de usuario --> va en otro lado
-			int pagina_actual = 0;
-            while (tamanio > 0) {
-				// Conseguir el marco asignado a esa pagina para poder escribir
-                t_list* tabla_paginas_actual = list_get(tabla_paginas_por_proceso, pid_resize);
-                int marco_libre = obtener_marco_asignado(pid_resize, pagina_actual, tabla_paginas_actual);
+            int pagina_actual = floor(direccion_fisica / TAM_PAGINA);
+            uint32_t desplazamiento_actual = direccion_fisica - pagina_actual * TAM_PAGINA; // Se utiliza para llevar un seguimiento del desplazamiento dentro de la página actual
+            while (tamanio_a_escribir > 0) {
+                // Conseguir el marco asignado a esa página para poder escribir
+                t_list* tabla_paginas_actual = list_get(tabla_paginas_por_proceso, pid_a_escribir);
+                int marco_libre = obtener_marco_asignado(pid_a_escribir, pagina_actual, tabla_paginas_actual);
                 if (marco_libre == -1) {
                     // No hay espacio en la página actual, pasar a la siguiente página
                     pagina_actual++;
+                    desplazamiento_actual = 0; // Reiniciar el desplazamiento para la nueva página
                     continue;
                 }
 
                 // Calcular el tamaño de datos a escribir en este marco
-                uint32_t tamanio_a_escribir = min(tamanio, TAM_PAGINA);
+                uint32_t bytes_disponibles_pagina = TAM_PAGINA - desplazamiento_actual;
+                uint32_t tamanio_a_escribir_actual = min(tamanio_a_escribir, bytes_disponibles_pagina);
 
                 // Escribir los datos en el marco actual
-                void* datos_a_escribir = "Prueba"; // Esto se cuando recibe una instruccion de CPU, por ahora es "Prueba"
-                escribir_memoria(espacio_usuario, marco_libre, tamanio_a_escribir, datos_a_escribir);
+                if (!escribir_memoria(espacio_usuario, marco_libre, desplazamiento_actual, tamanio_a_escribir_actual, datos)) {
+                    log_error(memoria_logger, "Error al escribir en la memoria.");
+                    break;
+                }
 
-                // Actualizar el tamaño restante y pasar al siguiente marco
-                tamanio -= tamanio_a_escribir;
-                pagina_actual++;
+                // Actualizar el tamaño restante y el desplazamiento dentro de la página actual
+                tamanio -= tamanio_a_escribir_actual;
+                desplazamiento_actual += tamanio_a_escribir_actual;
+
+                // Si hay más datos por escribir, pasar a la siguiente página
+                if (tamanio > 0) {
+                    pagina_actual++;
+                    desplazamiento_actual = 0; // Reiniciar el desplazamiento para la nueva página
+                }
             }
-			break;
 		case -1:
 			log_error(memoria_logger, "El CPU se desconecto. Terminando servidor");
 			control = 0;

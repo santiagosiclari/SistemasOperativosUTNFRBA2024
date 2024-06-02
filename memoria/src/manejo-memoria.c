@@ -40,15 +40,33 @@ int contar_marcos_libres(t_bitarray* marcos_ocupados) {
     return count;
 }
 
-bool leer_memoria(void* espacio_usuario, uint32_t direccion_fisica, uint32_t tamanio, void* datos) {
-    void* direccion = espacio_usuario + direccion_fisica;
-    memcpy(datos, direccion, tamanio);
+bool escribir_memoria(void* espacio_usuario, uint32_t numero_marco, uint32_t desplazamiento, uint32_t tamanio, void* datos) {
+    // Calcula la dirección física dentro del espacio de usuario
+    uint32_t direccion_fisica = numero_marco * TAM_PAGINA + desplazamiento;
+
+    // Verificación para evitar sobrepasar el espacio de usuario
+    if (direccion_fisica + tamanio > TAM_MEMORIA) {
+        return false; // Error: intento de escritura fuera de los límites
+    }
+
+    // Escribir en la memoria
+    memcpy(espacio_usuario + direccion_fisica, datos, tamanio);
+
     return true;
 }
 
-bool escribir_memoria(void* espacio_usuario, uint32_t direccion_fisica, uint32_t tamanio, void* datos) {
-    void* direccion = espacio_usuario + direccion_fisica;
-    memcpy(direccion, datos, tamanio);
+bool leer_memoria(void* espacio_usuario, uint32_t numero_marco, uint32_t desplazamiento, uint32_t tamanio, void* datos) {
+    // Calcula la dirección física dentro del espacio de usuario
+    uint32_t direccion_fisica = numero_marco * TAM_PAGINA + desplazamiento;
+
+    // Verificación para evitar sobrepasar el espacio de usuario
+    if (direccion_fisica + tamanio > TAM_MEMORIA) {
+        return false; // Error: intento de lectura fuera de los límites
+    }
+
+    // Leer de la memoria
+    memcpy(datos, espacio_usuario + direccion_fisica, tamanio);
+
     return true;
 }
 

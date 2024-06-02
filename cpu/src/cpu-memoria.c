@@ -71,6 +71,10 @@ void conexion_cpu_memoria() {
 					// Elimino \n cuando es un string la ultima parte de la instruccion
 					string_trim_right(&instruccion_separada[2]);
 					funcion_sub(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
+				} else if (strcmp(instruccion_separada[0], "MOV_IN") == 0) {
+					funcion_mov_in(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
+				} else if (strcmp(instruccion_separada[0], "MOV_OUT") == 0) {
+					funcion_mov_in(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 				} else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
 					uint32_t valor_pc = atoi(instruccion_separada[2]);
 					funcion_jnz(dictionary_registros, instruccion_separada[1], valor_pc);
@@ -150,6 +154,78 @@ void conexion_cpu_memoria() {
 			}
 			free(instruccion_separada);
 			dictionary_destroy(dictionary_registros);
+			break;
+        case RECIBIR_MARCO:
+			uint8_t pid_marco;
+			uint32_t numero_pagina, marco;
+			if (!recv_num_marco(fd_memoria, &pid_marco, &numero_pagina, &marco)) {
+				log_error(cpu_logger, "Error al recibir el marco de la memoria");
+				break;
+			}
+
+			agregar_a_tlb(pid_marco, numero_pagina, marco);
+
+			// Calculo para la instruccion que esperaba recibir algun dato, como un marco, etc.
+			uint32_t desplazamiento = instruccion_pendiente->direccion_logica - numero_pagina * tam_pagina;
+			uint32_t direccion_fisica = marco * tam_pagina + desplazamiento;
+
+			// Continuar la operación pendiente si existe
+			pthread_mutex_lock(&pcbEjecutarMutex);
+			pthread_mutex_lock(&instruccion_pendiente_mutex);
+			if (instruccion_pendiente != NULL) {
+				// Realizar la operación pendiente
+				if (strcmp(instruccion_pendiente->instruccion, "MOV_IN") == 0) {
+					uint32_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
+        			*reg_datos = direccion_fisica;
+    				pcb_a_ejecutar->pc++;
+				} else if (strcmp(instruccion_pendiente->instruccion, "MOV_OUT") == 0) {
+					uint32_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
+					send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, &(*reg_datos), sizeof(reg_datos));
+					pcb_a_ejecutar->pc++;
+				}
+				// Liberar la memoria de la instrucción pendiente
+				free(instruccion_pendiente->registro_datos);
+				free(instruccion_pendiente->registro_direccion);
+				free(instruccion_pendiente);
+				instruccion_pendiente = NULL;
+			}
+			pthread_mutex_unlock(&instruccion_pendiente_mutex);
+			pthread_mutex_unlock(&pcbEjecutarMutex);
+			break;
+		case RECIBIR_VALOR_MEMORIA:
+			// Recibir el valor de memoria y continuar la operación pendiente si existente
+			void* valor;
+    		uint8_t tam_dato;
+			if (!recv_valor_memoria(fd_memoria, &valor, &tam_dato)) {
+				log_error(cpu_logger, "Hubo un error al recibir el valor de memoria");
+				break;
+			}
+
+			// Continuar la operación pendiente si existe
+			pthread_mutex_lock(&pcbEjecutarMutex);
+			pthread_mutex_lock(&instruccion_pendiente_mutex);
+			if (instruccion_pendiente != NULL) {
+				// Realizar la operación pendiente
+				if (strcmp(instruccion_pendiente->instruccion, "MOV_IN") == 0) {
+					// Asignar el valor recibido al registro de datos dependiendo del tipo de dato
+					if (tam_dato == sizeof(uint32_t)) {
+						uint32_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
+						*reg_datos = *((uint32_t*)valor);
+					} else if (tam_dato == sizeof(uint8_t)) {
+						uint8_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
+						*reg_datos = *((uint8_t*)valor);
+					} else {
+						log_error(cpu_logger, "Tamaño de dato desconocido: %d", tam_dato);
+					}
+				}
+				// Liberar la memoria de la instrucción pendiente
+				free(instruccion_pendiente->registro_datos);
+				free(instruccion_pendiente->registro_direccion);
+				free(instruccion_pendiente);
+				instruccion_pendiente = NULL;
+			}
+			pthread_mutex_unlock(&instruccion_pendiente_mutex);
+			pthread_mutex_unlock(&pcbEjecutarMutex);
 			break;
 		case -1:
 			log_error(cpu_logger, "El servidor de Memoria no se encuentra activo.");

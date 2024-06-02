@@ -48,6 +48,9 @@ typedef enum {
     RECIBIR_INSTRUCCION, // Recibe la instruccion a ejecutar
     RECIBIR_TAM_PAGINA, // Recibe el tamaño de pagina para usar en la MMU
     RECIBIR_PID_A_INTERRUMPIR, // Recibe el pid a interrumpir
+    RECIBIR_VALOR_MEMORIA, // Para MOV_IN
+    RECIBIR_MARCO, // Para MOV_OUT
+    OUT_OF_MEMORY, // Para manejar errores de Out of Memory
     // SET,
     // MOV_IN,
     // MOV_OUT,
@@ -63,6 +66,8 @@ typedef enum {
     // Memoria
     RECIBIR_PC_PID, // Recibe la instruccion a enviar de un proceso para CPU
     RECIBIR_TAMANIO, // Funcion RESIZE
+    ESCRIBIR_MEMORIA, // Funciones MOV
+    NUMERO_PAGINA, // Para devolver el marco asociado a esa pagina
     // INICIAR_PROCESO_K_M
     // FINALIZAR_PROCESO_K_M
     // AMPLIAR_PROCESO
@@ -116,16 +121,13 @@ char* extraer_string_del_buffer(t_buffer* buffer);
 void cargar_char_al_buffer(t_buffer* buffer, char caracter);
 char extraer_char_del_buffer(t_buffer* buffer);
 
-// HACER
-// Despues hay q cambiar todos los int en config y usar uint8 o uint32
-// Sacariamos esto una vez hecho eso
-void cargar_int_al_buffer(t_buffer* buffer, int entero);
-int extraer_int_del_buffer(t_buffer* buffer);
-
 void cargar_uint8_al_buffer(t_buffer* buffer, uint8_t int8);
 uint8_t extraer_uint8_del_buffer(t_buffer* buffer);
 
 void cargar_uint32_al_buffer(t_buffer* buffer, uint32_t int32);
 uint32_t extraer_uint32_del_buffer(t_buffer* buffer);
+
+void cargar_void_al_buffer(t_buffer* buffer, void* datos, uint32_t tamanio_datos);
+void* extraer_void_del_buffer(t_buffer* buffer);
 
 #endif

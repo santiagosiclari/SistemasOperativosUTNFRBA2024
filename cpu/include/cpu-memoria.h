@@ -21,7 +21,10 @@
 extern t_pcb* pcb_a_ejecutar;
 extern uint32_t tam_pagina;
 extern t_list* lista_tlb;
+extern t_instruccion_pendiente* instruccion_pendiente;
+
 extern pthread_mutex_t pcbEjecutarMutex;
+extern pthread_mutex_t instruccion_pendiente_mutex;
 
 void conexion_cpu_memoria();
 void crear_diccionario(t_dictionary* dictionary_registros);

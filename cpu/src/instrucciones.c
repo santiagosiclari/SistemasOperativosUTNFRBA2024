@@ -32,7 +32,10 @@
 // 	return -1;
 // }
 
-int mmu(int dir_logica) {
+t_instruccion_pendiente* instruccion_pendiente;
+pthread_mutex_t instruccion_pendiente_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+uint32_t mmu(int dir_logica) {
     // Realizo calculos
     uint32_t numero_pagina = dir_logica / tam_pagina;
     uint32_t desplazamiento = dir_logica - numero_pagina * tam_pagina;
@@ -40,18 +43,13 @@ int mmu(int dir_logica) {
     t_tlb* entrada_tlb = buscar_en_tlb(pcb_a_ejecutar->pid, numero_pagina);
     if (entrada_tlb != NULL) {
         // TLB Hit
-        log_info(cpu_logger, "PID: %d- TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
+        log_info(cpu_logger, "PID: %d - TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
         return (entrada_tlb->marco * tam_pagina) + desplazamiento;
     } else {
         // TLB Miss
-        log_info(cpu_logger, "PID: %d- TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
-        // send_num_pagina(fd_memoria, entrada_tlb->pid, numero_pagina);
+        log_info(cpu_logger, "PID: %d - TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
+        send_num_pagina(fd_memoria, entrada_tlb->pid, numero_pagina, desplazamiento);
         return -1; // Significa que es un TLB Miss y esta esperando recibir el marco
-
-        // Esto se hace cuando recibe el codop RECIBIR_MARCO
-        // int marco = solicitar_marco_a_memoria(pid, numero_pagina);
-        // agregar_a_tlb(pid, numero_pagina, marco);
-        // return (marco * tam_pagina) + desplazamiento;
     }
 }
 
@@ -111,6 +109,57 @@ void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, cha
             *r_destino -= *r_origen;
         }
     }
+
+    pcb_a_ejecutar->pc++;
+}
+
+void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, char* registro_direccion) {
+    // Obtener la dirección lógica
+    uint32_t dir_logica = *(uint32_t*)dictionary_get(dictionary_registros, registro_direccion);
+
+    // Traducir la dirección lógica a física
+    int direccion_fisica = mmu(dir_logica);
+    if (direccion_fisica == -1) {
+        // TLB miss, guardar la instrucción pendiente y esperar a recibir el marco
+        pthread_mutex_lock(&instruccion_pendiente_mutex);
+        instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+        instruccion_pendiente->instruccion = "MOV_IN";
+        instruccion_pendiente->registro_datos = strdup(registro_datos);
+        instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+        instruccion_pendiente->direccion_logica = dir_logica;
+        pthread_mutex_unlock(&instruccion_pendiente_mutex);
+        return;
+    }
+
+    // TLB hit, continuar con la ejecución normal de mov_in
+    uint32_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
+    *reg_datos = direccion_fisica;
+
+    pcb_a_ejecutar->pc++;
+}
+
+void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccion, char* registro_datos) {
+    // Obtener la dirección lógica del registro correspondiente
+    uint32_t dir_logica = *(uint32_t*)dictionary_get(dictionary_registros, registro_direccion);
+
+    // Traducir la dirección lógica a física
+    uint32_t direccion_fisica = mmu(dir_logica);
+    if (direccion_fisica == -1) {
+        // TLB miss, guardar la instrucción pendiente y esperar a recibir el marco
+		pthread_mutex_lock(&instruccion_pendiente_mutex);
+        instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+        instruccion_pendiente->instruccion = "MOV_OUT";
+        instruccion_pendiente->registro_datos = strdup(registro_datos);
+        instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+        instruccion_pendiente->direccion_logica = dir_logica;
+		pthread_mutex_unlock(&instruccion_pendiente_mutex);
+        return;
+    }
+
+    // TLB hit, continuar con la ejecución normal de mov_out
+    uint32_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
+    // Escribir el valor del registro de datos en la dirección física correspondiente
+    send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, &(*reg_datos), sizeof(reg_datos));
 
     pcb_a_ejecutar->pc++;
 }

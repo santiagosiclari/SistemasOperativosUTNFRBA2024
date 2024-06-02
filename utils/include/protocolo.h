@@ -71,6 +71,29 @@ bool recv_tam_pagina(int fd, uint32_t* tam_pagina);
 void send_tamanio(int fd, uint32_t tamanio);
 bool recv_tamanio(int fd, uint32_t* tamanio);
 
+// Out of Memory
+void send_out_of_memory(int fd, uint8_t pid_oom);
+bool recv_out_of_memory(int fd, uint8_t* pid_oom);
+
+// Escribir memoria
+t_buffer* serializar_escribir_memoria(uint8_t pid_a_escribir, uint32_t direccion_fisica, void* datos, uint32_t tamanio_a_escribir);
+void send_escribir_memoria(int fd, uint8_t pid_a_escribir, uint32_t direccion_fisica, void* datos, uint32_t tamanio_a_escribir);
+bool recv_escribir_memoria(int fd, uint8_t* pid_a_escribir, uint32_t* direccion_fisica, void** datos, uint32_t* tamanio_a_escribir);
+
+// Numero de pagina
+t_buffer* serializar_pagina_marco(uint8_t pid, uint32_t num_pagina, uint32_t desplazamiento);
+void send_num_pagina(int fd, uint8_t pid, uint32_t num_pagina, uint32_t desplazamiento);
+bool recv_num_pagina(int fd, uint8_t* pid, uint32_t* num_pagina, uint32_t* desplazamiento);
+
+// RECIBIR_MARCO
+void send_num_marco(int fd, uint8_t pid_marco, uint32_t numero_pagina, uint32_t marco);
+bool recv_num_marco(int fd, uint8_t* pid_marco, uint32_t* numero_pagina, uint32_t* marco);
+
+// RECIBIR_VALOR_MEMORIA --> para MOV_IN
+t_buffer* serializar_valor_memoria(void* valor, uint8_t tam_dato);
+void send_valor_memoria(int fd, void* valor, uint8_t tam_dato);
+bool recv_valor_memoria(int fd, void** valor, uint8_t* tam_dato);
+
 // IOs
 // Nombre de interfaz
 void send_interfaz(int fd, char* nombre_interfaz, uint32_t length);

@@ -74,18 +74,6 @@ char extraer_char_del_buffer(t_buffer* buffer) {
     return value;
 }
 
-void cargar_int_al_buffer(t_buffer* buffer, int value) {
-    memcpy(buffer->stream + buffer->offset, &value, sizeof(int));
-    buffer->offset += sizeof(int);
-}
-
-int extraer_int_del_buffer(t_buffer* buffer) {
-    int value;
-    memcpy(&value, buffer->stream + buffer->offset, sizeof(int));
-    buffer->offset += sizeof(int);
-    return value;
-}
-
 void cargar_uint8_al_buffer(t_buffer* buffer, uint8_t value) {
     memcpy(buffer->stream + buffer->offset, &value, sizeof(uint8_t));
     buffer->offset += sizeof(uint8_t);
@@ -108,4 +96,27 @@ uint32_t extraer_uint32_del_buffer(t_buffer* buffer) {
     memcpy(&value, buffer->stream + buffer->offset, sizeof(uint32_t));
     buffer->offset += sizeof(uint32_t);
     return value;
+}
+
+void cargar_void_al_buffer(t_buffer* buffer, void* datos, uint32_t tamanio_datos) {
+    // Agregar la longitud de los datos
+    memcpy(buffer->stream + buffer->offset, &tamanio_datos, sizeof(uint32_t));
+    buffer->offset += sizeof(uint32_t);
+    // Agregar el string
+    memcpy(buffer->stream + buffer->offset, datos, tamanio_datos);
+    buffer->offset += tamanio_datos;
+}
+
+void* extraer_void_del_buffer(t_buffer* buffer) {
+    // Leer el largo del dato
+    uint32_t tamanio_datos;
+    memcpy(&tamanio_datos, buffer->stream + buffer->offset, sizeof(uint32_t));
+    buffer->offset += sizeof(uint32_t);
+
+    // Leer los datos
+    void* datos = malloc(tamanio_datos);
+    memcpy(datos, buffer->stream + buffer->offset, tamanio_datos);
+    buffer->offset += tamanio_datos;
+
+    return datos;
 }
