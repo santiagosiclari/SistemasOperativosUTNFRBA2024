@@ -1,17 +1,31 @@
 #include "../include/manejo-memoria.h"
 
-int obtener_marco_asignado(uint8_t pid, int pagina, t_list *tabla_paginas) {
+bool existe_tabla_paginas(uint8_t pid) {
+    bool existe = false;
+    for (int i = 0; i < list_size(tabla_paginas_por_proceso); i++) {
+        t_list* tabla_paginas = list_get(tabla_paginas_por_proceso, i);
+        // Verifica si la lista de tabla_paginas no es NULL y tiene el mismo PID
+        if (tabla_paginas != NULL && ((uint8_t) i) == pid) {
+            existe = true;
+            break;
+        }
+    }
+    return existe;
+}
+
+uint32_t obtener_marco_asignado(uint8_t pid, int pagina, t_list *tabla_paginas) {
     if (pagina >= list_size(tabla_paginas)) {
         // La página está fuera del rango de la tabla de páginas
         return -1;
     }
-    int marco = (intptr_t)list_get(tabla_paginas, pagina);
+
+    uint32_t *marco_ptr = list_get(tabla_paginas, pagina);
     log_info(memoria_logger, "Acceso a Tabla de Paginas");
-    log_info(memoria_logger, "PID: %d - Pagina: %d - Marco: %d", pid, pagina, marco);
-    return marco;
+    log_info(memoria_logger, "PID: %d - Pagina: %d - Marco: %d", pid, pagina, *marco_ptr);
+    return *marco_ptr;
 }
 
-int obtener_marco_libre(t_bitarray* marcos_ocupados) {
+uint32_t obtener_marco_libre(t_bitarray* marcos_ocupados) {
     for (size_t i = 0; i < bitarray_get_max_bit(marcos_ocupados); i++) {
         if (!bitarray_test_bit(marcos_ocupados, i)) {
             bitarray_set_bit(marcos_ocupados, i);

@@ -22,7 +22,7 @@ typedef struct {
 extern uint32_t tam_pagina;
 
 // MMU
-uint32_t mmu(int dir_logica);
+uint32_t mmu(uint32_t dir_logica);
 
 // Instrucciones
 void funcion_set(t_dictionary* dictionary_registros, char* registro, int valor);

@@ -97,26 +97,3 @@ uint32_t extraer_uint32_del_buffer(t_buffer* buffer) {
     buffer->offset += sizeof(uint32_t);
     return value;
 }
-
-void cargar_void_al_buffer(t_buffer* buffer, void* datos, uint32_t tamanio_datos) {
-    // Agregar la longitud de los datos
-    memcpy(buffer->stream + buffer->offset, &tamanio_datos, sizeof(uint32_t));
-    buffer->offset += sizeof(uint32_t);
-    // Agregar el string
-    memcpy(buffer->stream + buffer->offset, datos, tamanio_datos);
-    buffer->offset += tamanio_datos;
-}
-
-void* extraer_void_del_buffer(t_buffer* buffer) {
-    // Leer el largo del dato
-    uint32_t tamanio_datos;
-    memcpy(&tamanio_datos, buffer->stream + buffer->offset, sizeof(uint32_t));
-    buffer->offset += sizeof(uint32_t);
-
-    // Leer los datos
-    void* datos = malloc(tamanio_datos);
-    memcpy(datos, buffer->stream + buffer->offset, tamanio_datos);
-    buffer->offset += tamanio_datos;
-
-    return datos;
-}
