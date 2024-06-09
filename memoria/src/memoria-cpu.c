@@ -46,7 +46,7 @@ void conexion_memoria_cpu() {
                 log_info(memoria_logger, "Creacion de Tabla de Paginas");
                 log_info(memoria_logger, "PID: %d - Tamaño: %d", pid_resize, paginas_necesarias * TAM_PAGINA);
 
-                // Verificar si hay suficientes marcos disponibles antes de crear la tabla de páginas
+                // Verificar si hay suficientes marcos disponibles antes de crear la tabla de paginas
                 int marcos_disponibles = contar_marcos_libres(marcos_ocupados);
 
                 if (paginas_necesarias > marcos_disponibles) {
@@ -63,7 +63,7 @@ void conexion_memoria_cpu() {
                         uint32_t* marco_ptr = malloc(sizeof(uint32_t));
                         *marco_ptr = (uint32_t)marco;
                         list_add(tabla_paginas, marco_ptr);
-                        log_info(memoria_logger, "Marco %d asignado a la página %d", marco, i);
+                        log_info(memoria_logger, "Marco %d asignado a la pagina %d", marco, i);
                     } else {
                         log_error(memoria_logger, "No hay marcos libres disponibles");
                         break;
@@ -71,7 +71,7 @@ void conexion_memoria_cpu() {
                 }
                 list_add_in_index(tabla_paginas_por_proceso, pid_resize, tabla_paginas);
             } else {
-                // Ajustar la tabla de páginas existente
+                // Ajustar la tabla de paginas existente
 			    t_list* tabla_paginas = list_get(tabla_paginas_por_proceso, pid_resize);
                 int paginas_actuales = list_size(tabla_paginas);
                 if (paginas_necesarias > paginas_actuales) {
@@ -85,7 +85,7 @@ void conexion_memoria_cpu() {
                         break;
                     }
 
-                    // Aumentar tamaño --> añadir más marcos
+                    // Aumentar tamaño --> añadir mas marcos
                     log_info(memoria_logger, "Ampliacion del Proceso");
                     log_info(memoria_logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", pid_resize, paginas_actuales * TAM_PAGINA, tamanio);
                     for (int i = paginas_actuales; i < paginas_necesarias; i++) {
@@ -94,7 +94,7 @@ void conexion_memoria_cpu() {
                             uint32_t* marco_ptr = malloc(sizeof(uint32_t));
                             *marco_ptr = (uint32_t)marco;
                             list_add(tabla_paginas, marco_ptr);
-                            log_info(memoria_logger, "Marco %d asignado a la página %d", marco, i);
+                            log_info(memoria_logger, "Marco %d asignado a la pagina %d", marco, i);
                         } else {
                             log_error(memoria_logger, "No hay marcos libres disponibles");
                             break;
@@ -107,7 +107,7 @@ void conexion_memoria_cpu() {
                     for (int i = paginas_actuales - 1; i >= paginas_necesarias; i--) {
                         int marco = (intptr_t)list_remove(tabla_paginas, i);
                         liberar_marco(marcos_ocupados, marco);
-                        log_info(memoria_logger, "Marco %d liberado de la página %d", marco, i);
+                        log_info(memoria_logger, "Marco %d liberado de la pagina %d", marco, i);
                     }
                 }
             }
@@ -121,47 +121,63 @@ void conexion_memoria_cpu() {
                 break;
             }
 
-            log_info(memoria_logger, "MOV_OUT: Direccion fisica: %d, Tamaño: %d", direccion_fisica_escribir, tamanio_a_escribir);
-
             usleep(RETARDO_RESPUESTA);
             log_info(memoria_logger, "Acceso a espacio de usuario: PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", pid_a_escribir, direccion_fisica_escribir, tamanio_a_escribir);
 
-            int pagina_actual_escribir = floor(direccion_fisica_escribir / TAM_PAGINA);
-            uint32_t desplazamiento_actual_escribir = direccion_fisica_escribir - pagina_actual_escribir * TAM_PAGINA; // Se utiliza para llevar un seguimiento del desplazamiento dentro de la página actual
-            while (tamanio_a_escribir > 0) {
-                // Conseguir el marco asignado a esa página para poder escribir
-                t_list* tabla_paginas_actual_escribir = list_get(tabla_paginas_por_proceso, pid_a_escribir);
-                uint32_t marco_libre_escribir = obtener_marco_asignado(pid_a_escribir, pagina_actual_escribir, tabla_paginas_actual_escribir);
-                if (marco_libre_escribir == -1) {
-                    // No hay espacio en la página actual, pasar a la siguiente página
-                    pagina_actual_escribir++;
-                    desplazamiento_actual_escribir = 0; // Reiniciar el desplazamiento para la nueva página
-                    continue;
-                }
+            // Buscar marco
+            t_list* tabla_paginas_actual_escribir = list_get(tabla_paginas_por_proceso, pid_a_escribir);
+            int marco_asignado_escribir = floor(direccion_fisica_escribir / TAM_PAGINA);
+            int pagina_actual_escribir = obtener_pagina_asignada(pid_a_escribir, marco_asignado_escribir, tabla_paginas_actual_escribir);
+            if (pagina_actual_escribir == -1) {
+                log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_escribir, pid_a_escribir);
+                send_escritura_ok(fd_cpu, -1);
+                break;
+            }
+            log_info(memoria_logger, "Marco libre encontrado: %d para la pagina: %d", marco_asignado_escribir, pagina_actual_escribir);
 
+            // Para hacer un seguimiento del desplazamiento dentro de la pagina actual
+            uint32_t desplazamiento_actual_escribir = direccion_fisica_escribir % TAM_PAGINA;
+            
+            log_info(memoria_logger, "Pagina inicial: %d, Desplazamiento inicial: %d", pagina_actual_escribir, desplazamiento_actual_escribir);
+            
+            while (tamanio_a_escribir > 0) {
                 // Calcular el tamaño de datos a escribir en este marco
                 uint32_t bytes_disponibles_pagina = TAM_PAGINA - desplazamiento_actual_escribir;
                 uint32_t tamanio_a_escribir_actual = min(tamanio_a_escribir, bytes_disponibles_pagina);
+                log_info(memoria_logger, "Bytes disponibles en la pagina: %d, Tamaño a escribir actual: %d", bytes_disponibles_pagina, tamanio_a_escribir_actual);
 
                 // Escribir los datos en el marco actual
-                if (!escribir_memoria(espacio_usuario, marco_libre_escribir, desplazamiento_actual_escribir, tamanio_a_escribir_actual, datos_escribir)) {
+                if (!escribir_memoria(espacio_usuario, marco_asignado_escribir, desplazamiento_actual_escribir, tamanio_a_escribir_actual, datos_escribir)) {
                     log_error(memoria_logger, "Error al escribir en la memoria.");
                     // Error en escritura --> envia -1
                     send_escritura_ok(fd_cpu, -1);
                     break;
                 }
 
-                // Actualizar el tamaño restante y el desplazamiento dentro de la página actual
+                log_info(memoria_logger, "Escritura en memoria exitosa. Marco: %d, Desplazamiento: %d, Tamaño: %d", marco_asignado_escribir, desplazamiento_actual_escribir, tamanio_a_escribir_actual);
+
+                // Actualizar el tamanio restante
                 tamanio_a_escribir -= tamanio_a_escribir_actual;
                 desplazamiento_actual_escribir += tamanio_a_escribir_actual;
 
-                // Si hay más datos por escribir, pasar a la siguiente página
+                // Si hay mas datos por escribir, pasar a la siguiente pagina
                 if (tamanio_a_escribir > 0) {
-                    pagina_actual_escribir++;
-                    desplazamiento_actual_escribir = 0; // Reiniciar el desplazamiento para la nueva página
+                    if (desplazamiento_actual_escribir >= TAM_PAGINA) {
+                        pagina_actual_escribir++;
+                        marco_asignado_escribir = obtener_marco_asignado(pid_a_escribir, pagina_actual_escribir, tabla_paginas_actual_escribir);
+                        if (marco_asignado_escribir == -1) {
+                            log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_escribir, pid_a_escribir);
+                            send_escritura_ok(fd_cpu, -1);
+                            break;
+                        }
+                        desplazamiento_actual_escribir = 0; // Reiniciar el desplazamiento para la nueva pagina
+                        datos_escribir += tamanio_a_escribir_actual; // Datos restantes a escribir
+                        log_info(memoria_logger, "Pasando a la siguiente pagina: %d, Reiniciando desplazamiento a: %d", pagina_actual_escribir, desplazamiento_actual_escribir);
+                    }
                 }
             }
             // Escritura OK --> envia 1
+            log_info(memoria_logger, "Escritura en memoria completada correctamente para el PID: %d", pid_a_escribir);
             send_escritura_ok(fd_cpu, 1);
             free(datos_escribir);
             break;
@@ -176,26 +192,57 @@ void conexion_memoria_cpu() {
             usleep(RETARDO_RESPUESTA);
             log_info(memoria_logger, "Acceso a espacio de usuario: PID: %d - Accion: LEER - Direccion fisica: %u - Tamaño: %u", pid_a_leer, direccion_fisica_leer, tamanio_a_leer);
 
-            int pagina_actual_leer = floor(direccion_fisica_leer / TAM_PAGINA);
-            uint32_t desplazamiento_actual_leer = direccion_fisica_leer % TAM_PAGINA; // Ajuste de cálculo del desplazamiento dentro de la página
-
-            t_list* tabla_paginas_actual = list_get(tabla_paginas_por_proceso, pid_a_leer);
-            int marco_asignado_leer = obtener_marco_asignado(pid_a_leer, pagina_actual_leer, tabla_paginas_actual);
-            if (marco_asignado_leer == -1) {
-                log_error(memoria_logger, "No se encontró el marco asignado para la página %d del proceso %d.", pagina_actual_leer, pid_a_leer);
+            // Buscar marco
+            t_list* tabla_paginas_actual_leer = list_get(tabla_paginas_por_proceso, pid_a_leer);
+            int marco_asignado_leer = floor(direccion_fisica_leer / TAM_PAGINA);
+            int pagina_actual_leer = obtener_pagina_asignada(pid_a_leer, marco_asignado_leer, tabla_paginas_actual_leer);
+            if (pagina_actual_leer == -1) {
+                log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_leer, pid_a_leer);
                 break;
             }
+            log_info(memoria_logger, "Marco libre encontrado: %d para la pagina: %d", marco_asignado_leer, pagina_actual_leer);
+            uint32_t desplazamiento_actual_leer = direccion_fisica_leer % TAM_PAGINA;
 
             void* datos_leer = malloc(tamanio_a_leer);
 
-            if (!leer_memoria(espacio_usuario, marco_asignado_leer, desplazamiento_actual_leer, tamanio_a_leer, datos_leer)) {
-                log_error(memoria_logger, "Error al leer la memoria.");
-                free(datos_leer);
-                break;
+            // Leer los datos
+            uint32_t bytes_leidos = 0; // Para llevar la cuenta de los bytes leidos
+            while (bytes_leidos < tamanio_a_leer) {
+                // Calcular el tamanio de datos a leer en este marco
+                uint32_t bytes_disponibles_pagina = TAM_PAGINA - desplazamiento_actual_leer;
+                uint32_t tamanio_a_leer_actual = min(tamanio_a_leer - bytes_leidos, bytes_disponibles_pagina);
+
+                // Leer los datos en el marco actual
+                if (!leer_memoria(espacio_usuario, marco_asignado_leer, desplazamiento_actual_leer, tamanio_a_leer_actual, datos_leer + bytes_leidos)) {
+                    log_error(memoria_logger, "Error al leer la memoria.");
+                    free(datos_leer);
+                    // send_valor_memoria(fd_cpu, NULL, 0); // Envia datos nulos en caso de error --> Revisar
+                    break;
+                }
+
+                // Actualizar la cantidad de bytes leidos y el desplazamiento
+                bytes_leidos += tamanio_a_leer_actual;
+                desplazamiento_actual_leer = 0; // Desplazamiento se reinicia para la proxima pagina
+
+                // Si hay mas datos por leer, pasar a la siguiente pagina
+                if (bytes_leidos < tamanio_a_leer) {
+                    pagina_actual_leer++;
+                    marco_asignado_leer = obtener_marco_asignado(pid_a_leer, pagina_actual_leer, tabla_paginas_actual_leer);
+                    if (marco_asignado_leer == -1) {
+                        log_error(memoria_logger, "No se encontro un marco asignado para la pagina %d del proceso %d.", pagina_actual_leer, pid_a_leer);
+                        free(datos_leer);
+                        // send_valor_memoria(fd_cpu, NULL, 0); // Envia NULL en caso de error --> Revisar
+                        break;
+                    }
+                }
             }
 
-            send_valor_memoria(fd_cpu, datos_leer, tamanio_a_leer);
+            // Si la lectura se realizo correctamente, enviar los datos al CPU
+            if (bytes_leidos == tamanio_a_leer) {
+                send_valor_memoria(fd_cpu, datos_leer, tamanio_a_leer);
+            }
 
+            // Liberar la memoria reservada para los datos leidos
             free(datos_leer);
             break;
         case NUMERO_PAGINA:
