@@ -22,6 +22,7 @@ void conexion_kernel_cpu_dispatch() {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
 			} else {
 				log_info(kernel_logger, "Proceso a finalizar: %d", pid_a_borrar);
+				send_fin_proceso(fd_memoria, pid_a_borrar);
 			}
 
     		pthread_mutex_lock(&colaExecMutex);

@@ -59,6 +59,7 @@ typedef enum {
     ESCRIBIR_MEMORIA, // Funciones MOV
     LEER_MEMORIA, // Funciones MOV
     NUMERO_PAGINA, // Para devolver el marco asociado a esa pagina
+    FIN_PROCESO, // Se recibe de Kernel y se tienen que marcar los marcos como libres de ese proceso
     // COPY_STRING,
     // WAIT,
     // SIGNAL,

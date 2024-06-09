@@ -880,6 +880,38 @@ bool recv_escritura_ok(int fd, uint8_t* escritura_ok) {
     return true;
 }
 
+// FIN_PROCESO
+void send_fin_proceso(int fd, uint8_t pid_fin) {
+    t_buffer *buffer = serializar_uint8(pid_fin);
+    t_paquete *a_enviar = crear_paquete(FIN_PROCESO, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_fin_proceso(int fd, uint8_t* pid_fin) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    *pid_fin = extraer_uint8_del_buffer(paquete->buffer);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
 // Interfaces IO
 // Envio de nombre de interfaz
 void send_interfaz(int fd, char* nombre_interfaz, uint32_t length) {

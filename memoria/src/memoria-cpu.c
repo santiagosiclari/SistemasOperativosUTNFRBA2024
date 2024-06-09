@@ -133,7 +133,6 @@ void conexion_memoria_cpu() {
                 send_escritura_ok(fd_cpu, -1);
                 break;
             }
-            log_info(memoria_logger, "Marco libre encontrado: %d para la pagina: %d", marco_asignado_escribir, pagina_actual_escribir);
 
             // Para hacer un seguimiento del desplazamiento dentro de la pagina actual
             uint32_t desplazamiento_actual_escribir = direccion_fisica_escribir % TAM_PAGINA;
@@ -200,7 +199,6 @@ void conexion_memoria_cpu() {
                 log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_leer, pid_a_leer);
                 break;
             }
-            log_info(memoria_logger, "Marco libre encontrado: %d para la pagina: %d", marco_asignado_leer, pagina_actual_leer);
             uint32_t desplazamiento_actual_leer = direccion_fisica_leer % TAM_PAGINA;
 
             void* datos_leer = malloc(tamanio_a_leer);

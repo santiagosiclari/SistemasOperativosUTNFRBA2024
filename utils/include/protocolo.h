@@ -103,6 +103,10 @@ bool recv_valor_memoria(int fd, void** valor, uint8_t* tam_dato);
 void send_escritura_ok(int fd, uint8_t escritura_ok);
 bool recv_escritura_ok(int fd, uint8_t* escritura_ok);
 
+// FIN_PROCESO
+void send_fin_proceso(int fd, uint8_t pid_fin);
+bool recv_fin_proceso(int fd, uint8_t* pid_fin);
+
 // IOs
 // Nombre de interfaz
 void send_interfaz(int fd, char* nombre_interfaz, uint32_t length);

@@ -51,6 +51,27 @@ void conexion_memoria_kernel() {
 			free(path_recivido);
 			free(path_concatenado);
             break;
+		case FIN_PROCESO:
+            uint8_t pid_fin;
+			if (!recv_fin_proceso(fd_kernel, &pid_fin)) {
+				log_error(memoria_logger, "Hubo un error al recibir el PID del proceso a finalizar");
+				break;
+			}
+
+            // Liberar marcos
+            t_list* tabla_paginas_borrar = list_get(tabla_paginas_por_proceso, pid_fin);
+            if (tabla_paginas_borrar != NULL) {
+                while (!list_is_empty(tabla_paginas_borrar)) {
+					int* marco_asignado = list_remove(tabla_paginas_borrar, 0);
+					if (marco_asignado != NULL) {
+						liberar_marco(marcos_ocupados, *marco_asignado);
+						free(marco_asignado); // Liberar la memoria del puntero
+					}
+				}
+                list_destroy(tabla_paginas_borrar);
+                // list_remove(tabla_paginas_por_proceso, pid_fin); // Revisar porque si lo dejo no anda
+            }
+            break;
 		case -1:
 			log_error(memoria_logger, "El Kernel se desconecto. Terminando servidor");
 			control = 0;
