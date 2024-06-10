@@ -4,6 +4,7 @@ t_queue* colaNew;
 t_queue* colaReady;
 t_queue* colaBlocked;
 t_queue* colaExec;
+t_queue* colaAux;
 
 t_list* listaInterfaces;
 
@@ -18,6 +19,7 @@ int main(int argc, char* argv[]) {
     colaReady = queue_create();
     colaBlocked = queue_create();
     colaExec = queue_create();
+    colaAux = queue_create();
 
     // Creamos lista de interfaces
     listaInterfaces = list_create();

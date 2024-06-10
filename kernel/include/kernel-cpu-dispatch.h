@@ -7,6 +7,7 @@
 #include "configs.h"
 #include "logs.h"
 #include <pthread.h>
+#include <commons/temporal.h>
 #include <commons/collections/queue.h>
 #include <commons/collections/list.h>
 
@@ -23,6 +24,7 @@ extern t_queue* colaBlocked;
 
 extern pthread_t quantum_thread;
 
+extern t_temporal* tiempo_vrr;
 extern int control_planificacion;
 
 extern t_list* listaInterfaces;

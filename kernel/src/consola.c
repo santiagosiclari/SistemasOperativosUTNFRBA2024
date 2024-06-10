@@ -30,7 +30,7 @@ void atender_instruccion (char* leido) {
 		} else if(strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
 			planificacionRR();
 		} else if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
-			// planificacionVRR();
+			planificacionVRR();
 		}
 	} else {
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");

@@ -4,8 +4,11 @@ pthread_mutex_t colaNewMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaReadyMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaBlockedMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t colaExecMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t colaAuxMutex = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t quantum_thread;
+
+t_temporal* tiempo_vrr;
 
 int control_planificacion;
 
@@ -22,10 +25,8 @@ void destruir_pcb(void* ptr_pcb) {
 
 void* quantum(void* arg) {
     t_pcb* pcb = (t_pcb*)arg;
-    
     usleep(pcb->quantum);
     send_interrupcion(fd_cpu_interrupt, pcb->pid);
-
     return NULL;
 }
 
@@ -69,6 +70,7 @@ void planificacionFIFO() {
     queue_clean_and_destroy_elements(colaReady, destruir_pcb);
     queue_clean_and_destroy_elements(colaExec, destruir_pcb);
     queue_clean_and_destroy_elements(colaBlocked, destruir_pcb);
+    queue_clean_and_destroy_elements(colaAux,destruir_pcb);
 }
 
 void planificacionRR() {
@@ -111,4 +113,87 @@ void planificacionRR() {
     queue_clean_and_destroy_elements(colaReady, destruir_pcb);
     queue_clean_and_destroy_elements(colaExec, destruir_pcb);
     queue_clean_and_destroy_elements(colaBlocked, destruir_pcb);
+    queue_clean_and_destroy_elements(colaAux, destruir_pcb);
+}
+
+void planificacionVRR() {
+    // El control_planificacion se cambia a 0 una vez que se elimina el proceso y todas las queues estan vacias
+    // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
+    control_planificacion = 1;
+    while (control_planificacion)
+    {
+        while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
+            pthread_mutex_lock(&colaNewMutex);
+            t_pcb* pcb_nuevo = queue_pop(colaNew);
+            pthread_mutex_unlock(&colaNewMutex);
+            pcb_nuevo->estado = 'R';
+            pthread_mutex_lock(&colaReadyMutex);
+            queue_push(colaReady, pcb_nuevo);
+            pthread_mutex_unlock(&colaReadyMutex);
+            log_info(kernel_logger, "Se paso el proceso %d de New a Ready", pcb_nuevo->pid);
+        }
+
+        if(queue_size(colaAux) > 0 && queue_size(colaExec) == 0) {
+            //Ejecutar los procesos de esta cola
+            t_pcb* pcb;
+
+            // Desalojamos el que se está ejecutando
+            pthread_mutex_lock(&colaReadyMutex);
+            pthread_mutex_lock(&colaExecMutex);
+            if(!queue_is_empty(colaExec))
+            {
+                pcb = queue_pop(colaExec);
+                pcb->estado = 'R';
+                queue_push(colaReady, pcb);
+            }
+            pthread_mutex_unlock(&colaExecMutex);
+            pthread_mutex_unlock(&colaReadyMutex);
+
+            // Ejecutamos el proceso de la cola
+            pthread_mutex_lock(&colaExecMutex);
+            pthread_mutex_lock(&colaAuxMutex);
+            pcb = queue_pop(colaAux);
+            pthread_mutex_unlock(&colaAuxMutex);
+            pcb->estado = 'E';
+            queue_push(colaExec, pcb);
+            pthread_mutex_unlock(&colaExecMutex);
+
+            // Manda PID del proceso a ejecutar
+            send_pid(fd_cpu_dispatch, pcb->pid);
+            tiempo_vrr = temporal_create();
+            log_info(kernel_logger, "Se paso el proceso %d de Aux a Exec", pcb->pid);
+
+            // Quantum
+            if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
+                controlar_quantum(pcb);
+            }
+        } else {
+            if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
+                pthread_mutex_lock(&colaExecMutex);
+                pthread_mutex_lock(&colaReadyMutex);
+                t_pcb* pcb = queue_pop(colaReady);
+                pthread_mutex_unlock(&colaReadyMutex);
+                pcb->estado = 'E';
+                queue_push(colaExec, pcb);
+                pthread_mutex_unlock(&colaExecMutex);
+
+                // Manda PID del proceso a ejecutar
+                send_pid(fd_cpu_dispatch, pcb->pid);
+                // Aca empeza a contar el tiempo de ejecucion --> crear variable de tiempo
+                tiempo_vrr = temporal_create();
+                log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
+                
+                // Quantum
+                if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
+                    controlar_quantum(pcb);
+                }
+            }
+        }
+    }
+
+    queue_clean_and_destroy_elements(colaNew, destruir_pcb);
+    queue_clean_and_destroy_elements(colaReady, destruir_pcb);
+    queue_clean_and_destroy_elements(colaExec, destruir_pcb);
+    queue_clean_and_destroy_elements(colaBlocked, destruir_pcb);
+    queue_clean_and_destroy_elements(colaAux, destruir_pcb);
 }

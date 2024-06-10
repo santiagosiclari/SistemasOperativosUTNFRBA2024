@@ -52,6 +52,7 @@ extern t_queue* colaNew;
 extern t_queue* colaReady;
 extern t_queue* colaBlocked;
 extern t_queue* colaExec;
+extern t_queue* colaAux;
 
 extern t_list* listaInterfaces;
 
