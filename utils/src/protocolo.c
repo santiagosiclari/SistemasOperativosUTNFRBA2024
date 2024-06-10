@@ -1092,3 +1092,111 @@ bool recv_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t* unidades_trabajo, char* 
 
     return true;
 }
+
+// IO_STDIN_READ y IO_STDOUT_WRITE
+// Serializacion sirve para las dos
+// recv tambien
+t_buffer* serializar_io_stdin_stdout(t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
+        sizeof(uint32_t) +    // direccion_fisica
+        sizeof(uint32_t) +    // tamanio_maximo
+        sizeof(uint32_t) +    // longitud del nombre
+        length;               // nombre
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_io->pid);
+    cargar_uint32_al_buffer(buffer, pcb_io->pc);
+    cargar_char_al_buffer(buffer, pcb_io->estado);
+    cargar_uint32_al_buffer(buffer, pcb_io->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_io->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->DI);
+
+    cargar_uint32_al_buffer(buffer, direccion_fisica);
+    cargar_uint32_al_buffer(buffer, tamanio_maximo);
+    cargar_string_al_buffer(buffer, nombre);
+
+    return buffer;
+}
+
+void send_io_stdin_read(int fd, t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_io_stdin_stdout(pcb_io, direccion_fisica, tamanio_maximo, nombre, length);
+    t_paquete *a_enviar = crear_paquete(IO_STDIN_READ, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+void send_io_stdout_write(int fd, t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_io_stdin_stdout(pcb_io, direccion_fisica, tamanio_maximo, nombre, length);
+    t_paquete *a_enviar = crear_paquete(IO_STDOUT_WRITE, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_io_stdin_stdout(int fd, t_pcb* pcb_io, uint32_t* direccion_fisica, uint32_t* tamanio_maximo, char* nombre) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    // Datos del pcb
+    pcb_io->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
+
+    *direccion_fisica = extraer_uint32_del_buffer(paquete->buffer);
+    *tamanio_maximo = extraer_uint32_del_buffer(paquete->buffer);
+
+    char* received_nombre = deserializar_string(paquete->buffer);
+    strcpy(nombre, received_nombre);
+    free(received_nombre);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}

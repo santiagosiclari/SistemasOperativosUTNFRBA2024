@@ -19,9 +19,11 @@ typedef struct {
     uint32_t direccion_logica;
     uint32_t tamanio;
     void* datos;
+    char* nombre_interfaz;
 } t_instruccion_pendiente;
 
 extern uint32_t tam_pagina;
+extern bool esperando_datos;
 
 // MMU
 uint32_t mmu(uint32_t dir_logica);
@@ -36,6 +38,8 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
 void funcion_resize(uint32_t tamanio);
 void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio);
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
+void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio);
+void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio);
 void funcion_exit();
 
 extern t_instruccion_pendiente* instruccion_pendiente;

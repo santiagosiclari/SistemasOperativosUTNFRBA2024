@@ -106,6 +106,16 @@ void conexion_cpu_memoria() {
 				} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 					uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
 					funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);
+				} else if (strcmp(instruccion_separada[0], "IO_STDIN_READ") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[3]);
+					funcion_io_stdin_read(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
+					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
+				} else if (strcmp(instruccion_separada[0], "IO_STDOUT_WRITE") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[3]);
+					funcion_io_stdout_write(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
+					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
 				} else if (strcmp(instruccion_separada[0], "EXIT") == 0) {
 					funcion_exit();
 				} else {
@@ -227,9 +237,27 @@ void conexion_cpu_memoria() {
                     } else if (strcmp(instruccion_pendiente->registro_datos, "DI") == 0) {
                         send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->datos, instruccion_pendiente->tamanio);
                     }
+				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0) {
+    				send_io_stdin_read(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
+				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDOUT_WRITE") == 0) {
+    				send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
 				}
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
+
+			// Interrupcion por IO
+			if(pcb_a_ejecutar->flag_int == 1) {
+				log_info(cpu_logger, "Proceso %d fue interrumpido por una IO", pcb_a_ejecutar->pid);
+				free(instruccion);
+				free(instruccion_recibida);
+				for (int i = 0; instruccion_separada[i] != NULL; i++) {
+					free(instruccion_separada[i]);
+				}
+				free(instruccion_separada);
+				dictionary_destroy(dictionary_registros);
+				break;
+			}
+			
 			break;
 		case RECIBIR_VALOR_MEMORIA: // Para MOV_IN y COPY_STRING
 			// Recibir el valor de memoria y continuar la operación pendiente si existente

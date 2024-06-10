@@ -122,4 +122,10 @@ t_buffer* serializar_io_gen_sleep(t_pcb* pcb_io, uint32_t unidades_trabajo, char
 void send_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t unidades_trabajo, char* nombre, uint32_t length);
 bool recv_io_gen_sleep(int fd, t_pcb* pcb_io, uint32_t* unidades_trabajo, char* nombre);
 
+// IO_STDIN_READ y IO_STDOUT_WRITE
+t_buffer* serializar_io_stdin_stdout(t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length);
+void send_io_stdin_read(int fd, t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length);
+void send_io_stdout_write(int fd, t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length);
+bool recv_io_stdin_stdout(int fd, t_pcb* pcb_io, uint32_t* direccion_fisica, uint32_t* tamanio_maximo, char* nombre);
+
 #endif

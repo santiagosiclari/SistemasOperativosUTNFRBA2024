@@ -1,5 +1,13 @@
 #include "../include/memoria-cpu.h"
 
+void list_add_in_index_safe(t_list* list, int index, void* element) {
+    // NULL si el indice es mayor que el tamanio actual
+    while (list_size(list) < index) {
+        list_add(list, NULL);
+    }
+    list_add_in_index(list, index, element);
+}
+
 void conexion_memoria_cpu() {
     bool control = 1;
 	while (control) {
@@ -69,7 +77,7 @@ void conexion_memoria_cpu() {
                         break;
                     }
                 }
-                list_add_in_index(tabla_paginas_por_proceso, pid_resize, tabla_paginas);
+                list_add_in_index_safe(tabla_paginas_por_proceso, pid_resize, tabla_paginas);
             } else {
                 // Ajustar la tabla de paginas existente
 			    t_list* tabla_paginas = list_get(tabla_paginas_por_proceso, pid_resize);
