@@ -87,7 +87,7 @@ void conexion_kernel_cpu_dispatch() {
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
-					//pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
 					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
 					pcb_recibido->quantum -= tiempo_restante;
