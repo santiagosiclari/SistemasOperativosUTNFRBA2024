@@ -26,8 +26,9 @@ int main(int argc, char* argv[]) {
 
     // Indica marcos libres y ocupados
     cant_paginas_marcos = TAM_MEMORIA / TAM_PAGINA; // Cantidad de paginas --> Siempre es multiplo del tam de memoria
-    char* block_size = malloc(cant_paginas_marcos);
-    marcos_ocupados = bitarray_create_with_mode(block_size, cant_paginas_marcos, LSB_FIRST); // Marcos disponibles
+    void* bitmap_espacio_usuario = malloc(cant_paginas_marcos / 8);
+    memset(bitmap_espacio_usuario, 0, cant_paginas_marcos / 8);  // Asegurarse de que esté inicializado a 0
+    marcos_ocupados = bitarray_create_with_mode(bitmap_espacio_usuario, cant_paginas_marcos / 8, LSB_FIRST); // Marcos disponibles
     tabla_paginas_por_proceso = list_create();
 
     // Conexiones

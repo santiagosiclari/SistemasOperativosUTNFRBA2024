@@ -1,54 +1,33 @@
 #include "../include/instrucciones.h"
 
-// int mmu(int dir_logica) {
-//     // Realizo calculos
-// 	// int numeroPagina = floor(dir_logica / tam_pagina);
-// 	// int desplazamiento = dir_logica - numeroPagina * tam_pagina;
-
-// 	// t_tlb* tlb_encontrada = buscar_en_tlb(numeroPagina);
-// 	// if (tlb_encontrada != NULL){
-//     //     log_info(cpu_logger, "PID: %d- TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numeroPagina);
-// 	// 	   return (tlb_encontrada->numMarco) + desplazamiento;
-// 	// } else {
-// 	// 	log_info(cpu_logger, "PID: %d- TLB MISS - Pagina: %d", pcb_a_ejecutar->pid, numeroPagina);
-// 	// 	send --> mandar_numero_actualizado(conexion_memoria, numeroPagina, BUSCAR_MARCO);
-
-//     //     Esto lo vamos a hacer en los hilos de cpu-memoria
-// 	// 	op_code codOp = recibir_operacion(conexion_memoria);
-// 	// 	if(codOp == NUMERO){
-//     //  		log_debug(cpu_logger,"Entre a numero bien");
-// 	// 		int marco = 0;
-// 	// 		marco = recibir_numero(conexion_memoria);
-// 	// 		if(list_size(listaTLB)<config.cantidad_entradas_tlb){
-// 	// 			agregar_a_tlb(pcb_a_ejecutar->pid,numeroPagina,marco);
-// 	// 		}else{
-// 	// 			//el algoritmoSustitucion debe estar en un hilo?
-// 	// 			algoritmoSustitucion(pcb_a_ejecutar->pid,numeroPagina,marco);
-// 	// 		}
-// 	// 	  	return marco+desplazamiento;
-//     // 	}
-// 	// }
-
-// 	return -1;
-// }
-
 t_instruccion_pendiente* instruccion_pendiente;
 pthread_mutex_t instruccion_pendiente_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-uint32_t mmu(int dir_logica) {
+uint32_t mmu(uint32_t dir_logica) {
     // Realizo calculos
     uint32_t numero_pagina = dir_logica / tam_pagina;
     uint32_t desplazamiento = dir_logica - numero_pagina * tam_pagina;
+
+    log_info(cpu_logger, "Dir logica: %u, Tam pagina: %u, Numero de pagina: %u, Desplazamiento: %u", dir_logica, tam_pagina, numero_pagina, desplazamiento);
 
     t_tlb* entrada_tlb = buscar_en_tlb(pcb_a_ejecutar->pid, numero_pagina);
     if (entrada_tlb != NULL) {
         // TLB Hit
         log_info(cpu_logger, "PID: %d - TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
+        // Mover marco para LRU
+        if (strcmp(ALGORITMO_TLB, "LRU") == 0) {
+            // El marco mas recientemente usado va a ir al final de la lista (index: list_size(lista_tlb) - 1)
+            // mientras que el menos recientemente usado va al principio (index: 0)
+            int index = buscar_indice_en_lista(lista_tlb, entrada_tlb);
+            if (index != -1) {
+                mover_elemento_al_principio(lista_tlb, index);
+            }
+        }
         return (entrada_tlb->marco * tam_pagina) + desplazamiento;
     } else {
         // TLB Miss
-        log_info(cpu_logger, "PID: %d - TLB HIT - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
-        send_num_pagina(fd_memoria, entrada_tlb->pid, numero_pagina, desplazamiento);
+        log_info(cpu_logger, "PID: %d - TLB MISS - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
+        send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
         return -1; // Significa que es un TLB Miss y esta esperando recibir el marco
     }
 }
@@ -114,54 +93,107 @@ void funcion_sub(t_dictionary* dictionary_registros, char* registro_destino, cha
 }
 
 void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, char* registro_direccion) {
-    // Obtener la dirección lógica
-    uint32_t dir_logica = *(uint32_t*)dictionary_get(dictionary_registros, registro_direccion);
+    // Obtener la direccion logica
+    uint32_t direccion_fisica;
+    if (strlen(registro_direccion) == 3 || !strcmp(registro_direccion, "SI") || !strcmp(registro_direccion, "DI") || !strcmp(registro_direccion, "PC")) {
+        uint32_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "MOV_IN";
+            instruccion_pendiente->registro_datos = strdup(registro_datos);
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            return;
+        }
+	} else if (strlen(registro_direccion) == 2) {
+        uint8_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "MOV_IN";
+            instruccion_pendiente->registro_datos = strdup(registro_datos);
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            return;
+        }
+    }
 
-    // Traducir la dirección lógica a física
-    int direccion_fisica = mmu(dir_logica);
-    if (direccion_fisica == -1) {
-        // TLB miss, guardar la instrucción pendiente y esperar a recibir el marco
+    // TLB hit, continuar con la ejecucion normal de mov_in
+    if (strlen(registro_datos) == 3 || !strcmp(registro_datos, "SI") || !strcmp(registro_datos, "DI") || !strcmp(registro_datos, "PC")) {
+        uint32_t tamanio_a_leer = sizeof(uint32_t);
+		send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, tamanio_a_leer);
         pthread_mutex_lock(&instruccion_pendiente_mutex);
         instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
         instruccion_pendiente->instruccion = "MOV_IN";
         instruccion_pendiente->registro_datos = strdup(registro_datos);
         instruccion_pendiente->registro_direccion = strdup(registro_direccion);
-        instruccion_pendiente->direccion_logica = dir_logica;
         pthread_mutex_unlock(&instruccion_pendiente_mutex);
-        return;
-    }
-
-    // TLB hit, continuar con la ejecución normal de mov_in
-    uint32_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
-    *reg_datos = direccion_fisica;
+	} else if (strlen(registro_datos) == 2) {
+        uint32_t tamanio_a_leer = sizeof(uint8_t);
+		send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, tamanio_a_leer);
+        pthread_mutex_lock(&instruccion_pendiente_mutex);
+        instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+        instruccion_pendiente->instruccion = "MOV_IN";
+        instruccion_pendiente->registro_datos = strdup(registro_datos);
+        instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+        pthread_mutex_unlock(&instruccion_pendiente_mutex);
+	}
 
     pcb_a_ejecutar->pc++;
 }
 
 void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccion, char* registro_datos) {
-    // Obtener la dirección lógica del registro correspondiente
-    uint32_t dir_logica = *(uint32_t*)dictionary_get(dictionary_registros, registro_direccion);
-
-    // Traducir la dirección lógica a física
-    uint32_t direccion_fisica = mmu(dir_logica);
-    if (direccion_fisica == -1) {
-        // TLB miss, guardar la instrucción pendiente y esperar a recibir el marco
-		pthread_mutex_lock(&instruccion_pendiente_mutex);
-        instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-        instruccion_pendiente->instruccion = "MOV_OUT";
-        instruccion_pendiente->registro_datos = strdup(registro_datos);
-        instruccion_pendiente->registro_direccion = strdup(registro_direccion);
-        instruccion_pendiente->direccion_logica = dir_logica;
-		pthread_mutex_unlock(&instruccion_pendiente_mutex);
-        return;
+    // Obtener la direccion logica
+    uint32_t direccion_fisica;
+    if (strlen(registro_direccion) == 3 || !strcmp(registro_direccion, "SI") || !strcmp(registro_direccion, "DI") || !strcmp(registro_direccion, "PC")) {
+        uint32_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "MOV_OUT";
+            instruccion_pendiente->registro_datos = strdup(registro_datos);
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            return;
+        }
+	} else if (strlen(registro_direccion) == 2) {
+        uint8_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "MOV_OUT";
+            instruccion_pendiente->registro_datos = strdup(registro_datos);
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            return;
+        }
     }
-
-    // TLB hit, continuar con la ejecución normal de mov_out
-    uint32_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
-    // Escribir el valor del registro de datos en la dirección física correspondiente
-    send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, &(*reg_datos), sizeof(reg_datos));
-
-    pcb_a_ejecutar->pc++;
+    
+    // TLB hit, continuar con la ejecucion normal de mov_out
+    if (strlen(registro_datos) == 3 || !strcmp(registro_datos, "SI") || !strcmp(registro_datos, "DI") || !strcmp(registro_datos, "PC")) {
+		uint32_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
+		uint32_t tamanio_a_escribir = sizeof(uint32_t);
+		send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
+		log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
+	} else if (strlen(registro_datos) == 2) {
+		uint8_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
+		uint32_t tamanio_a_escribir = sizeof(uint8_t);
+	    send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
+		log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
+	}
 }
 
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc) {
@@ -183,8 +215,39 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
 }
 
 void funcion_resize(uint32_t tamanio) {
-    send_tamanio(fd_memoria, tamanio);
+    send_tamanio(fd_memoria, tamanio, pcb_a_ejecutar->pid);
     log_info(cpu_logger, "Funcion Resize enviada a memoria: %d", tamanio);
+    pcb_a_ejecutar->pc++;
+}
+
+void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio) {
+    // Contiene la direccion logica de memoria de origen desde donde se va a copiar un string.
+    uint32_t *reg_si = dictionary_get(dictionary_registros, "SI");
+    uint32_t direccion_fisica_si = mmu(*reg_si);
+    if (direccion_fisica_si == -1) {
+        // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+        pthread_mutex_lock(&instruccion_pendiente_mutex);
+        instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+        instruccion_pendiente->instruccion = "COPY_STRING";
+        instruccion_pendiente->direccion_logica = *reg_si;
+        instruccion_pendiente->registro_datos = strdup("SI");
+        instruccion_pendiente->tamanio = tamanio;
+        pthread_mutex_unlock(&instruccion_pendiente_mutex);
+        return;
+    }
+
+    // TLB hit
+    send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica_si, tamanio);
+    
+    pthread_mutex_lock(&instruccion_pendiente_mutex);
+    instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+    instruccion_pendiente->instruccion = "COPY_STRING";
+    instruccion_pendiente->direccion_logica = *reg_si;
+    instruccion_pendiente->registro_datos = strdup("SI");
+    instruccion_pendiente->tamanio = tamanio;
+    pthread_mutex_unlock(&instruccion_pendiente_mutex);
+
+    // Sigue cuando recibe el marco (si es necesario) o cuando recibe el valor de memoria (string)
 }
 
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
@@ -192,6 +255,122 @@ void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
     pcb_a_ejecutar->pc++;
     // Enviar el pcb como contexto de ejecucion directamente en la funcion de send_io_gen_sleep
     send_io_gen_sleep(fd_kernel_dispatch, pcb_a_ejecutar, unidades_trabajo, interfaz, strlen(interfaz) + 1); // Envia pcb y el nombre de la interfaz
+}
+
+void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    // Obtener tamanio maximo
+    uint32_t tamanio_maximo;
+    if (strlen(registro_tamanio) == 3 || !strcmp(registro_tamanio, "SI") || !strcmp(registro_tamanio, "DI") || !strcmp(registro_tamanio, "PC")) {
+		uint32_t *reg_tamanio = dictionary_get(dictionary_registros, registro_tamanio);
+        tamanio_maximo = *reg_tamanio;
+	} else if (strlen(registro_tamanio) == 2) {
+		uint8_t *reg_tamanio = dictionary_get(dictionary_registros, registro_tamanio);
+        tamanio_maximo = *reg_tamanio;
+	}
+
+    // Traducir direccion logica a fisica
+    uint32_t direccion_fisica;
+    if (strlen(registro_direccion) == 3 || !strcmp(registro_direccion, "SI") || !strcmp(registro_direccion, "DI") || !strcmp(registro_direccion, "PC")) {
+        uint32_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_STDIN_READ";
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_maximo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+	} else if (strlen(registro_direccion) == 2) {
+        uint8_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_STDIN_READ";
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_maximo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+    }
+
+    // TLB hit
+    // Enviar el pcb como contexto de ejecucion directamente en la funcion de send_io_stdin_read
+    send_io_stdin_read(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, tamanio_maximo, interfaz, strlen(interfaz) + 1);
+}
+
+void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    // Obtener tamanio maximo
+    uint32_t tamanio_maximo;
+    if (strlen(registro_tamanio) == 3 || !strcmp(registro_tamanio, "SI") || !strcmp(registro_tamanio, "DI") || !strcmp(registro_tamanio, "PC")) {
+		uint32_t *reg_tamanio = dictionary_get(dictionary_registros, registro_tamanio);
+        tamanio_maximo = *reg_tamanio;
+	} else if (strlen(registro_tamanio) == 2) {
+		uint8_t *reg_tamanio = dictionary_get(dictionary_registros, registro_tamanio);
+        tamanio_maximo = *reg_tamanio;
+	}
+
+    // Traducir direccion logica a fisica
+    uint32_t direccion_fisica;
+    if (strlen(registro_direccion) == 3 || !strcmp(registro_direccion, "SI") || !strcmp(registro_direccion, "DI") || !strcmp(registro_direccion, "PC")) {
+        uint32_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_STDOUT_WRITE";
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_maximo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+	} else if (strlen(registro_direccion) == 2) {
+        uint8_t *dir_logica = dictionary_get(dictionary_registros, registro_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_STDOUT_WRITE";
+            instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_maximo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+    }
+
+    // TLB hit
+    // Enviar el pcb como contexto de ejecucion directamente en la funcion de send_io_stdout_write
+    send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, tamanio_maximo, interfaz, strlen(interfaz) + 1);
 }
 
 void funcion_exit() {

@@ -7,6 +7,8 @@
 #include "configs.h"
 #include "logs.h"
 #include "archivos.h"
+#include "manejo-memoria.h"
+#include <commons/bitarray.h>
 
 #include "../include/file-descriptors.h"
 
@@ -15,6 +17,9 @@
 
 extern t_list* instrucciones;
 extern t_list* instrucciones_por_proceso;
+
+extern t_bitarray* marcos_ocupados;
+extern t_list* tabla_paginas_por_proceso;
 
 void conexion_memoria_kernel();
 

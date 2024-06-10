@@ -48,45 +48,33 @@ typedef enum {
     RECIBIR_INSTRUCCION, // Recibe la instruccion a ejecutar
     RECIBIR_TAM_PAGINA, // Recibe el tamaño de pagina para usar en la MMU
     RECIBIR_PID_A_INTERRUMPIR, // Recibe el pid a interrumpir
+    RECIBIR_MARCO, // En caso de que sea TLB MISS
     RECIBIR_VALOR_MEMORIA, // Para MOV_IN
-    RECIBIR_MARCO, // Para MOV_OUT
+    ESCRITURA_OK, // Para MOV_OUT
     OUT_OF_MEMORY, // Para manejar errores de Out of Memory
-    // SET,
-    // MOV_IN,
-    // MOV_OUT,
-    // SUM,
-    // SUB,
-    // JNZ,
-    // RESIZE,
-    // COPY_STRING,
-    // WAIT,
-    // SIGNAL,
-    // EXIT,
 
     // Memoria
     RECIBIR_PC_PID, // Recibe la instruccion a enviar de un proceso para CPU
     RECIBIR_TAMANIO, // Funcion RESIZE
     ESCRIBIR_MEMORIA, // Funciones MOV
+    LEER_MEMORIA, // Funciones MOV
     NUMERO_PAGINA, // Para devolver el marco asociado a esa pagina
-    // INICIAR_PROCESO_K_M
-    // FINALIZAR_PROCESO_K_M
-    // AMPLIAR_PROCESO
-    // REDUCIR_PROCESO
-    // ACCERDER_ESPACIO_USUARIO_K_M
-    // ACCERDER_ESPACIO_USUARIO_IO_M
+    FIN_PROCESO, // Se recibe de Kernel y se tienen que marcar los marcos como libres de ese proceso
+    // COPY_STRING,
+    // WAIT,
+    // SIGNAL,
 
     // EntradaSalida (IO)
+    RECIBIR_NOMBRE_IO,
     FIN_IO,
     IO_GEN_SLEEP,
-    RECIBIR_NOMBRE_IO,
-    // IO_STDIN_READ
-    // IO_STDOUT_WRITE
+    IO_STDIN_READ,
+    IO_STDOUT_WRITE,
     // IO_FS_CREATE
     // IO_FS_DELETE
     // IO_FS_TRUNCATE
     // IO_FS_WRITE
     // IO_FS_READ
-    
 } op_code;
 
 typedef enum {
@@ -126,8 +114,5 @@ uint8_t extraer_uint8_del_buffer(t_buffer* buffer);
 
 void cargar_uint32_al_buffer(t_buffer* buffer, uint32_t int32);
 uint32_t extraer_uint32_del_buffer(t_buffer* buffer);
-
-void cargar_void_al_buffer(t_buffer* buffer, void* datos, uint32_t tamanio_datos);
-void* extraer_void_del_buffer(t_buffer* buffer);
 
 #endif

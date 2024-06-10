@@ -26,6 +26,9 @@ extern t_instruccion_pendiente* instruccion_pendiente;
 extern pthread_mutex_t pcbEjecutarMutex;
 extern pthread_mutex_t instruccion_pendiente_mutex;
 
+extern bool esperando_datos;
+
+void printear_pcb();
 void conexion_cpu_memoria();
 void crear_diccionario(t_dictionary* dictionary_registros);
 
