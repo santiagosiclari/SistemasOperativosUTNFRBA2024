@@ -17,6 +17,8 @@ typedef struct {
     char* registro_datos;
     char* registro_direccion;
     uint32_t direccion_logica;
+    uint32_t tamanio;
+    void* datos;
 } t_instruccion_pendiente;
 
 extern uint32_t tam_pagina;
@@ -32,6 +34,7 @@ void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, ch
 void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccion, char* registro_datos);
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc);
 void funcion_resize(uint32_t tamanio);
+void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio);
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
 void funcion_exit();
 

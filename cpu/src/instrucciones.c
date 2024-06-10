@@ -194,8 +194,6 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
 	    send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
 		log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
 	}
-
-    pcb_a_ejecutar->pc++;
 }
 
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc) {
@@ -220,6 +218,36 @@ void funcion_resize(uint32_t tamanio) {
     send_tamanio(fd_memoria, tamanio, pcb_a_ejecutar->pid);
     log_info(cpu_logger, "Funcion Resize enviada a memoria: %d", tamanio);
     pcb_a_ejecutar->pc++;
+}
+
+void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio) {
+    // Contiene la direccion logica de memoria de origen desde donde se va a copiar un string.
+    uint32_t *reg_si = dictionary_get(dictionary_registros, "SI");
+    int direccion_fisica_si = mmu(*reg_si);
+    if (direccion_fisica_si == -1) {
+        // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+        pthread_mutex_lock(&instruccion_pendiente_mutex);
+        instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+        instruccion_pendiente->instruccion = "COPY_STRING";
+        instruccion_pendiente->direccion_logica = *reg_si;
+        instruccion_pendiente->registro_datos = strdup("SI");
+        instruccion_pendiente->tamanio = tamanio;
+        pthread_mutex_unlock(&instruccion_pendiente_mutex);
+        return;
+    }
+
+    // TLB hit
+    send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica_si, tamanio);
+    
+    pthread_mutex_lock(&instruccion_pendiente_mutex);
+    instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+    instruccion_pendiente->instruccion = "COPY_STRING";
+    instruccion_pendiente->direccion_logica = *reg_si;
+    instruccion_pendiente->registro_datos = strdup("SI");
+    instruccion_pendiente->tamanio = tamanio;
+    pthread_mutex_unlock(&instruccion_pendiente_mutex);
+
+    // Sigue cuando recibe el marco (si es necesario) o cuando recibe el valor de memoria (string)
 }
 
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {

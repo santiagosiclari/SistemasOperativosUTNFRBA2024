@@ -98,6 +98,11 @@ void conexion_cpu_memoria() {
 				} else if (strcmp(instruccion_separada[0], "RESIZE") == 0) {
 					uint32_t tamanio = atoi(instruccion_separada[1]);
 					funcion_resize(tamanio);
+				} else if (strcmp(instruccion_separada[0], "COPY_STRING") == 0) {
+					uint32_t tamanio = atoi(instruccion_separada[1]);
+					funcion_copy_string(dictionary_registros, tamanio);
+					// Tiene que esperar a recibir un dato
+					esperando_datos = true;
 				} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 					uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
 					funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);
@@ -216,13 +221,17 @@ void conexion_cpu_memoria() {
 						send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
 						log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
 					}
-
-					pcb_a_ejecutar->pc++;
+				} else if (strcmp(instruccion_pendiente->instruccion, "COPY_STRING") == 0) {
+					if (strcmp(instruccion_pendiente->registro_datos, "SI") == 0) {
+                        send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->tamanio);
+                    } else if (strcmp(instruccion_pendiente->registro_datos, "DI") == 0) {
+                        send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->datos, instruccion_pendiente->tamanio);
+                    }
 				}
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
 			break;
-		case RECIBIR_VALOR_MEMORIA: // Para MOV_IN
+		case RECIBIR_VALOR_MEMORIA: // Para MOV_IN y COPY_STRING
 			// Recibir el valor de memoria y continuar la operación pendiente si existente
 			void* valor;
     		uint8_t tam_dato;
@@ -248,6 +257,23 @@ void conexion_cpu_memoria() {
 					} else {
 						log_error(cpu_logger, "Tamaño de dato desconocido: %d", tam_dato);
 					}
+				} else if (strcmp(instruccion_pendiente->instruccion, "COPY_STRING") == 0) {
+					uint32_t *reg_di = dictionary_get(dictionary_registros, "DI");
+					int direccion_fisica_di = mmu(*reg_di);
+					if (direccion_fisica_di == -1) {
+						// TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+						pthread_mutex_lock(&instruccion_pendiente_mutex);
+						instruccion_pendiente->direccion_logica = *reg_di;
+						instruccion_pendiente->registro_datos = strdup("DI");
+						instruccion_pendiente->datos = valor;
+						instruccion_pendiente->tamanio = tam_dato;
+						pthread_mutex_unlock(&instruccion_pendiente_mutex);
+						return;
+					}
+
+					// TLB hit
+					send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica_di, valor, tam_dato);
+					break;
 				}
 				// Liberar la memoria de la instrucción pendiente
 				free(instruccion_pendiente->registro_datos);
@@ -293,7 +319,7 @@ void conexion_cpu_memoria() {
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
 			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
 			break;
-		case ESCRITURA_OK: // Para MOV_OUT
+		case ESCRITURA_OK: // Para MOV_OUT y COPY_STRING
 			uint8_t escritura_ok;
 			if(!recv_escritura_ok(fd_memoria, &escritura_ok)) {
 				log_error(cpu_logger, "Hubo un error al recibir el OK de la escritura");
@@ -306,6 +332,7 @@ void conexion_cpu_memoria() {
 			}
 
 			// Ya no se esperan datos
+			pcb_a_ejecutar->pc++;
 			esperando_datos = false; 
 			log_info(cpu_logger, "Datos recibidos");
 
