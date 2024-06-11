@@ -13,6 +13,8 @@ int main(int argc, char* argv[]) {
     init_kernel_logs();
     // Inicializamos config
     init_kernel_config();
+    // Inicializamos recursos
+    iniciar_recursos();
 
     // Inicializamos colas para planificacion
     colaNew = queue_create();

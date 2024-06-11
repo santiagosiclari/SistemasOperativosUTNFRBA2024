@@ -28,6 +28,11 @@ extern pthread_mutex_t instruccion_pendiente_mutex;
 
 extern bool esperando_datos;
 
+extern t_dictionary* dictionary_registros;
+extern char* instruccion;
+extern char* instruccion_recibida;
+extern char** instruccion_separada;
+
 void printear_pcb();
 void conexion_cpu_memoria();
 void crear_diccionario(t_dictionary* dictionary_registros);

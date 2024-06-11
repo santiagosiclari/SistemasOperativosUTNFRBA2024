@@ -20,6 +20,8 @@ extern t_queue* colaReady;
 extern t_queue* colaBlocked;
 extern t_queue* colaExec;
 
+extern t_list* recursos_de_procesos;
+
 extern pthread_mutex_t colaNewMutex;
 
 void iniciar_consola(t_log* logger);

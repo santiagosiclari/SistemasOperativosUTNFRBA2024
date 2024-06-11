@@ -440,6 +440,137 @@ bool recv_instruccion(int fd, char* instruccion) {
     return true;
 }
 
+// WAIT y SIGNAL
+t_buffer* serializar_wait_signal(t_pcb* pcb_wait_signal, char* recurso, uint32_t length) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
+        sizeof(uint32_t) +    // longitud del recurso
+        length;               // recurso
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_wait_signal->pid);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->pc);
+    cargar_char_al_buffer(buffer, pcb_wait_signal->estado);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_wait_signal->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_wait_signal->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_wait_signal->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_wait_signal->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_wait_signal->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_wait_signal->registros->DI);
+
+    cargar_string_al_buffer(buffer, recurso);
+
+    return buffer;
+}
+
+void send_wait(int fd, t_pcb* pcb_wait, char* recurso, uint32_t length) {
+    t_buffer *buffer = serializar_wait_signal(pcb_wait, recurso, length);
+    t_paquete *a_enviar = crear_paquete(WAIT, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+void send_signal(int fd, t_pcb* pcb_signal, char* recurso, uint32_t length) {
+    t_buffer *buffer = serializar_wait_signal(pcb_signal, recurso, length);
+    t_paquete *a_enviar = crear_paquete(SIGNAL, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_wait_signal(int fd, t_pcb* pcb_wait_signal, char* recurso) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    // Datos del pcb
+    pcb_wait_signal->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_wait_signal->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_wait_signal->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_wait_signal->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_wait_signal->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
+
+    char* received_recurso = deserializar_string(paquete->buffer);
+    strcpy(recurso, received_recurso);
+    free(received_recurso);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
+// RECURSOS_OK --> Notifica si hay recursos disponibles para que siga ejecutando
+void send_recursos_ok(int fd, uint8_t recursos_ok) {
+    t_buffer *buffer = serializar_uint8(recursos_ok);
+    t_paquete *a_enviar = crear_paquete(RECURSOS_OK, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_recursos_ok(int fd, uint8_t* recursos_ok) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    *recursos_ok = extraer_uint8_del_buffer(paquete->buffer);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
 // TAM_PAGINA
 void send_tam_pagina(int fd, uint32_t tam_pagina) {
     t_buffer *buffer = serializar_uint32(tam_pagina);
@@ -537,61 +668,7 @@ bool recv_out_of_memory(int fd, uint8_t* pid_oom) {
     return true;
 }
 
-// // Escribir memoria
-// t_buffer* serializar_escribir_memoria(uint8_t pid_a_escribir, uint32_t direccion_fisica, void* datos, uint32_t tamanio_a_escribir) {
-//     t_buffer *buffer = malloc(sizeof(t_buffer));
-
-//     buffer->size =
-//         sizeof(uint8_t) +     // pid_a_escribir
-//         sizeof(uint32_t) +    // direccion_fisica
-//         sizeof(uint32_t) +    // tamanio_a_escribir
-//         tamanio_a_escribir;   // datos
-
-//     buffer->offset = 0;
-//     buffer->stream = malloc(buffer->size);
-
-//     cargar_uint8_al_buffer(buffer, pid_a_escribir);
-//     cargar_uint32_al_buffer(buffer, direccion_fisica);
-//     cargar_uint32_al_buffer(buffer, tamanio_a_escribir);
-//     cargar_void_al_buffer(buffer, datos, tamanio_a_escribir);
-
-//     return buffer;
-// }
-
-// void send_escribir_memoria(int fd, uint8_t pid_a_escribir, uint32_t direccion_fisica, void* datos, uint32_t tamanio_a_escribir) {
-//     t_buffer *buffer = serializar_escribir_memoria(pid_a_escribir, direccion_fisica, datos, tamanio_a_escribir);
-//     t_paquete *a_enviar = crear_paquete(ESCRIBIR_MEMORIA, buffer);
-//     enviar_paquete(a_enviar, fd);
-//     eliminar_paquete(a_enviar);
-// }
-
-// bool recv_escribir_memoria(int fd, uint8_t* pid_a_escribir, uint32_t* direccion_fisica, void** datos, uint32_t* tamanio_a_escribir) {
-//     t_paquete* paquete = malloc(sizeof(t_paquete));
-//     paquete->buffer = malloc(sizeof(t_buffer));
-//     paquete->buffer->offset = 0;
-
-//     // Control para recibir el buffer
-//     int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
-//     if (bytes_recibidos != sizeof(uint32_t)) {
-//         printf("Error: No se recibió el tamaño del buffer completo\n");
-//         free(paquete->buffer);
-//         free(paquete);
-//         return false;
-//     }
-
-//     paquete->buffer->stream = malloc(paquete->buffer->size);
-//     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
-
-//     *pid_a_escribir = extraer_uint8_del_buffer(paquete->buffer);
-//     *direccion_fisica = extraer_uint32_del_buffer(paquete->buffer);
-//     *tamanio_a_escribir = extraer_uint32_del_buffer(paquete->buffer);
-//     *datos = extraer_void_del_buffer(paquete->buffer);
-
-//     eliminar_paquete(paquete);
-
-//     return true;
-// }
-
+// Escribir memoria
 t_buffer* serializar_escribir_memoria(uint8_t pid_a_escribir, uint32_t direccion_fisica, void* datos, uint32_t tamanio_a_escribir) {
     t_buffer* buffer = malloc(sizeof(t_buffer));
 

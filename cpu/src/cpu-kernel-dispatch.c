@@ -53,6 +53,57 @@ void conexion_cpu_kernel_dispatch() {
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
 			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
 			break;
+		case RECURSOS_OK:
+			// Para ver si sigue ejecutando el proceso o si esta bloqueado por falta de recursos
+			uint8_t recursos_ok;
+			if(!recv_recursos_ok(fd_kernel_dispatch, &recursos_ok)) {
+				log_error(cpu_logger, "Hubo un error al recibir el OK de la escritura");
+			}
+
+			if(recursos_ok == 1) {
+				log_info(cpu_logger, "Hay recursos disponibles segui con el proceso");
+			} else {
+				log_info(cpu_logger, "No hay mas recursos disponibles. Bloqueando proceso");
+				esperando_datos = false; 
+				break;
+			}
+
+			// Ya no se esperan datos
+			esperando_datos = false; 
+			log_info(cpu_logger, "Datos recibidos");
+
+			log_info(cpu_logger, "Instruccion finalizada");
+			// Printea el PCB
+			printear_pcb(pcb_a_ejecutar);
+
+			// Interrupcion por fin de Quantum
+			if(pcb_a_ejecutar->flag_int == 2) {
+				log_info(cpu_logger, "Proceso %d finalizo su quantum", pcb_a_ejecutar->pid);
+				send_pcb(fd_kernel_dispatch, pcb_a_ejecutar);
+				free(instruccion);
+				free(instruccion_recibida);
+				for (int i = 0; instruccion_separada[i] != NULL; i++) {
+					free(instruccion_separada[i]);
+				}
+				free(instruccion_separada);
+				dictionary_destroy(dictionary_registros);
+				break;
+			}
+
+			// Libera la instruccion anterior
+			free(instruccion);
+			free(instruccion_recibida);
+			// Liberar el arreglo de la instrucción separada
+			for (int i = 0; instruccion_separada[i] != NULL; i++) {
+				free(instruccion_separada[i]);
+			}
+			free(instruccion_separada);
+			dictionary_destroy(dictionary_registros);
+
+			// Fetch --> seguir pidiendo instrucciones
+			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
+			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+			break;
 		case -1:
 			log_error(cpu_logger, "El Kernel (Dispatch) se desconecto. Terminando servidor");
 			control = 0;

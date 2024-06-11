@@ -1,6 +1,10 @@
 #include "../include/cpu-memoria.h"
 
 t_dictionary* dictionary_registros;
+char* instruccion;
+char* instruccion_recibida;
+char** instruccion_separada;
+
 uint32_t tam_pagina;
 t_list* lista_tlb;
 pthread_mutex_t pcbEjecutarMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -47,9 +51,8 @@ void conexion_cpu_memoria() {
 			break;
 		case RECIBIR_INSTRUCCION:
 			int MAX_LENGTH = 128;
-			char* instruccion = malloc(MAX_LENGTH);
-			char* instruccion_recibida = malloc(MAX_LENGTH);
-			char** instruccion_separada;
+			instruccion = malloc(MAX_LENGTH);
+			instruccion_recibida = malloc(MAX_LENGTH);
 			if(pcb_a_ejecutar != NULL) {
 				// Creo diccionario
 				dictionary_registros = dictionary_create();
@@ -103,6 +106,14 @@ void conexion_cpu_memoria() {
 					funcion_copy_string(dictionary_registros, tamanio);
 					// Tiene que esperar a recibir un dato
 					esperando_datos = true;
+				}  else if (strcmp(instruccion_separada[0], "WAIT") == 0) {
+					string_trim_right(&instruccion_separada[1]);
+					funcion_wait(instruccion_separada[1]);
+					// Tiene que esperar a recibir un dato
+					esperando_datos = true;
+				}  else if (strcmp(instruccion_separada[0], "SIGNAL") == 0) {
+					string_trim_right(&instruccion_separada[1]);
+					funcion_signal(instruccion_separada[1]);
 				} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 					uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
 					funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);
@@ -239,8 +250,10 @@ void conexion_cpu_memoria() {
                     }
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0) {
     				send_io_stdin_read(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
+					esperando_datos = false;
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDOUT_WRITE") == 0) {
     				send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
+					esperando_datos = false;
 				}
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);

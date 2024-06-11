@@ -3,9 +3,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <commons/string.h>
 
 #include "configs.h"
 #include "logs.h"
+#include "recursos.h"
 #include <pthread.h>
 #include <commons/temporal.h>
 #include <commons/collections/queue.h>
@@ -21,6 +24,7 @@ extern t_queue* colaNew;
 extern t_queue* colaExec;
 extern t_queue* colaReady;
 extern t_queue* colaBlocked;
+extern t_queue* colaAux;
 
 extern pthread_t quantum_thread;
 
@@ -34,6 +38,9 @@ extern char* nombre_interfaz; // Esta es el nombre de la IO en proceso
 extern pthread_mutex_t colaExecMutex;
 extern pthread_mutex_t colaReadyMutex;
 extern pthread_mutex_t colaBlockedMutex;
+
+extern t_list* recursos_de_procesos;
+extern t_list* recursos;
 
 void conexion_kernel_cpu_dispatch();
 

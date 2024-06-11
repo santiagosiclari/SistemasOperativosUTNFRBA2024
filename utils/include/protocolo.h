@@ -63,6 +63,16 @@ bool recv_iniciar_proceso(int fd, uint8_t* pid, char* path);
 void send_instruccion(int fd, char* instruccion, uint32_t length);
 bool recv_instruccion(int fd, char* instruccion);
 
+// WAIT y SIGNAL
+t_buffer* serializar_wait_signal(t_pcb* pcb_wait_signal, char* recurso, uint32_t length);
+void send_wait(int fd, t_pcb* pcb_wait, char* recurso, uint32_t length);
+void send_signal(int fd, t_pcb* pcb_signal, char* recurso, uint32_t length);
+bool recv_wait_signal(int fd, t_pcb* pcb_wait_signal, char* recurso);
+
+// RECURSOS_OK
+void send_recursos_ok(int fd, uint8_t recursos_ok);
+bool recv_recursos_ok(int fd, uint8_t* recursos_ok);
+
 // TAM_PAGINA
 void send_tam_pagina(int fd, uint32_t tam_pagina);
 bool recv_tam_pagina(int fd, uint32_t* tam_pagina);

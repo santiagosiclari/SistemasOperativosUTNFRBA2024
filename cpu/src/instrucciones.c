@@ -250,6 +250,16 @@ void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio) {
     // Sigue cuando recibe el marco (si es necesario) o cuando recibe el valor de memoria (string)
 }
 
+void funcion_wait(char* recurso) {
+    pcb_a_ejecutar->pc++;
+    send_wait(fd_kernel_dispatch, pcb_a_ejecutar, recurso, strlen(recurso) + 1);
+}
+
+void funcion_signal(char* recurso) {
+    pcb_a_ejecutar->pc++;
+    send_signal(fd_kernel_dispatch, pcb_a_ejecutar, recurso, strlen(recurso) + 1);
+}
+
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo) {
     pcb_a_ejecutar->flag_int = 1; // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
     pcb_a_ejecutar->pc++;

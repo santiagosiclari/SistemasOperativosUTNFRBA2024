@@ -22,6 +22,9 @@ void atender_instruccion (char* leido) {
 		queue_push(colaNew, pcb);
         pthread_mutex_unlock(&colaNewMutex);
 
+		t_list* recursos_tomados = list_create();
+		list_add(recursos_de_procesos, recursos_tomados);
+
 		send_iniciar_proceso(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
 		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
 	} else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0) {

@@ -9,6 +9,7 @@
 #include "configs.h"
 #include "logs.h"
 #include "consola.h"
+#include "recursos.h"
 #include "kernel-memoria.h"
 #include "kernel-cpu-dispatch.h"
 #include "kernel-cpu-interrupt.h"

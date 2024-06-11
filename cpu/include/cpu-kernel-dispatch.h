@@ -17,6 +17,17 @@
 extern uint8_t size_instrucciones;
 extern t_pcb* pcb_a_ejecutar;
 
+extern t_dictionary* dictionary_registros;
+extern char* instruccion;
+extern char* instruccion_recibida;
+extern char** instruccion_separada;
+
+extern bool esperando_datos;
+
+void printear_pcb();
+void conexion_cpu_memoria();
+void crear_diccionario(t_dictionary* dictionary_registros);
+
 void conexion_cpu_kernel_dispatch();
 
 #endif

@@ -40,6 +40,8 @@ typedef enum {
     // PROCESO_ESTADO
     RECIBIR_CONTEXTO_DE_EJEC, // Recibir registros y PC del CPU
     RECIBIR_SIZE_INSTRUCCIONES, // Para pedir la cantidad necesaria de instrucciones
+    WAIT, // Resta 1 al recurso
+    SIGNAL, // Suma 1 al recurso
 
     // CPU (no hace falta ponerlas aca despues las sacamos)
     RECIBIR_PCB, // Recibir PCB de Kernel
@@ -51,6 +53,7 @@ typedef enum {
     RECIBIR_MARCO, // En caso de que sea TLB MISS
     RECIBIR_VALOR_MEMORIA, // Para MOV_IN
     ESCRITURA_OK, // Para MOV_OUT
+    RECURSOS_OK, // Para ver si sigue ejecutando el proceso o si esta bloqueado por falta de recursos
     OUT_OF_MEMORY, // Para manejar errores de Out of Memory
 
     // Memoria

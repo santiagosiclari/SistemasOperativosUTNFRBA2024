@@ -37,6 +37,8 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
 void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t valor_pc);
 void funcion_resize(uint32_t tamanio);
 void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio);
+void funcion_wait(char* recurso);
+void funcion_signal(char* recurso);
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
 void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio);
 void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio);
