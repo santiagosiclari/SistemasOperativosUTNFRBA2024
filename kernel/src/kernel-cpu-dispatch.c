@@ -33,7 +33,7 @@ void conexion_kernel_cpu_dispatch() {
 				liberar_recursos(pid_a_borrar);
 
 				if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked) && queue_is_empty(colaAux)) {
-					control_planificacion = 0; // No hay más procesos pendientes, termina la planificación
+					control_planificacion = 0;
 				}
 				free(pcb_a_borrar->registros);
 				free(pcb_a_borrar);
@@ -142,9 +142,10 @@ void conexion_kernel_cpu_dispatch() {
 				log_error(kernel_logger, "Hubo un error al recibir el SIGNAL");
 			}
 			strcpy(recurso_signal, recurso_signal_recibido);
+			string_trim_right(&recurso_signal);
 
 			for(int i = 0; i < list_size(recursos); i++) {
-				r = list_get(recursos,i);
+				r = list_get(recursos, i);
 				if(strcmp(recurso_signal, r->nombre) == 0) {
 					r->instancias++;
 				}
@@ -154,21 +155,20 @@ void conexion_kernel_cpu_dispatch() {
 			t_list* rec_tom_signal = list_get(recursos_de_procesos, pcb_signal->pid);
 
 			for(int i = 0; i < list_size(rec_tom_signal); i++) {
-				t_recurso* r = list_get(rec_tom_signal,i);
+				r = list_get(rec_tom_signal,i);
 				if(strcmp(recurso_signal, r->nombre) == 0) {
 					list_remove(rec_tom_signal, i);
 					break;
 				}
 			}
 
-			// Revisar si otro proceso se puede desbloquear
 			if(!queue_is_empty(r->blocked)) {
 				t_pcb* pcb_desbloqueado = queue_pop(r->blocked);
 				pthread_mutex_lock(&colaReadyMutex);
 				queue_push(colaReady, pcb_desbloqueado);
 				pthread_mutex_unlock(&colaReadyMutex);
+				log_info(kernel_logger, "Proceso %d desbloqueado y enviado a Ready", pcb_desbloqueado->pid);
 			}
-
 
 			free(pcb_signal->registros);
 			free(pcb_signal);

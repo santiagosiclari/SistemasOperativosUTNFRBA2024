@@ -10,6 +10,7 @@
 #include "logs.h"
 #include "funciones-pcb.h"
 #include "planificador.h"
+#include "recursos.h"
 #include <readline/readline.h>
 
 #include <../../utils/include/file-descriptors.h>
@@ -21,6 +22,7 @@ extern t_queue* colaBlocked;
 extern t_queue* colaExec;
 
 extern t_list* recursos_de_procesos;
+extern t_list* recursos;
 
 extern pthread_mutex_t colaNewMutex;
 

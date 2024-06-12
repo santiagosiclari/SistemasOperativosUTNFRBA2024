@@ -11,8 +11,7 @@ void iniciar_recursos() {
         t_recurso* recurso = malloc(sizeof(t_recurso));
         recurso->nombre = strdup(RECURSOS[i]);
         recurso->instancias = atoi(INSTANCIAS_RECURSOS[i]);
-        t_queue* colaBlockedRecurso = queue_create();
-        recurso->blocked = colaBlockedRecurso;
+        recurso->blocked = queue_create();
         list_add(recursos, recurso);
     }
 }
