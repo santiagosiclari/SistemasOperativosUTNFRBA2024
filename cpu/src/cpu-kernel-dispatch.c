@@ -65,6 +65,14 @@ void conexion_cpu_kernel_dispatch() {
 			} else {
 				log_info(cpu_logger, "No hay mas recursos disponibles. Bloqueando proceso");
 				esperando_datos = false; 
+				free(instruccion);
+				free(instruccion_recibida);
+				// Liberar el arreglo de la instrucción separada
+				for (int i = 0; instruccion_separada[i] != NULL; i++) {
+					free(instruccion_separada[i]);
+				}
+				free(instruccion_separada);
+				dictionary_destroy(dictionary_registros);
 				break;
 			}
 
