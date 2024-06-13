@@ -34,6 +34,11 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 	}
 }
 
+/* void ejecutar_script(){
+	send_ejecutar_scr(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
+		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
+} */
+
 void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	// New
     pthread_mutex_lock(&colaNewMutex);
@@ -70,7 +75,7 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 		finalizar_proceso(pid_a_borrar);
 		return;
 	}
-		
+
 	// Aux (Ready prioritaria de VRR)
     pthread_mutex_lock(&colaAuxMutex);
 	pcb_borrar = buscar_pcb_a_finalizar(colaAux, pid_a_borrar);
@@ -79,7 +84,7 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 		finalizar_proceso(pid_a_borrar);
 		return;
 	}
-		
+
 	// Blocked de cada recurso
 	for(int i = 0; i < list_size(recursos); i++) {
 		t_recurso* r = list_get(recursos, i);
@@ -94,7 +99,7 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 void atender_instruccion (char* leido) {
 
 	char** comando_consola = string_split(leido, " ");
-	
+
 	if(strcmp(comando_consola[0], "HELP") == 0) {
 		printf( "\nInstrucciones:\n"
 				"EJECUTAR_SCRIPT [path]\n"
@@ -104,7 +109,21 @@ void atender_instruccion (char* leido) {
 				"INICIAR_PLANIFICACION\n"
 				"MULTIPROGRAMACION [valor]\n"
 				"PROCESO_ESTADO\n\n");
-	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
+	}/*  else if(strcmp(comando_consola[0], "EJECUTAR_SCRIPT") == 0){
+		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
+
+	char linea[128];
+		//leer comando y ejecutarlo
+		char *leer = fgets(linea, 128, archivo);
+
+		while ( leer != NULL){
+			char *posicion_limite = strchr(linea, '\n');
+				if(posicion_limite != NULL){
+					*posicion_limite = '\0';
+				}
+			atender_instruccion(leer);
+		} */
+	 else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
 		t_pcb* pcb = crear_pcb();
 		send_pcb(fd_cpu_dispatch, pcb);
 		log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
@@ -127,7 +146,7 @@ void atender_instruccion (char* leido) {
 		} else if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 			pthread_create(&planificacion, NULL, (void *)planificacionVRR, NULL);
 		}
-		pthread_detach(planificacion); 
+		pthread_detach(planificacion);
 	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0) {
 		// Buscar pid en queue --> pid => comando_consola[1]
 		uint8_t pid_a_borrar = atoi(comando_consola[1]);
@@ -138,6 +157,20 @@ void atender_instruccion (char* leido) {
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);
+	} /*  else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0){
+		int nuevo_grado = atoi(comando_consola[1]);
+		GRADO_MULTIPROGRAMACION = nuevo_grado;
+
+		//Falta agregar -> En caso de que se tengan más procesos ejecutando que lo que permite el grado de multiprogramación, no se tomarán acciones sobre los mismos y se
+		//esperará su finalización normal.
+
+		log_info(kernel_logger, "Grado de multiprogramacion modificado a %d", GRADO_MULTIPROGRAMACION);
+	} */
+	/* else if(strcmp(comando_consola[0], "PROCESO_ESTADO") == 0){
+
+	} */
+	else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0){
+
 	} else {
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
