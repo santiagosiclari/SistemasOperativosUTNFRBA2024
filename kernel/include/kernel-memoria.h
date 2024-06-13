@@ -6,10 +6,22 @@
 
 #include "configs.h"
 #include "logs.h"
+#include "recursos.h"
+#include <pthread.h>
 
 #include "../../utils/include/file-descriptors.h"
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
+
+extern t_queue* colaNew;
+extern t_queue* colaExec;
+extern t_queue* colaReady;
+extern t_queue* colaBlocked;
+extern t_queue* colaAux;
+
+extern int control_planificacion;
+
+extern pthread_mutex_t colaExecMutex;
 
 void conexion_kernel_memoria();
 

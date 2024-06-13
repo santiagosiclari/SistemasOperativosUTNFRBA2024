@@ -101,6 +101,8 @@ void conexion_cpu_memoria() {
 				} else if (strcmp(instruccion_separada[0], "RESIZE") == 0) {
 					uint32_t tamanio = atoi(instruccion_separada[1]);
 					funcion_resize(tamanio);
+					// Tiene que esperar a recibir un dato
+					esperando_datos = true;
 				} else if (strcmp(instruccion_separada[0], "COPY_STRING") == 0) {
 					uint32_t tamanio = atoi(instruccion_separada[1]);
 					funcion_copy_string(dictionary_registros, tamanio);
@@ -408,6 +410,41 @@ void conexion_cpu_memoria() {
 			// Fetch --> seguir pidiendo instrucciones
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
 			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+			break;
+		case OUT_OF_MEMORY:
+			uint8_t pid_oom;
+			if(!recv_out_of_memory(fd_memoria, &pid_oom)) {
+				log_error(cpu_logger, "Hubo un error al recibir el Out of Memory");
+			}
+
+			log_info(cpu_logger, "PID de Out of Memory: %d", pid_oom);
+
+			// Ya no se esperan datos
+			esperando_datos = false; 
+			log_info(cpu_logger, "Datos recibidos");
+			
+			// Printea el PCB
+			printear_pcb(pcb_a_ejecutar);
+
+			// Libera la instruccion anterior
+			free(instruccion);
+			free(instruccion_recibida);
+			// Liberar el arreglo de la instrucción separada
+			for (int i = 0; instruccion_separada[i] != NULL; i++) {
+				free(instruccion_separada[i]);
+			}
+			free(instruccion_separada);
+			dictionary_destroy(dictionary_registros);
+
+			if(pid_oom != pcb_a_ejecutar->pid) {
+				// Fetch --> seguir pidiendo instrucciones
+				send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
+				log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+				break;
+			} else {
+				log_error(cpu_logger, "Fin del proceso por Out of Memory");
+				break;
+			}
 			break;
 		case -1:
 			log_error(cpu_logger, "El servidor de Memoria no se encuentra activo.");

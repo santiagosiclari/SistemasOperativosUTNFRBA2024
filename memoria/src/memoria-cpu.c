@@ -59,6 +59,7 @@ void conexion_memoria_cpu() {
 
                 if (paginas_necesarias > marcos_disponibles) {
                     log_error(memoria_logger, "Out Of Memory: No hay suficientes marcos libres para el nuevo proceso");
+                    send_out_of_memory(fd_kernel, pid_resize);
                     send_out_of_memory(fd_cpu, pid_resize);
                     break;
                 }
@@ -89,6 +90,7 @@ void conexion_memoria_cpu() {
 
                     if (marcos_necesarios > marcos_disponibles) {
                         log_error(memoria_logger, "Out Of Memory: No hay suficientes marcos libres para ampliar el proceso");
+                        send_out_of_memory(fd_kernel, pid_resize);
                         send_out_of_memory(fd_cpu, pid_resize);
                         break;
                     }
@@ -113,12 +115,16 @@ void conexion_memoria_cpu() {
                     log_info(memoria_logger, "Reduccion del Proceso");
                     log_info(memoria_logger, "PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d", pid_resize, paginas_actuales * TAM_PAGINA, tamanio);
                     for (int i = paginas_actuales - 1; i >= paginas_necesarias; i--) {
-                        int marco = (intptr_t)list_remove(tabla_paginas, i);
+                        uint32_t* marco_ptr = list_remove(tabla_paginas, i);
+                        int marco = *marco_ptr;
+                        free(marco_ptr);
                         liberar_marco(marcos_ocupados, marco);
                         log_info(memoria_logger, "Marco %d liberado de la pagina %d", marco, i);
                     }
                 }
             }
+            // Si no hay Out of memory, CPU recibe un -1 en vez del PID del proceso
+            send_out_of_memory(fd_cpu, -1);
             break;
         case ESCRIBIR_MEMORIA:
             uint8_t pid_a_escribir;
@@ -186,7 +192,7 @@ void conexion_memoria_cpu() {
             // Escritura OK --> envia 1
             log_info(memoria_logger, "Escritura en memoria completada correctamente para el PID: %d", pid_a_escribir);
             send_escritura_ok(fd_cpu, 1);
-            free(datos_escribir);
+            // free(datos_escribir);
             break;
         case LEER_MEMORIA:
             uint8_t pid_a_leer;
@@ -261,7 +267,7 @@ void conexion_memoria_cpu() {
 
             usleep(RETARDO_RESPUESTA);
 
-			t_list* tabla_paginas_marco = list_get(tabla_paginas_por_proceso, pid_resize);
+			t_list* tabla_paginas_marco = list_get(tabla_paginas_por_proceso, pid_pagina);
             uint32_t* marco_ptr = (uint32_t*)list_get(tabla_paginas_marco, numero_pagina);
             uint32_t num_marco = *marco_ptr;
 
