@@ -22,10 +22,19 @@ void conexion_entradasalida_memoria() {
 			// Muestra el string en pantalla
 			log_info(entradasalida_logger, "%s", datos_char);
 
-			free(datos_char);
-
 			// Avisa que ya no esta mas interrumpido el proceso
-			send_fin_io(fd_kernel, nombre, strlen(nombre) + 1);
+			// uint32_t length_stdout = strlen(nombre_stdout) + 1;
+			send_fin_io(fd_kernel, pcb_stdout->pid, nombre_stdout, strlen(nombre_stdout) + 1);
+
+			// Liberar memoria
+			free(pcb_stdout->registros);
+			free(pcb_stdout);
+			free(nombre_stdout);
+			free(nombre_stdout_recibido);
+			free(datos_char);
+			free(datos);
+
+			pthread_mutex_unlock(&mutexIO);
 			break;
 		case ESCRITURA_OK:
 			uint8_t escritura_ok;
@@ -41,7 +50,17 @@ void conexion_entradasalida_memoria() {
 			}
 
 			// Avisa que ya no esta mas interrumpido el proceso
-			send_fin_io(fd_kernel, nombre, strlen(nombre) + 1);
+			// uint32_t length_stdin = strlen(nombre_stdin) + 1;
+			send_fin_io(fd_kernel, pcb_stdin->pid, nombre_stdin, strlen(nombre_stdin) + 1);
+
+			// Liberar memoria
+			free(pcb_stdin->registros);
+			free(pcb_stdin);
+			free(nombre_stdin);
+			free(nombre_stdin_recibido);
+			free(string);
+
+			pthread_mutex_unlock(&mutexIO);
 			break;
 		case -1:
 			log_error(entradasalida_logger, "El servidor de Memoria no se encuentra activo.");

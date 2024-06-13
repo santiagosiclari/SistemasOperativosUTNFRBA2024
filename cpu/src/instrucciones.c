@@ -27,7 +27,7 @@ uint32_t mmu(uint32_t dir_logica) {
     } else {
         // TLB Miss
         log_info(cpu_logger, "PID: %d - TLB MISS - Pagina: %d", pcb_a_ejecutar->pid, numero_pagina);
-        send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
+        // send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
         return -1; // Significa que es un TLB Miss y esta esperando recibir el marco
     }
 }
@@ -106,6 +106,9 @@ void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, ch
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             return;
         }
@@ -120,6 +123,9 @@ void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, ch
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             return;
         }
@@ -163,6 +169,9 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             return;
         }
@@ -177,6 +186,9 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             return;
         }
@@ -232,6 +244,9 @@ void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio) {
         instruccion_pendiente->direccion_logica = *reg_si;
         instruccion_pendiente->registro_datos = strdup("SI");
         instruccion_pendiente->tamanio = tamanio;
+        uint32_t numero_pagina = *reg_si / tam_pagina;
+        uint32_t desplazamiento = *reg_si - numero_pagina * tam_pagina;
+        send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
         pthread_mutex_unlock(&instruccion_pendiente_mutex);
         return;
     }
@@ -296,6 +311,9 @@ void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, c
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             // Espera recibir el marco
             esperando_datos = true;
@@ -313,6 +331,9 @@ void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, c
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             // Espera recibir el marco
             esperando_datos = true;
@@ -354,6 +375,9 @@ void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz,
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             // Espera recibir el marco
             esperando_datos = true;
@@ -371,6 +395,9 @@ void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz,
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
             pthread_mutex_unlock(&instruccion_pendiente_mutex);
             // Espera recibir el marco
             esperando_datos = true;

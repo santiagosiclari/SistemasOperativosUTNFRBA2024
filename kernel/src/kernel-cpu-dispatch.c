@@ -4,6 +4,7 @@ char* nombre_interfaz;
 int fd_interfaz;
 
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutexFinQuantum = PTHREAD_MUTEX_INITIALIZER;
 
 void conexion_kernel_cpu_dispatch() {
 	uint8_t MAX_LENGTH = 128;
@@ -18,6 +19,8 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		case RECIBIR_PID_A_BORRAR:
 			// Recibo proceso a eliminar
+    		pthread_mutex_lock(&colaExecMutex);
+			pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
 			uint8_t pid_a_borrar;
 			if(!recv_pid_a_borrar(fd_cpu_dispatch, &pid_a_borrar)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
@@ -25,8 +28,6 @@ void conexion_kernel_cpu_dispatch() {
 				log_info(kernel_logger, "Proceso a finalizar: %d", pid_a_borrar);
 				send_fin_proceso(fd_memoria, pid_a_borrar);
 			}
-
-    		pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_a_borrar = queue_pop(colaExec);
 				// Revisar si otro proceso se puede desbloquear
@@ -45,24 +46,29 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		case RECIBIR_PCB:
 			// PCB interrumpido por fin de quantum
+			pthread_mutex_lock(&mutexFinQuantum);
 			t_pcb* pcb_interrumpido = malloc(sizeof(t_pcb));
 			pcb_interrumpido->registros = malloc(sizeof(t_pcb));
+			t_pcb* pcb_int;
 
 			if(!recv_pcb(fd_cpu_dispatch, pcb_interrumpido)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PCB interrumpido");
 				break;
 			}
+			free(pcb_interrumpido->registros);
+			free(pcb_interrumpido);
 
 			pthread_mutex_lock(&colaExecMutex);
 			if(queue_size(colaExec) != 0) {
-				queue_pop(colaExec);
+				pcb_int = queue_pop(colaExec);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 
 			pthread_mutex_lock(&colaReadyMutex);
-			pcb_interrumpido->estado = 'R';
-			queue_push(colaReady, pcb_interrumpido);
+			pcb_int->estado = 'R';
+			queue_push(colaReady, pcb_int);
 			pthread_mutex_unlock(&colaReadyMutex);
+			pthread_mutex_unlock(&mutexFinQuantum);
 			break;
 		case WAIT:
 			t_pcb* pcb_wait = malloc(sizeof(t_pcb));

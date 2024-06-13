@@ -16,20 +16,21 @@ void conexion_kernel_interfaces(void* arg) {
 			break;
         case FIN_IO:
 			pthread_mutex_lock(&reciboFinDeIO);
+			uint8_t pid_fin_io;
 			char* nombre_fin_io = malloc(MAX_LENGTH);
 			char* nombre_fin_io_recibido = malloc(MAX_LENGTH);
 
 			// Busca el socket de la interfaz
-			int fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
+			// fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
 
-			if(!recv_fin_io(fd_interfaz, nombre_fin_io_recibido)) {
+			if(!recv_fin_io(fd_interfaz, &pid_fin_io, nombre_fin_io_recibido)) { // falta recibir el pid
 				log_error(kernel_logger, "Hubo un error al recibir el fin de una IO");
 			}
 			strcpy(nombre_fin_io, nombre_fin_io_recibido);
 			
 			pthread_mutex_lock(&colaBlockedMutex);
 			if(!queue_is_empty(colaBlocked)) {
-				t_pcb* pcb_recibido = queue_pop(colaBlocked);
+				t_pcb* pcb_recibido = buscar_pcb_a_finalizar(colaBlocked, pid_fin_io);
 				if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
 				{
 					if(pcb_recibido->quantum > 0 && pcb_recibido->quantum < QUANTUM)

@@ -25,6 +25,9 @@ void destruir_pcb(void* ptr_pcb) {
 
 void* quantum(void* arg) {
     t_pcb* pcb = (t_pcb*)arg;
+    // if (pcb == NULL) {
+    //     return NULL;
+    // }
     usleep(pcb->quantum);
     send_interrupcion(fd_cpu_interrupt, pcb->pid);
     return NULL;

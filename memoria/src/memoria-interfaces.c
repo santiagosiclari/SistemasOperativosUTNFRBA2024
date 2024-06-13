@@ -30,6 +30,7 @@ void conexion_memoria_interfaces(void* arg) {
             if (pagina_actual_escribir == -1) {
                 log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_escribir, pid_a_escribir);
                 send_escritura_ok(fd_interfaz, -1);
+                free(datos_escribir);
                 break;
             }
 
@@ -49,6 +50,7 @@ void conexion_memoria_interfaces(void* arg) {
                     log_error(memoria_logger, "Error al escribir en la memoria.");
                     // Error en escritura --> envia -1
                     send_escritura_ok(fd_interfaz, -1);
+                    free(datos_escribir);
                     break;
                 }
 
@@ -66,6 +68,7 @@ void conexion_memoria_interfaces(void* arg) {
                         if (marco_asignado_escribir == -1) {
                             log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_escribir, pid_a_escribir);
                             send_escritura_ok(fd_interfaz, -1);
+                            free(datos_escribir);
                             break;
                         }
                         desplazamiento_actual_escribir = 0; // Reiniciar el desplazamiento para la nueva pagina
@@ -77,7 +80,7 @@ void conexion_memoria_interfaces(void* arg) {
             // Escritura OK --> envia 1
             log_info(memoria_logger, "Escritura en memoria completada correctamente para el PID: %d", pid_a_escribir);
             send_escritura_ok(fd_interfaz, 1);
-            // free(datos_escribir);
+            free(datos_escribir);
             break;
 		case LEER_MEMORIA:
             uint8_t pid_a_leer;

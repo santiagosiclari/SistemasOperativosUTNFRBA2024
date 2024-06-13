@@ -27,5 +27,6 @@ extern char* nombre_interfaz;
 extern t_list* listaInterfaces;
 
 void conexion_kernel_interfaces(void* arg);
+t_pcb* buscar_pcb_a_finalizar(t_queue* cola, uint8_t pid_a_borrar);
 
 #endif

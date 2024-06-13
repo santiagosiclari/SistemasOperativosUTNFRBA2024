@@ -1025,10 +1025,11 @@ bool recv_interfaz(int fd, char* nombre_interfaz) {
 }
 
 // Fin de IO
-t_buffer* serializar_fin_io(char* nombre, uint32_t length) {
+t_buffer* serializar_fin_io(uint8_t pid_fin_io, char* nombre, uint32_t length) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size =
+        sizeof(uint8_t) +     // pid_fin_io
         sizeof(uint32_t) +    // longitud del nombre
         length;               // nombre
 
@@ -1036,19 +1037,20 @@ t_buffer* serializar_fin_io(char* nombre, uint32_t length) {
     buffer->offset = 0;
     buffer->stream = malloc(buffer->size);
 
+    cargar_uint8_al_buffer(buffer, pid_fin_io);
     cargar_string_al_buffer(buffer, nombre);
 
     return buffer;
 }
 
-void send_fin_io(int fd, char* nombre, uint32_t length) {
-    t_buffer *buffer = serializar_fin_io(nombre, length);
+void send_fin_io(int fd, uint8_t pid_fin_io, char* nombre, uint32_t length) {
+    t_buffer *buffer = serializar_fin_io(pid_fin_io, nombre, length);
     t_paquete *a_enviar = crear_paquete(FIN_IO, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_fin_io(int fd, char* nombre) {
+bool recv_fin_io(int fd, uint8_t* pid_fin_io, char* nombre) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -1064,6 +1066,8 @@ bool recv_fin_io(int fd, char* nombre) {
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    *pid_fin_io = extraer_uint8_del_buffer(paquete->buffer);
 
     char* received_nombre = deserializar_string(paquete->buffer);
     strcpy(nombre, received_nombre);

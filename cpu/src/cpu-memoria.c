@@ -18,6 +18,17 @@ void printear_pcb() {
 		pcb_a_ejecutar->registros->SI, pcb_a_ejecutar->registros->DI);
 }
 
+void free_instruccion_pendiente(t_instruccion_pendiente* instruccion_pendiente) {
+	// Liberar la memoria de la instrucción pendiente
+	free(instruccion_pendiente->instruccion);
+	free(instruccion_pendiente->registro_datos);
+	free(instruccion_pendiente->registro_direccion);
+	free(instruccion_pendiente->datos);
+	free(instruccion_pendiente->nombre_interfaz);
+	free(instruccion_pendiente);
+	instruccion_pendiente = NULL;
+}
+
 void crear_diccionario(t_dictionary* dictionary_registros) {
     dictionary_put(dictionary_registros, "AX", &pcb_a_ejecutar->registros->AX);
     dictionary_put(dictionary_registros, "BX", &pcb_a_ejecutar->registros->BX);
@@ -253,9 +264,11 @@ void conexion_cpu_memoria() {
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0) {
     				send_io_stdin_read(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
 					esperando_datos = false;
+					free_instruccion_pendiente(instruccion_pendiente);
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDOUT_WRITE") == 0) {
     				send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
 					esperando_datos = false;
+					free_instruccion_pendiente(instruccion_pendiente);
 				}
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
@@ -301,17 +314,23 @@ void conexion_cpu_memoria() {
 						log_error(cpu_logger, "Tamaño de dato desconocido: %d", tam_dato);
 					}
 				} else if (strcmp(instruccion_pendiente->instruccion, "COPY_STRING") == 0) {
+					free_instruccion_pendiente(instruccion_pendiente);
 					uint32_t *reg_di = dictionary_get(dictionary_registros, "DI");
 					int direccion_fisica_di = mmu(*reg_di);
 					if (direccion_fisica_di == -1) {
 						// TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
-						pthread_mutex_lock(&instruccion_pendiente_mutex);
+						instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+						instruccion_pendiente->instruccion = "COPY_STRING";
 						instruccion_pendiente->direccion_logica = *reg_di;
 						instruccion_pendiente->registro_datos = strdup("DI");
 						instruccion_pendiente->datos = valor;
 						instruccion_pendiente->tamanio = tam_dato;
+						uint32_t numero_pagina = *reg_di / tam_pagina;
+						uint32_t desplazamiento = *reg_di - numero_pagina * tam_pagina;
+						send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
+    					log_info(cpu_logger, "Instruccion pendiente guardada en COPY_STRING");
 						pthread_mutex_unlock(&instruccion_pendiente_mutex);
-						return;
+						break;
 					}
 
 					// TLB hit
@@ -319,10 +338,7 @@ void conexion_cpu_memoria() {
 					break;
 				}
 				// Liberar la memoria de la instrucción pendiente
-				free(instruccion_pendiente->registro_datos);
-				free(instruccion_pendiente->registro_direccion);
-				free(instruccion_pendiente);
-				instruccion_pendiente = NULL;
+				free_instruccion_pendiente(instruccion_pendiente);
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
 
@@ -393,6 +409,7 @@ void conexion_cpu_memoria() {
 					free(instruccion_separada[i]);
 				}
 				free(instruccion_separada);
+				free_instruccion_pendiente(instruccion_pendiente);
 				dictionary_destroy(dictionary_registros);
 				break;
 			}
@@ -405,6 +422,7 @@ void conexion_cpu_memoria() {
 				free(instruccion_separada[i]);
 			}
 			free(instruccion_separada);
+			free_instruccion_pendiente(instruccion_pendiente);
 			dictionary_destroy(dictionary_registros);
 
 			// Fetch --> seguir pidiendo instrucciones

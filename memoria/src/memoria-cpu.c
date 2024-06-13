@@ -117,7 +117,7 @@ void conexion_memoria_cpu() {
                     for (int i = paginas_actuales - 1; i >= paginas_necesarias; i--) {
                         uint32_t* marco_ptr = list_remove(tabla_paginas, i);
                         int marco = *marco_ptr;
-                        free(marco_ptr);
+                        // free(marco_ptr);
                         liberar_marco(marcos_ocupados, marco);
                         log_info(memoria_logger, "Marco %d liberado de la pagina %d", marco, i);
                     }
@@ -145,6 +145,7 @@ void conexion_memoria_cpu() {
             if (pagina_actual_escribir == -1) {
                 log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_escribir, pid_a_escribir);
                 send_escritura_ok(fd_cpu, -1);
+                free(datos_escribir);
                 break;
             }
 
@@ -164,6 +165,7 @@ void conexion_memoria_cpu() {
                     log_error(memoria_logger, "Error al escribir en la memoria.");
                     // Error en escritura --> envia -1
                     send_escritura_ok(fd_cpu, -1);
+                    free(datos_escribir);
                     break;
                 }
 
@@ -181,6 +183,7 @@ void conexion_memoria_cpu() {
                         if (marco_asignado_escribir == -1) {
                             log_error(memoria_logger, "No se encontro un marco asignado para la pagina: %d del proceso PID: %d", pagina_actual_escribir, pid_a_escribir);
                             send_escritura_ok(fd_cpu, -1);
+                            free(datos_escribir);
                             break;
                         }
                         desplazamiento_actual_escribir = 0; // Reiniciar el desplazamiento para la nueva pagina
@@ -192,7 +195,7 @@ void conexion_memoria_cpu() {
             // Escritura OK --> envia 1
             log_info(memoria_logger, "Escritura en memoria completada correctamente para el PID: %d", pid_a_escribir);
             send_escritura_ok(fd_cpu, 1);
-            // free(datos_escribir);
+            free(datos_escribir);
             break;
         case LEER_MEMORIA:
             uint8_t pid_a_leer;
