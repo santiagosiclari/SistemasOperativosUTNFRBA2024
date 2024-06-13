@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <readline/readline.h>
 
 #include "configs.h"
 #include "logs.h"

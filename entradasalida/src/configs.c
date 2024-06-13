@@ -16,4 +16,5 @@ void init_entradasalida_config(void) {
     PATH_BASE_DIALFS = config_get_string_value(entradasalida_config, "PATH_BASE_DIALFS");
     BLOCK_SIZE = config_get_int_value(entradasalida_config, "BLOCK_SIZE");
     BLOCK_COUNT = config_get_int_value(entradasalida_config, "BLOCK_COUNT");
+    RETRASO_COMPACTACION = config_get_int_value(entradasalida_config, "RETRASO_COMPACTACION");
 }

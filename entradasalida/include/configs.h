@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
+#include <commons/string.h>
 #include <commons/config.h>
 
 extern t_config* entradasalida_config;
@@ -18,6 +19,7 @@ extern char* PUERTO_MEMORIA;//pdf dice int?
 extern char* PATH_BASE_DIALFS;
 extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
+extern int RETRASO_COMPACTACION;
 
 void init_entradasalida_config();
 

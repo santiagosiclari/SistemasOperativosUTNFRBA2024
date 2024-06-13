@@ -11,6 +11,8 @@
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 
+extern char* nombre;
+
 void conexion_entradasalida_memoria();
 
 #endif

@@ -34,7 +34,9 @@ char* PUERTO_MEMORIA;//pdf dice int?
 char* PATH_BASE_DIALFS;
 int BLOCK_SIZE;
 int BLOCK_COUNT;
+int RETRASO_COMPACTACION;
 
 extern char* nombre;
+extern char* config;
 
 #endif
