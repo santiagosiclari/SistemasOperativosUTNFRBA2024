@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <semaphore.h>
 
 #include <commons/string.h>
 #include <commons/collections/queue.h>
@@ -23,6 +24,9 @@ extern t_queue* colaExec;
 
 extern t_list* recursos_de_procesos;
 extern t_list* recursos;
+
+extern bool control_primera_vez;
+extern sem_t semaforoPlanificacion;
 
 extern pthread_mutex_t colaNewMutex;
 

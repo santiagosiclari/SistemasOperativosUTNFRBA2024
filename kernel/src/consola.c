@@ -34,11 +34,6 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 	}
 }
 
-/* void ejecutar_script(){
-	send_ejecutar_scr(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
-		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
-} */
-
 void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	// New
     pthread_mutex_lock(&colaNewMutex);
@@ -96,6 +91,18 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	}
 }
 
+void iniciar_planificacion() {
+    pthread_t planificacion;
+	if(strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0) {
+		pthread_create(&planificacion, NULL, (void *)planificacionFIFO, NULL);
+	} else if(strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+		pthread_create(&planificacion, NULL, (void *)planificacionRR, NULL);
+	} else if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+		pthread_create(&planificacion, NULL, (void *)planificacionVRR, NULL);
+	}
+	pthread_detach(planificacion);
+}
+
 void atender_instruccion (char* leido) {
 
 	char** comando_consola = string_split(leido, " ");
@@ -109,21 +116,39 @@ void atender_instruccion (char* leido) {
 				"INICIAR_PLANIFICACION\n"
 				"MULTIPROGRAMACION [valor]\n"
 				"PROCESO_ESTADO\n\n");
-	}/*  else if(strcmp(comando_consola[0], "EJECUTAR_SCRIPT") == 0){
-		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
+	} else if(strcmp(comando_consola[0], "EJECUTAR_SCRIPT") == 0) {
+		log_info(kernel_logger, "Path del script: %s", comando_consola[1]);
 
-	char linea[128];
-		//leer comando y ejecutarlo
-		char *leer = fgets(linea, 128, archivo);
+		// Concatenar con path de carpeta scripts-pruebas
+		uint32_t MAX_LENGTH = 256;
+		char* path = malloc(MAX_LENGTH);
+		strcpy(path, "/home/utnso/scripts-kernel");
+   	 	strcat(path, comando_consola[1]);
 
-		while ( leer != NULL){
-			char *posicion_limite = strchr(linea, '\n');
-				if(posicion_limite != NULL){
-					*posicion_limite = '\0';
-				}
-			atender_instruccion(leer);
-		} */
-	 else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
+		FILE* archivo;
+		archivo = fopen(path, "rt");
+
+		if (archivo == NULL) {
+			perror("Error abriendo archivo");
+			exit(EXIT_FAILURE);
+		}
+
+		char* linea = malloc(MAX_LENGTH);
+
+		log_info(kernel_logger, "Leyendo el archivo");
+		while (fgets(linea, MAX_LENGTH, archivo) != NULL) {
+			char* comando = malloc(strlen(linea) + 1); // +1 para el terminador nulo
+			strcpy(comando, linea);
+			string_trim_right(&comando);
+			log_info(kernel_logger, "Comando: %s", comando);
+			atender_instruccion(comando);
+			free(comando);
+		}
+
+		fclose(archivo); // Cerrar el archivo
+		free(linea); // Libero memoria
+    	free(path); // Liberar memoria del path
+	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
 		t_pcb* pcb = crear_pcb();
 		send_pcb(fd_cpu_dispatch, pcb);
 		log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
@@ -137,16 +162,18 @@ void atender_instruccion (char* leido) {
 
 		send_iniciar_proceso(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
 		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
-	} else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0) {
-    	pthread_t planificacion;
-		if(strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0) {
-			pthread_create(&planificacion, NULL, (void *)planificacionFIFO, NULL);
-		} else if(strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
-			pthread_create(&planificacion, NULL, (void *)planificacionRR, NULL);
-		} else if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
-			pthread_create(&planificacion, NULL, (void *)planificacionVRR, NULL);
-		}
-		pthread_detach(planificacion);
+	} else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0){
+        log_info(kernel_logger,"Se detiene la planificacion");
+        sem_wait(&semaforoPlanificacion);
+    } else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0) {
+		if (control_primera_vez) {
+            log_info(kernel_logger, "Comienza la planificacion");
+            control_primera_vez = false;
+        } else {
+            log_info(kernel_logger, "Se retoma la planificacion");
+        }
+        sem_post(&semaforoPlanificacion);
+        iniciar_planificacion();
 	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0) {
 		// Buscar pid en queue --> pid => comando_consola[1]
 		uint8_t pid_a_borrar = atoi(comando_consola[1]);

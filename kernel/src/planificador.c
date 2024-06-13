@@ -25,9 +25,6 @@ void destruir_pcb(void* ptr_pcb) {
 
 void* quantum(void* arg) {
     t_pcb* pcb = (t_pcb*)arg;
-    // if (pcb == NULL) {
-    //     return NULL;
-    // }
     usleep(pcb->quantum);
     send_interrupcion(fd_cpu_interrupt, pcb->pid);
     return NULL;
@@ -43,6 +40,7 @@ void planificacionFIFO() {
     // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
     control_planificacion = 1;
     while (control_planificacion) {
+        sem_wait(&semaforoPlanificacion);
         while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
@@ -67,8 +65,11 @@ void planificacionFIFO() {
             send_pid(fd_cpu_dispatch, pcb->pid);
             log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
         }
+        sem_post(&semaforoPlanificacion);
     }
 
+    sem_wait(&semaforoPlanificacion);
+    control_primera_vez = true;
     queue_clean_and_destroy_elements(colaNew, destruir_pcb);
     queue_clean_and_destroy_elements(colaReady, destruir_pcb);
     queue_clean_and_destroy_elements(colaExec, destruir_pcb);
@@ -81,6 +82,7 @@ void planificacionRR() {
     // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
     control_planificacion = 1;
     while (control_planificacion) {
+        sem_wait(&semaforoPlanificacion);
         while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
@@ -110,8 +112,11 @@ void planificacionRR() {
                 controlar_quantum(pcb);
             }
         }
+        sem_post(&semaforoPlanificacion);
     }
 
+    sem_wait(&semaforoPlanificacion);
+    control_primera_vez = true;
     queue_clean_and_destroy_elements(colaNew, destruir_pcb);
     queue_clean_and_destroy_elements(colaReady, destruir_pcb);
     queue_clean_and_destroy_elements(colaExec, destruir_pcb);
@@ -123,8 +128,8 @@ void planificacionVRR() {
     // El control_planificacion se cambia a 0 una vez que se elimina el proceso y todas las queues estan vacias
     // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
     control_planificacion = 1;
-    while (control_planificacion)
-    {
+    while (control_planificacion) {
+        sem_wait(&semaforoPlanificacion);
         while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
@@ -139,18 +144,6 @@ void planificacionVRR() {
         if(queue_size(colaAux) > 0 && queue_size(colaExec) == 0) {
             //Ejecutar los procesos de esta cola
             t_pcb* pcb;
-
-            // Desalojamos el que se está ejecutando
-            pthread_mutex_lock(&colaReadyMutex);
-            pthread_mutex_lock(&colaExecMutex);
-            if(!queue_is_empty(colaExec))
-            {
-                pcb = queue_pop(colaExec);
-                pcb->estado = 'R';
-                queue_push(colaReady, pcb);
-            }
-            pthread_mutex_unlock(&colaExecMutex);
-            pthread_mutex_unlock(&colaReadyMutex);
 
             // Ejecutamos el proceso de la cola
             pthread_mutex_lock(&colaExecMutex);
@@ -192,8 +185,11 @@ void planificacionVRR() {
                 }
             }
         }
+        sem_post(&semaforoPlanificacion);
     }
 
+    sem_wait(&semaforoPlanificacion);
+    control_primera_vez = true;
     queue_clean_and_destroy_elements(colaNew, destruir_pcb);
     queue_clean_and_destroy_elements(colaReady, destruir_pcb);
     queue_clean_and_destroy_elements(colaExec, destruir_pcb);

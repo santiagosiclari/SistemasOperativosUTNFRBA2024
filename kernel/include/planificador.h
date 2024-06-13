@@ -25,6 +25,9 @@ extern pthread_t quantum_thread;
 extern t_temporal* tiempo_vrr;
 extern int control_planificacion;
 
+extern sem_t semaforoPlanificacion;
+extern bool control_primera_vez;
+
 void planificacionFIFO();
 void planificacionRR();
 void planificacionVRR();

@@ -57,4 +57,7 @@ extern t_queue* colaAux;
 
 extern t_list* listaInterfaces;
 
+extern sem_t semaforoPlanificacion;
+extern bool control_primera_vez;
+
 #endif

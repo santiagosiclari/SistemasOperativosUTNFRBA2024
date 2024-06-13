@@ -338,7 +338,7 @@ void conexion_cpu_memoria() {
 					break;
 				}
 				// Liberar la memoria de la instrucción pendiente
-				free_instruccion_pendiente(instruccion_pendiente);
+				// free_instruccion_pendiente(instruccion_pendiente);
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
 
@@ -360,6 +360,7 @@ void conexion_cpu_memoria() {
 					free(instruccion_separada[i]);
 				}
 				free(instruccion_separada);
+				free_instruccion_pendiente(instruccion_pendiente);
 				dictionary_destroy(dictionary_registros);
 				break;
 			}
@@ -372,6 +373,7 @@ void conexion_cpu_memoria() {
 				free(instruccion_separada[i]);
 			}
 			free(instruccion_separada);
+			free_instruccion_pendiente(instruccion_pendiente);
 			dictionary_destroy(dictionary_registros);
 
 			// Fetch --> seguir pidiendo instrucciones

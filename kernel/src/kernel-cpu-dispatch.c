@@ -20,7 +20,10 @@ void conexion_kernel_cpu_dispatch() {
 		case RECIBIR_PID_A_BORRAR:
 			// Recibo proceso a eliminar
     		pthread_mutex_lock(&colaExecMutex);
-			pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
+			if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0 || strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
+			}
+
 			uint8_t pid_a_borrar;
 			if(!recv_pid_a_borrar(fd_cpu_dispatch, &pid_a_borrar)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
@@ -28,6 +31,7 @@ void conexion_kernel_cpu_dispatch() {
 				log_info(kernel_logger, "Proceso a finalizar: %d", pid_a_borrar);
 				send_fin_proceso(fd_memoria, pid_a_borrar);
 			}
+
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_a_borrar = queue_pop(colaExec);
 				// Revisar si otro proceso se puede desbloquear
@@ -57,6 +61,7 @@ void conexion_kernel_cpu_dispatch() {
 			}
 			free(pcb_interrumpido->registros);
 			free(pcb_interrumpido);
+			temporal_destroy(tiempo_vrr);
 
 			pthread_mutex_lock(&colaExecMutex);
 			if(queue_size(colaExec) != 0) {

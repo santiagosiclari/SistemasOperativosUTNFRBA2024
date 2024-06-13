@@ -44,7 +44,9 @@ int iniciar_servidor(t_log* logger, char* puerto, char* modulo) {
     getaddrinfo(NULL, puerto, &hints, &server_info);
 
     socket_servidor = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
-
+    if(setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0) {
+        perror("setsockopt(SO_REUSEADDR)failed");
+    }
     bind(socket_servidor, server_info->ai_addr, server_info->ai_addrlen);
     
     listen(socket_servidor, SOMAXCONN); 

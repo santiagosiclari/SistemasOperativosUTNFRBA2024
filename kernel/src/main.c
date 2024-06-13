@@ -8,6 +8,9 @@ t_queue* colaAux;
 
 t_list* listaInterfaces;
 
+sem_t semaforoPlanificacion;
+bool control_primera_vez;
+
 int main(int argc, char* argv[]) {
     // Inicializamos logger y logger debug
     init_kernel_logs();
@@ -22,6 +25,10 @@ int main(int argc, char* argv[]) {
     colaBlocked = queue_create();
     colaExec = queue_create();
     colaAux = queue_create();
+
+    //Inicializamos semaforo
+    control_primera_vez = true;
+    sem_init(&semaforoPlanificacion, 1, 0);
 
     // Creamos lista de interfaces
     listaInterfaces = list_create();
