@@ -37,7 +37,7 @@ void conexion_entradasalida_kernel() {
 
 			uint32_t usleep_final = TIEMPO_UNIDAD_TRABAJO * unidades_de_trabajo;
 			
-			log_info(entradasalida_logger, "Realizando el usleep de %d - PID: %d", usleep_final, pcb_sleep->pid);
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_sleep->pid, "IO_GEN_SLEEP");
 			// Hace el sleep
 			usleep(usleep_final);
 			log_info(entradasalida_logger, "Finalizo el usleep de %d - PID: %d", usleep_final, pcb_sleep->pid);
@@ -65,9 +65,11 @@ void conexion_entradasalida_kernel() {
 				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_STDIN_READ");
 			}
 			strcpy(nombre_stdin, nombre_stdin_recibido);
+
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_stdin->pid, "IO_STDIN_READ");
+			log_info(entradasalida_logger, "Ingrese el string (maximo %d letras): ", tamanio_maximo_stdin);
 			
 			// Pedir string
-			string = malloc(tamanio_maximo_stdin + 1);
 			string = readline("> ");
 			if (strlen(string) > tamanio_maximo_stdin) {
 				log_info(entradasalida_logger, "El string supera los valores maximos.");
@@ -95,6 +97,8 @@ void conexion_entradasalida_kernel() {
 				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_STDOUT_WRITE");
 			}
 			strcpy(nombre_stdout, nombre_stdout_recibido);
+
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_stdout->pid, "IO_STDOUT_WRITE");
 
 			// Logica de leer memoria y mostrar en pantalla el string (recibir_valor)
 			send_leer_memoria(fd_memoria, pcb_stdout->pid, direccion_fisica_stdout, tamanio_maximo_stdout);

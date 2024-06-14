@@ -14,7 +14,6 @@
 
 extern t_pcb* pcb_stdin;
 extern t_pcb* pcb_stdout;
-extern char* nombre;
 extern char* nombre_stdin;
 extern char* nombre_stdout;
 extern char* nombre_stdin_recibido;

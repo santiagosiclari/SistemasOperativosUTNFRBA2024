@@ -31,6 +31,8 @@ void conexion_memoria_kernel() {
 
 			strcpy(path, path_recivido);
 
+			usleep(RETARDO_RESPUESTA);
+
 			// Loguear el path concatenado
 			log_info(memoria_logger, "Path recivido: %s", path);
 
@@ -58,10 +60,13 @@ void conexion_memoria_kernel() {
 				break;
 			}
 
+			log_info(memoria_logger, "Destruccion de Tabla de Paginas");
+
             // Liberar marcos
 			if (pid_fin < list_size(tabla_paginas_por_proceso)) {
 				t_list* tabla_paginas_borrar = list_get(tabla_paginas_por_proceso, pid_fin);
 				if (tabla_paginas_borrar != NULL) {
+            		log_info(memoria_logger, "PID: %d - Tamaño: %d", pid_fin, list_size(tabla_paginas_borrar) * TAM_PAGINA);
 					while (!list_is_empty(tabla_paginas_borrar)) {
 						int* marco_asignado = list_remove(tabla_paginas_borrar, 0);
 						if (marco_asignado != NULL) {

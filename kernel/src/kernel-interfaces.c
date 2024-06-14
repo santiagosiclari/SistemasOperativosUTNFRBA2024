@@ -31,6 +31,13 @@ void conexion_kernel_interfaces(void* arg) {
 			pthread_mutex_lock(&colaBlockedMutex);
 			if(!queue_is_empty(colaBlocked)) {
 				t_pcb* pcb_recibido = buscar_pcb_a_finalizar(colaBlocked, pid_fin_io);
+				if(pcb_recibido == NULL) {
+					pthread_mutex_unlock(&colaBlockedMutex);
+					pthread_mutex_unlock(&reciboFinDeIO);
+					free(nombre_fin_io);
+					free(nombre_fin_io_recibido);
+					break;
+				}
 				if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
 				{
 					if(pcb_recibido->quantum > 0 && pcb_recibido->quantum < QUANTUM)
@@ -57,7 +64,7 @@ void conexion_kernel_interfaces(void* arg) {
 					}
 				}
 				else{
-					if (pcb_recibido) {
+					if (pcb_recibido != NULL) {
 						log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre_fin_io, pcb_recibido->pid);
 						pthread_mutex_lock(&colaReadyMutex);
 						pcb_recibido->estado = 'R';

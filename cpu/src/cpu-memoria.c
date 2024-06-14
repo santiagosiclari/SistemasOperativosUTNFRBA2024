@@ -80,67 +80,79 @@ void conexion_cpu_memoria() {
 
 				strcpy(instruccion, instruccion_recibida);
 
-				log_info(cpu_logger, "Iniciando instruccion: %s - Nro: %d", instruccion, pcb_a_ejecutar->pc);
-
 				// Decode
 				pthread_mutex_lock(&pcbEjecutarMutex);
 				instruccion_separada = string_split(instruccion, " ");
 				if (strcmp(instruccion_separada[0], "SET") == 0) {
 					int valor = atoi(instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %d", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], valor);
 					funcion_set(dictionary_registros, instruccion_separada[1], valor);
 				} else if (strcmp(instruccion_separada[0], "SUM") == 0) {
 					// Elimino \n cuando es un string la ultima parte de la instruccion
 					string_trim_right(&instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 					funcion_sum(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 				} else if (strcmp(instruccion_separada[0], "SUB") == 0) {
 					// Elimino \n cuando es un string la ultima parte de la instruccion
 					string_trim_right(&instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 					funcion_sub(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 				} else if (strcmp(instruccion_separada[0], "MOV_IN") == 0) {
 					string_trim_right(&instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 					funcion_mov_in(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 					// Tiene que esperar a recibir un dato
 					esperando_datos = true;
 				} else if (strcmp(instruccion_separada[0], "MOV_OUT") == 0) {
 					string_trim_right(&instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
 					funcion_mov_out(dictionary_registros, instruccion_separada[1], instruccion_separada[2]);
 					// Tiene que esperar a recibir un dato
 					esperando_datos = true;
 				} else if (strcmp(instruccion_separada[0], "JNZ") == 0) {
 					uint32_t valor_pc = atoi(instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %d", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], valor_pc);
 					funcion_jnz(dictionary_registros, instruccion_separada[1], valor_pc);
 				} else if (strcmp(instruccion_separada[0], "RESIZE") == 0) {
 					uint32_t tamanio = atoi(instruccion_separada[1]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %d", pcb_a_ejecutar->pid, instruccion_separada[0], tamanio);
 					funcion_resize(tamanio);
 					// Tiene que esperar a recibir un dato
 					esperando_datos = true;
 				} else if (strcmp(instruccion_separada[0], "COPY_STRING") == 0) {
 					uint32_t tamanio = atoi(instruccion_separada[1]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %d", pcb_a_ejecutar->pid, instruccion_separada[0], tamanio);
 					funcion_copy_string(dictionary_registros, tamanio);
 					// Tiene que esperar a recibir un dato
 					esperando_datos = true;
 				}  else if (strcmp(instruccion_separada[0], "WAIT") == 0) {
 					string_trim_right(&instruccion_separada[1]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1]);
 					funcion_wait(instruccion_separada[1]);
 					// Tiene que esperar a recibir un dato
 					esperando_datos = true;
 				}  else if (strcmp(instruccion_separada[0], "SIGNAL") == 0) {
 					string_trim_right(&instruccion_separada[1]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1]);
 					funcion_signal(instruccion_separada[1]);
 				} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 					uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %d", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], unidades_trabajo);
 					funcion_io_gen_sleep(instruccion_separada[1], unidades_trabajo);
 				} else if (strcmp(instruccion_separada[0], "IO_STDIN_READ") == 0) {
 					// Elimino \n cuando es un string la ultima parte de la instruccion
 					string_trim_right(&instruccion_separada[3]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
 					funcion_io_stdin_read(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
 					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
 				} else if (strcmp(instruccion_separada[0], "IO_STDOUT_WRITE") == 0) {
 					// Elimino \n cuando es un string la ultima parte de la instruccion
 					string_trim_right(&instruccion_separada[3]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
 					funcion_io_stdout_write(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
 					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
 				} else if (strcmp(instruccion_separada[0], "EXIT") == 0) {
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s", pcb_a_ejecutar->pid, instruccion_separada[0]);
 					funcion_exit();
 				} else {
 					log_warning(cpu_logger, "No se pudo encontrar la instruccion: %s\n", instruccion_separada[0]);
@@ -169,7 +181,7 @@ void conexion_cpu_memoria() {
 				log_info(cpu_logger, "Instruccion finalizada");
 
 				// Printea el PCB
-				printear_pcb(pcb_a_ejecutar);
+				// printear_pcb(pcb_a_ejecutar);
 				
 				// Interrupcion por IO
 				if(pcb_a_ejecutar->flag_int == 1) {
@@ -200,7 +212,7 @@ void conexion_cpu_memoria() {
 
 				// Fetch --> seguir pidiendo instrucciones
 				send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
-				log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+				log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
 			}
 
 			// Libera la instruccion anterior
@@ -220,10 +232,10 @@ void conexion_cpu_memoria() {
 				log_error(cpu_logger, "Error al recibir el marco de la memoria");
 				break;
 			}
+
+			log_info(cpu_logger, "PID: %d - OBTENER MARCO - Pagina: %d - Marco: %d", pid_marco, numero_pagina, marco);
 			
-			log_info(cpu_logger, "Agregando a la TLB");
 			agregar_a_tlb(pid_marco, numero_pagina, marco);
-			log_info(cpu_logger, "Marco agregado a la TLB");
 
 			// Calculo para la instruccion que esperaba recibir algun dato, como un marco, etc.
 			uint32_t desplazamiento = instruccion_pendiente->direccion_logica - numero_pagina * tam_pagina;
@@ -247,18 +259,19 @@ void conexion_cpu_memoria() {
 					if (strlen(instruccion_pendiente->registro_datos) == 3 || !strcmp(instruccion_pendiente->registro_datos, "SI") || !strcmp(instruccion_pendiente->registro_datos, "DI") || !strcmp(instruccion_pendiente->registro_datos, "PC")) {
 						uint32_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
 						uint32_t tamanio_a_escribir = sizeof(uint32_t);
+        				log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos);
 						send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
-						log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
 					} else if (strlen(instruccion_pendiente->registro_datos) == 2) {
 						uint8_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
 						uint32_t tamanio_a_escribir = sizeof(uint8_t);
+        				log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos);
 						send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
-						log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
 					}
 				} else if (strcmp(instruccion_pendiente->instruccion, "COPY_STRING") == 0) {
 					if (strcmp(instruccion_pendiente->registro_datos, "SI") == 0) {
                         send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->tamanio);
                     } else if (strcmp(instruccion_pendiente->registro_datos, "DI") == 0) {
+						log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %s", pcb_a_ejecutar->pid, direccion_fisica, (char*)instruccion_pendiente->datos);
                         send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->datos, instruccion_pendiente->tamanio);
                     }
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0) {
@@ -303,13 +316,13 @@ void conexion_cpu_memoria() {
 				if (strcmp(instruccion_pendiente->instruccion, "MOV_IN") == 0) {
 					// Asignar el valor recibido al registro de datos dependiendo del tipo de dato
 					if (tam_dato == sizeof(uint32_t)) {
-						log_info(cpu_logger, "Valor recibido de memoria: %u", *((uint32_t*)valor));
 						uint32_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
 						*reg_datos = *((uint32_t*)valor);
+						log_info(cpu_logger, "Valor recibido de memoria: %d", *reg_datos);
 					} else if (tam_dato == sizeof(uint8_t)) {
-						log_info(cpu_logger, "Valor recibido de memoria: %u", *((uint8_t*)valor));
 						uint8_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
 						*reg_datos = *((uint8_t*)valor);
+						log_info(cpu_logger, "Valor recibido de memoria: %d", *reg_datos);
 					} else {
 						log_error(cpu_logger, "Tamaño de dato desconocido: %d", tam_dato);
 					}
@@ -328,12 +341,12 @@ void conexion_cpu_memoria() {
 						uint32_t numero_pagina = *reg_di / tam_pagina;
 						uint32_t desplazamiento = *reg_di - numero_pagina * tam_pagina;
 						send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
-    					log_info(cpu_logger, "Instruccion pendiente guardada en COPY_STRING");
 						pthread_mutex_unlock(&instruccion_pendiente_mutex);
 						break;
 					}
 
 					// TLB hit
+					log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %s", pcb_a_ejecutar->pid, direccion_fisica_di, (char*)valor);
 					send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica_di, valor, tam_dato);
 					break;
 				}
@@ -348,7 +361,7 @@ void conexion_cpu_memoria() {
 			
 			log_info(cpu_logger, "Instruccion finalizada");
 			// Printea el PCB
-			printear_pcb(pcb_a_ejecutar);
+			// printear_pcb(pcb_a_ejecutar);
 
 			// Interrupcion por fin de Quantum
 			if(pcb_a_ejecutar->flag_int == 2) {
@@ -378,7 +391,7 @@ void conexion_cpu_memoria() {
 
 			// Fetch --> seguir pidiendo instrucciones
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
-			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+			log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
 			break;
 		case ESCRITURA_OK: // Para MOV_OUT y COPY_STRING
 			uint8_t escritura_ok;
@@ -399,7 +412,7 @@ void conexion_cpu_memoria() {
 
 			log_info(cpu_logger, "Instruccion finalizada");
 			// Printea el PCB
-			printear_pcb(pcb_a_ejecutar);
+			// printear_pcb(pcb_a_ejecutar);
 
 			// Interrupcion por fin de Quantum
 			if(pcb_a_ejecutar->flag_int == 2) {
@@ -429,7 +442,7 @@ void conexion_cpu_memoria() {
 
 			// Fetch --> seguir pidiendo instrucciones
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
-			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+			log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
 			break;
 		case OUT_OF_MEMORY:
 			uint8_t pid_oom;
@@ -444,7 +457,7 @@ void conexion_cpu_memoria() {
 			log_info(cpu_logger, "Datos recibidos");
 			
 			// Printea el PCB
-			printear_pcb(pcb_a_ejecutar);
+			// printear_pcb(pcb_a_ejecutar);
 
 			// Libera la instruccion anterior
 			free(instruccion);
@@ -459,7 +472,7 @@ void conexion_cpu_memoria() {
 			if(pid_oom != pcb_a_ejecutar->pid) {
 				// Fetch --> seguir pidiendo instrucciones
 				send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
-				log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+				log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
 				break;
 			} else {
 				log_error(cpu_logger, "Fin del proceso por Out of Memory");

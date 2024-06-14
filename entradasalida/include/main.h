@@ -36,7 +36,4 @@ int BLOCK_SIZE;
 int BLOCK_COUNT;
 int RETRASO_COMPACTACION;
 
-extern char* nombre;
-extern char* config;
-
 #endif

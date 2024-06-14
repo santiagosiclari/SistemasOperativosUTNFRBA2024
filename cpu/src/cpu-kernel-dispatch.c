@@ -30,11 +30,11 @@ void conexion_cpu_kernel_dispatch() {
 			list_add_in_index(procesos, pcb->pid, pcb);
 
 			// Printea el PCB
-			log_info(cpu_logger, "PID: %d\nProgram Counter: %d\nEstado: %c\nQuantum: %d\nFlag IO: %d\nRegistros:\nAX: %d, BX: %d, CX: %d, DX: %d\nEAX: %d, EBX: %d, ECX: %d, EDX: %d\nSI: %d, DI: %d",
-			pcb->pid, pcb->pc, pcb->estado, pcb->quantum, pcb->flag_int,
-			pcb->registros->AX, pcb->registros->BX, pcb->registros->CX, pcb->registros->DX,
-			pcb->registros->EAX, pcb->registros->EBX, pcb->registros->ECX, pcb->registros->EDX,
-			pcb->registros->SI, pcb->registros->DI);
+			// log_info(cpu_logger, "PID: %d\nProgram Counter: %d\nEstado: %c\nQuantum: %d\nFlag IO: %d\nRegistros:\nAX: %d, BX: %d, CX: %d, DX: %d\nEAX: %d, EBX: %d, ECX: %d, EDX: %d\nSI: %d, DI: %d",
+			// pcb->pid, pcb->pc, pcb->estado, pcb->quantum, pcb->flag_int,
+			// pcb->registros->AX, pcb->registros->BX, pcb->registros->CX, pcb->registros->DX,
+			// pcb->registros->EAX, pcb->registros->EBX, pcb->registros->ECX, pcb->registros->EDX,
+			// pcb->registros->SI, pcb->registros->DI);
 
             break;
 		case RECIBIR_PID:
@@ -47,11 +47,14 @@ void conexion_cpu_kernel_dispatch() {
 			}
 
 			pcb_a_ejecutar = list_get(procesos, pid_a_ejecutar);
+			if (pcb_a_ejecutar == NULL) {
+				break;
+			}
 			pcb_a_ejecutar->flag_int = 0; // Por si vuelve de interrupcion
 
 			// Fetch --> pedir la primera instruccion y despues pasa al while en cpu-memoria.c
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
-			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+			log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
 			break;
 		case RECURSOS_OK:
 			// Para ver si sigue ejecutando el proceso o si esta bloqueado por falta de recursos
@@ -82,7 +85,7 @@ void conexion_cpu_kernel_dispatch() {
 
 			log_info(cpu_logger, "Instruccion finalizada");
 			// Printea el PCB
-			printear_pcb(pcb_a_ejecutar);
+			// printear_pcb(pcb_a_ejecutar);
 
 			// Interrupcion por fin de Quantum
 			if(pcb_a_ejecutar->flag_int == 2) {
@@ -110,7 +113,7 @@ void conexion_cpu_kernel_dispatch() {
 
 			// Fetch --> seguir pidiendo instrucciones
 			send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
-			log_info(cpu_logger, "Se envio el PC %d a memoria", pcb_a_ejecutar->pc);
+			log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
 			break;
 		case -1:
 			log_error(cpu_logger, "El Kernel (Dispatch) se desconecto. Terminando servidor");

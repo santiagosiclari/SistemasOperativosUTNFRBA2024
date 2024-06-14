@@ -8,8 +8,6 @@ uint32_t mmu(uint32_t dir_logica) {
     uint32_t numero_pagina = dir_logica / tam_pagina;
     uint32_t desplazamiento = dir_logica - numero_pagina * tam_pagina;
 
-    log_info(cpu_logger, "Dir logica: %u, Tam pagina: %u, Numero de pagina: %u, Desplazamiento: %u", dir_logica, tam_pagina, numero_pagina, desplazamiento);
-
     t_tlb* entrada_tlb = buscar_en_tlb(pcb_a_ejecutar->pid, numero_pagina);
     if (entrada_tlb != NULL) {
         // TLB Hit
@@ -198,13 +196,13 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
     if (strlen(registro_datos) == 3 || !strcmp(registro_datos, "SI") || !strcmp(registro_datos, "DI") || !strcmp(registro_datos, "PC")) {
 		uint32_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
 		uint32_t tamanio_a_escribir = sizeof(uint32_t);
+        log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos);
 		send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
-		log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
 	} else if (strlen(registro_datos) == 2) {
 		uint8_t *reg_datos = dictionary_get(dictionary_registros, registro_datos);
 		uint32_t tamanio_a_escribir = sizeof(uint8_t);
+        log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos);
 	    send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, reg_datos, tamanio_a_escribir);
-		log_info(cpu_logger, "MOV_OUT: PID: %d, Direccion fisica: %d, Valor: %d, Tamaño: %d", pcb_a_ejecutar->pid, direccion_fisica, *reg_datos, tamanio_a_escribir);
 	}
 }
 
@@ -228,7 +226,6 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
 
 void funcion_resize(uint32_t tamanio) {
     send_tamanio(fd_memoria, tamanio, pcb_a_ejecutar->pid);
-    log_info(cpu_logger, "Funcion Resize enviada a memoria: %d", tamanio);
     pcb_a_ejecutar->pc++;
 }
 

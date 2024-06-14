@@ -136,7 +136,8 @@ void conexion_memoria_cpu() {
             }
 
             usleep(RETARDO_RESPUESTA);
-            log_info(memoria_logger, "Acceso a espacio de usuario: PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", pid_a_escribir, direccion_fisica_escribir, tamanio_a_escribir);
+            log_info(memoria_logger, "Acceso a espacio de usuario:");
+            log_info(memoria_logger, "PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", pid_a_escribir, direccion_fisica_escribir, tamanio_a_escribir);
 
             // Buscar marco
             t_list* tabla_paginas_actual_escribir = list_get(tabla_paginas_por_proceso, pid_a_escribir);
@@ -206,7 +207,8 @@ void conexion_memoria_cpu() {
             }
 
             usleep(RETARDO_RESPUESTA);
-            log_info(memoria_logger, "Acceso a espacio de usuario: PID: %d - Accion: LEER - Direccion fisica: %u - Tamaño: %u", pid_a_leer, direccion_fisica_leer, tamanio_a_leer);
+            log_info(memoria_logger, "Acceso a espacio de usuario:");
+            log_info(memoria_logger, "PID: %d - Accion: LEER - Direccion fisica: %u - Tamaño: %u", pid_a_leer, direccion_fisica_leer, tamanio_a_leer);
 
             // Buscar marco
             t_list* tabla_paginas_actual_leer = list_get(tabla_paginas_por_proceso, pid_a_leer);
@@ -275,7 +277,8 @@ void conexion_memoria_cpu() {
             uint32_t num_marco = *marco_ptr;
 
             send_num_marco(fd_cpu, pid_pagina, numero_pagina, num_marco);
-            log_info(memoria_logger, "Numero de marco enviado a CPU: %d", num_marco);
+            log_info(memoria_logger, "Acceso a Tabla de Paginas:");
+            log_info(memoria_logger, "PID: %d - Pagina: %d - Marco: %d", pid_pagina, numero_pagina, num_marco);
 
             break;
 		case -1:

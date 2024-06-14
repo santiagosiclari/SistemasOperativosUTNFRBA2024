@@ -20,7 +20,6 @@ extern pthread_mutex_t mutexIO;
 
 void conexion_entradasalida_kernel();
 
-extern char* nombre;
 extern char* nombre_stdin;
 extern char* nombre_stdout;
 extern char* nombre_stdin_recibido;
