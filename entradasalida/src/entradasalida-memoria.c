@@ -12,8 +12,9 @@ void conexion_entradasalida_memoria() {
 		case RECIBIR_VALOR_MEMORIA:
 			// Cambiar el length de uint8 a uint32 !!
 			void* datos;
-			uint8_t length;
-			if(!recv_valor_memoria(fd_memoria, &datos, &length)) {
+			uint32_t length;
+			uint32_t dir_fisica;
+			if(!recv_valor_memoria(fd_memoria, &dir_fisica, &datos, &length)) {
 				log_error(entradasalida_logger, "Hubo un error al recibir los datos de memoria");
 			}
 			char* datos_char = malloc(length + 1);

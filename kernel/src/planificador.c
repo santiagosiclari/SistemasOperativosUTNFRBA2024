@@ -49,7 +49,7 @@ void planificacionFIFO() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
-            log_info(kernel_logger, "Se paso el proceso %d de New a Ready", pcb_nuevo->pid);
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
         }
 
         if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
@@ -63,7 +63,7 @@ void planificacionFIFO() {
 
             // Manda PID del proceso a ejecutar
             send_pid(fd_cpu_dispatch, pcb->pid);
-            log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready", "Exec");
         }
         sem_post(&semaforoPlanificacion);
     }
@@ -91,7 +91,7 @@ void planificacionRR() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
-            log_info(kernel_logger, "Se paso el proceso %d de New a Ready", pcb_nuevo->pid);
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
         }
 
         if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
@@ -105,7 +105,7 @@ void planificacionRR() {
 
             // Manda PID del proceso a ejecutar
             send_pid(fd_cpu_dispatch, pcb->pid);
-            log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready", "Exec");
             
             // Quantum
             if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
@@ -138,7 +138,7 @@ void planificacionVRR() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
-            log_info(kernel_logger, "Se paso el proceso %d de New a Ready", pcb_nuevo->pid);
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
         }
 
         if(queue_size(colaAux) > 0 && queue_size(colaExec) == 0) {
@@ -157,7 +157,7 @@ void planificacionVRR() {
             // Manda PID del proceso a ejecutar
             send_pid(fd_cpu_dispatch, pcb->pid);
             tiempo_vrr = temporal_create();
-            log_info(kernel_logger, "Se paso el proceso %d de Aux a Exec", pcb->pid);
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready (Prioritario)", "Exec");
 
             // Quantum
             if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
@@ -177,7 +177,7 @@ void planificacionVRR() {
                 send_pid(fd_cpu_dispatch, pcb->pid);
                 // Aca empeza a contar el tiempo de ejecucion --> crear variable de tiempo
                 tiempo_vrr = temporal_create();
-                log_info(kernel_logger, "Se paso el proceso %d de Ready a Exec", pcb->pid);
+                log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready", "Exec");
                 
                 // Quantum
                 if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {

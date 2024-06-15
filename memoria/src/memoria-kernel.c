@@ -48,6 +48,14 @@ void conexion_memoria_kernel() {
 			// Listar segun el PID recibido
 			list_add_in_index(instrucciones_por_proceso, pid, instrucciones);
 
+			// Crear tabla de paginas vacia para cada proceso
+            log_info(memoria_logger, "Creacion de Tabla de Paginas");
+            log_info(memoria_logger, "PID: %d - Tamaño: %d", pid, 0);
+
+			// Crear tabla de paginas para cada proceso
+            t_list* tabla_paginas = list_create();
+            list_add(tabla_paginas_por_proceso, tabla_paginas);
+
 			// Liberar espacio
 			free(path);
 			free(path_recivido);
@@ -66,7 +74,7 @@ void conexion_memoria_kernel() {
 			if (pid_fin < list_size(tabla_paginas_por_proceso)) {
 				t_list* tabla_paginas_borrar = list_get(tabla_paginas_por_proceso, pid_fin);
 				if (tabla_paginas_borrar != NULL) {
-            		log_info(memoria_logger, "PID: %d - Tamaño: %d", pid_fin, list_size(tabla_paginas_borrar) * TAM_PAGINA);
+            		log_info(memoria_logger, "PID: %d - Tamaño: %d", pid_fin, list_size(tabla_paginas_borrar));
 					while (!list_is_empty(tabla_paginas_borrar)) {
 						int* marco_asignado = list_remove(tabla_paginas_borrar, 0);
 						if (marco_asignado != NULL) {

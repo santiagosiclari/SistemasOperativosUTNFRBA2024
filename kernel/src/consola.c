@@ -181,6 +181,7 @@ void atender_instruccion (char* leido) {
 		pcb_borrar->registros = malloc(sizeof(t_registros));
 
 		buscar_en_queues_y_finalizar(pcb_borrar, pid_a_borrar);
+        log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);

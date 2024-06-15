@@ -65,6 +65,10 @@ void conexion_cpu_memoria() {
 			instruccion = malloc(MAX_LENGTH);
 			instruccion_recibida = malloc(MAX_LENGTH);
 			if(pcb_a_ejecutar != NULL) {
+				// Si habia una instruccion pendiente, que la libere
+				if(instruccion_pendiente != NULL) {
+					free_instruccion_pendiente(instruccion_pendiente);
+				}
 				// Creo diccionario
 				dictionary_registros = dictionary_create();
 				crear_diccionario(dictionary_registros);
@@ -161,7 +165,6 @@ void conexion_cpu_memoria() {
 
 				// Espera a recibir el dato para las instrucciones necesarias
 				if (esperando_datos) {
-					log_info(cpu_logger, "Esperando recibir datos...");
 					break;
 				}
 
@@ -277,11 +280,11 @@ void conexion_cpu_memoria() {
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0) {
     				send_io_stdin_read(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
 					esperando_datos = false;
-					free_instruccion_pendiente(instruccion_pendiente);
+					// free_instruccion_pendiente(instruccion_pendiente);
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDOUT_WRITE") == 0) {
     				send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
 					esperando_datos = false;
-					free_instruccion_pendiente(instruccion_pendiente);
+					// free_instruccion_pendiente(instruccion_pendiente);
 				}
 			}
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
@@ -303,8 +306,9 @@ void conexion_cpu_memoria() {
 		case RECIBIR_VALOR_MEMORIA: // Para MOV_IN y COPY_STRING
 			// Recibir el valor de memoria y continuar la operación pendiente si existente
 			void* valor;
-    		uint8_t tam_dato;
-			if (!recv_valor_memoria(fd_memoria, &valor, &tam_dato)) {
+    		uint32_t tam_dato;
+			uint32_t direccion_fisica_leer;
+			if (!recv_valor_memoria(fd_memoria, &direccion_fisica_leer, &valor, &tam_dato)) {
 				log_error(cpu_logger, "Hubo un error al recibir el valor de memoria");
 				break;
 			}
@@ -318,11 +322,11 @@ void conexion_cpu_memoria() {
 					if (tam_dato == sizeof(uint32_t)) {
 						uint32_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
 						*reg_datos = *((uint32_t*)valor);
-						log_info(cpu_logger, "Valor recibido de memoria: %d", *reg_datos);
+						log_info(cpu_logger, "PID: %d - Accion: LEER - Direccion Fisica: %d - Valor: %d", pcb_a_ejecutar->pid, direccion_fisica_leer, *reg_datos);
 					} else if (tam_dato == sizeof(uint8_t)) {
 						uint8_t *reg_datos = dictionary_get(dictionary_registros, instruccion_pendiente->registro_datos);
 						*reg_datos = *((uint8_t*)valor);
-						log_info(cpu_logger, "Valor recibido de memoria: %d", *reg_datos);
+						log_info(cpu_logger, "PID: %d - Accion: LEER - Direccion Fisica: %d - Valor: %d", pcb_a_ejecutar->pid, direccion_fisica_leer, *reg_datos);
 					} else {
 						log_error(cpu_logger, "Tamaño de dato desconocido: %d", tam_dato);
 					}
@@ -356,8 +360,7 @@ void conexion_cpu_memoria() {
 			pthread_mutex_unlock(&instruccion_pendiente_mutex);
 
 			// Ya no se esperan datos
-			esperando_datos = false; 
-			log_info(cpu_logger, "Datos recibidos");
+			esperando_datos = false;
 			
 			log_info(cpu_logger, "Instruccion finalizada");
 			// Printea el PCB
@@ -373,7 +376,7 @@ void conexion_cpu_memoria() {
 					free(instruccion_separada[i]);
 				}
 				free(instruccion_separada);
-				free_instruccion_pendiente(instruccion_pendiente);
+				// free_instruccion_pendiente(instruccion_pendiente);
 				dictionary_destroy(dictionary_registros);
 				break;
 			}
@@ -386,7 +389,7 @@ void conexion_cpu_memoria() {
 				free(instruccion_separada[i]);
 			}
 			free(instruccion_separada);
-			free_instruccion_pendiente(instruccion_pendiente);
+			// free_instruccion_pendiente(instruccion_pendiente);
 			dictionary_destroy(dictionary_registros);
 
 			// Fetch --> seguir pidiendo instrucciones
@@ -407,8 +410,7 @@ void conexion_cpu_memoria() {
 
 			// Ya no se esperan datos
 			pcb_a_ejecutar->pc++;
-			esperando_datos = false; 
-			log_info(cpu_logger, "Datos recibidos");
+			esperando_datos = false;
 
 			log_info(cpu_logger, "Instruccion finalizada");
 			// Printea el PCB
@@ -424,7 +426,7 @@ void conexion_cpu_memoria() {
 					free(instruccion_separada[i]);
 				}
 				free(instruccion_separada);
-				free_instruccion_pendiente(instruccion_pendiente);
+				// free_instruccion_pendiente(instruccion_pendiente);
 				dictionary_destroy(dictionary_registros);
 				break;
 			}
@@ -437,7 +439,7 @@ void conexion_cpu_memoria() {
 				free(instruccion_separada[i]);
 			}
 			free(instruccion_separada);
-			free_instruccion_pendiente(instruccion_pendiente);
+			// free_instruccion_pendiente(instruccion_pendiente);
 			dictionary_destroy(dictionary_registros);
 
 			// Fetch --> seguir pidiendo instrucciones
@@ -450,11 +452,8 @@ void conexion_cpu_memoria() {
 				log_error(cpu_logger, "Hubo un error al recibir el Out of Memory");
 			}
 
-			log_info(cpu_logger, "PID de Out of Memory: %d", pid_oom);
-
 			// Ya no se esperan datos
-			esperando_datos = false; 
-			log_info(cpu_logger, "Datos recibidos");
+			esperando_datos = false;
 			
 			// Printea el PCB
 			// printear_pcb(pcb_a_ejecutar);

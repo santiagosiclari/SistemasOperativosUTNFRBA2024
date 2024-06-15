@@ -105,9 +105,9 @@ void send_num_marco(int fd, uint8_t pid_marco, uint32_t numero_pagina, uint32_t 
 bool recv_num_marco(int fd, uint8_t* pid_marco, uint32_t* numero_pagina, uint32_t* marco);
 
 // RECIBIR_VALOR_MEMORIA --> para MOV_IN
-t_buffer* serializar_valor_memoria(void* valor, uint8_t tam_dato);
-void send_valor_memoria(int fd, void* valor, uint8_t tam_dato);
-bool recv_valor_memoria(int fd, void** valor, uint8_t* tam_dato);
+t_buffer* serializar_valor_memoria(uint32_t direccion_fisica, void* valor, uint32_t tam_dato);
+void send_valor_memoria(int fd, uint32_t direccion_fisica, void* valor, uint32_t tam_dato);
+bool recv_valor_memoria(int fd, uint32_t* direccion_fisica, void** valor, uint32_t* tam_dato);
 
 // ESCRITURA_OK --> para MOV_OUT
 void send_escritura_ok(int fd, uint8_t escritura_ok);

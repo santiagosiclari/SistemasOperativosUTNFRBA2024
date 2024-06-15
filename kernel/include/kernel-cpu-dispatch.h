@@ -33,8 +33,6 @@ extern int control_planificacion;
 
 extern t_list* listaInterfaces;
 
-extern char* nombre_interfaz; // Esta es el nombre de la IO en proceso
-
 extern pthread_mutex_t colaExecMutex;
 extern pthread_mutex_t colaReadyMutex;
 extern pthread_mutex_t colaBlockedMutex;

@@ -139,7 +139,7 @@ void conexion_memoria_interfaces(void* arg) {
 
             // Si la lectura se realizo correctamente, enviar los datos al CPU
             if (bytes_leidos == tamanio_a_leer) {
-                send_valor_memoria(fd_interfaz, datos_leer, tamanio_a_leer);
+                send_valor_memoria(fd_interfaz, direccion_fisica_leer, datos_leer, tamanio_a_leer);
             }
 
             // Liberar la memoria reservada para los datos leidos

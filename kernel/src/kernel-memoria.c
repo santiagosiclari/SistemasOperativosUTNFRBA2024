@@ -15,7 +15,7 @@ void conexion_kernel_memoria() {
 				log_error(kernel_logger, "Hubo un error al recibir el Out of memory");
 			}
 
-			log_info(kernel_logger, "Proceso a finalizar por OOM: %d", pid_oom);
+            log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_oom, "Out of Memory");
 
 			pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {

@@ -6,11 +6,11 @@ int main(int argc, char* argv[]) {
     init_entradasalida_logs();
 
     // Pedir nombre y archivo config
-    log_info(entradasalida_logger, "Ingrese el nombre de la I/O:");
+    log_info(entradasalida_logger, "Ingrese el nombre de la I/O:"); // EJemplo --> TECLADO
 	char* nombre = readline("> ");
     log_info(entradasalida_logger, "Nombre de la I/O leido: %s\n", nombre);
 	
-    log_info(entradasalida_logger, "Ingrese el archivo de configuracion:"); // ./memoria.config
+    log_info(entradasalida_logger, "Ingrese el archivo de configuracion:"); // Ejemplo --> /TECLADO.config
     char* config = readline("> ");
     log_info(entradasalida_logger, "Archivo de config leido: %s\n", config);
 

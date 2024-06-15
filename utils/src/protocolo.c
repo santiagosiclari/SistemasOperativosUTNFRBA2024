@@ -871,17 +871,19 @@ bool recv_num_marco(int fd, uint8_t* pid_marco, uint32_t* numero_pagina, uint32_
 
 
 // RECIBIR_VALOR_MEMORIA
-t_buffer* serializar_valor_memoria(void* valor, uint8_t tam_dato) {
+t_buffer* serializar_valor_memoria(uint32_t direccion_fisica, void* valor, uint32_t tam_dato) {
     t_buffer *buffer = malloc(sizeof(t_buffer));
 
     buffer->size =
-        sizeof(uint8_t) +     // tam_dato
-        tam_dato;             // valor
+        sizeof(uint32_t) +     // direccion_fisica
+        sizeof(uint32_t) +     // tam_dato
+        tam_dato;              // valor
 
     buffer->offset = 0;
     buffer->stream = malloc(buffer->size);
 
-    cargar_uint8_al_buffer(buffer, tam_dato);
+    cargar_uint32_al_buffer(buffer, direccion_fisica);
+    cargar_uint32_al_buffer(buffer, tam_dato);
 
     // Cargo datos (void*)
     memcpy(buffer->stream + buffer->offset, valor, tam_dato);
@@ -890,14 +892,14 @@ t_buffer* serializar_valor_memoria(void* valor, uint8_t tam_dato) {
     return buffer;
 }
 
-void send_valor_memoria(int fd, void* valor, uint8_t tam_dato) {
-    t_buffer *buffer = serializar_valor_memoria(valor, tam_dato);
+void send_valor_memoria(int fd, uint32_t direccion_fisica, void* valor, uint32_t tam_dato) {
+    t_buffer *buffer = serializar_valor_memoria(direccion_fisica, valor, tam_dato);
     t_paquete *a_enviar = crear_paquete(RECIBIR_VALOR_MEMORIA, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_valor_memoria(int fd, void** valor, uint8_t* tam_dato) {
+bool recv_valor_memoria(int fd, uint32_t* direccion_fisica, void** valor, uint32_t* tam_dato) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -914,7 +916,8 @@ bool recv_valor_memoria(int fd, void** valor, uint8_t* tam_dato) {
     paquete->buffer->stream = malloc(paquete->buffer->size);
     bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
 
-    *tam_dato = extraer_uint8_del_buffer(paquete->buffer);
+    *direccion_fisica = extraer_uint32_del_buffer(paquete->buffer);
+    *tam_dato = extraer_uint32_del_buffer(paquete->buffer);
 
     // Extraer datos (void*)
     *valor = malloc(*tam_dato);

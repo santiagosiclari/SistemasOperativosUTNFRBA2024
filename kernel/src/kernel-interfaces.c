@@ -38,23 +38,19 @@ void conexion_kernel_interfaces(void* arg) {
 					free(nombre_fin_io_recibido);
 					break;
 				}
-				if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0)
-				{
-					if(pcb_recibido->quantum > 0 && pcb_recibido->quantum < QUANTUM)
-					{
-						if (pcb_recibido)
-						{
-							log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre_fin_io, pcb_recibido->pid);
+				if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					if(pcb_recibido->quantum > 0 && pcb_recibido->quantum < QUANTUM) {
+						if (pcb_recibido != NULL) {
+            				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Blocked", "Ready (Prioridad)");
 							pthread_mutex_lock(&colaAuxMutex);
 							pcb_recibido->estado = 'A';
 							pcb_recibido->flag_int = 0;
 							queue_push(colaAux, pcb_recibido);
 							pthread_mutex_unlock(&colaAuxMutex);
 						}
-					}
-					else{
-						if (pcb_recibido) {
-							log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre_fin_io, pcb_recibido->pid);
+					} else {
+						if (pcb_recibido != NULL) {
+            				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Blocked", "Ready");
 							pthread_mutex_lock(&colaReadyMutex);
 							pcb_recibido->estado = 'R';
 							pcb_recibido->flag_int = 0;
@@ -62,10 +58,9 @@ void conexion_kernel_interfaces(void* arg) {
 							pthread_mutex_unlock(&colaReadyMutex);
 						}
 					}
-				}
-				else{
+				} else {
 					if (pcb_recibido != NULL) {
-						log_info(kernel_logger, "Fin de IO de la interfaz %s del proceso %d", nombre_fin_io, pcb_recibido->pid);
+            			log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Blocked", "Ready");
 						pthread_mutex_lock(&colaReadyMutex);
 						pcb_recibido->estado = 'R';
 						pcb_recibido->flag_int = 0;

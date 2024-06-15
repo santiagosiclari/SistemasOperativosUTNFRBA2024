@@ -1,14 +1,18 @@
 #include "../include/kernel-cpu-dispatch.h"
 
-char* nombre_interfaz;
 int fd_interfaz;
+char* nombre_sleep;
+char* nombre_recibido_sleep;
+char* nombre_stdin;
+char* nombre_recibido_stdin;
+char* nombre_stdout;
+char* nombre_recibido_stdout;
 
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutexFinQuantum = PTHREAD_MUTEX_INITIALIZER;
 
 void conexion_kernel_cpu_dispatch() {
 	uint8_t MAX_LENGTH = 128;
-	nombre_interfaz = malloc(MAX_LENGTH);
     bool control = 1;
 	while (control) {
 		int cod_op = recibir_operacion(fd_cpu_dispatch);
@@ -20,33 +24,32 @@ void conexion_kernel_cpu_dispatch() {
 		case RECIBIR_PID_A_BORRAR:
 			// Recibo proceso a eliminar
     		pthread_mutex_lock(&colaExecMutex);
+			t_pcb* pcb_a_borrar;
 			if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0 || strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
+			}
+
+			if(!queue_is_empty(colaExec)) {
+				pcb_a_borrar = queue_pop(colaExec);
+
+				if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked) && queue_is_empty(colaAux)) {
+					control_planificacion = 0;
+				}
 			}
 
 			uint8_t pid_a_borrar;
 			if(!recv_pid_a_borrar(fd_cpu_dispatch, &pid_a_borrar)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
-			} else {
-				log_info(kernel_logger, "Proceso a finalizar: %d", pid_a_borrar);
-				send_fin_proceso(fd_memoria, pid_a_borrar);
 			}
 
-			if(!queue_is_empty(colaExec)) {
-				t_pcb* pcb_a_borrar = queue_pop(colaExec);
-				// Revisar si otro proceso se puede desbloquear
-				liberar_recursos(pid_a_borrar);
+			// Revisar si otro proceso se puede desbloquear
+			liberar_recursos(pid_a_borrar);
+			send_fin_proceso(fd_memoria, pid_a_borrar);
+            log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pcb_a_borrar->pid, "Success");
 
-				if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked) && queue_is_empty(colaAux)) {
-					control_planificacion = 0;
-				}
-				free(pcb_a_borrar->registros);
-				free(pcb_a_borrar);
-			}
+			free(pcb_a_borrar->registros);
+			free(pcb_a_borrar);
 			pthread_mutex_unlock(&colaExecMutex);
-
-			log_info(kernel_logger, "Proceso eliminado");
-
 			break;
 		case RECIBIR_PCB:
 			// PCB interrumpido por fin de quantum
@@ -59,13 +62,19 @@ void conexion_kernel_cpu_dispatch() {
 				log_error(kernel_logger, "Hubo un error al recibir el PCB interrumpido");
 				break;
 			}
-			free(pcb_interrumpido->registros);
-			free(pcb_interrumpido);
 			temporal_destroy(tiempo_vrr);
 
 			pthread_mutex_lock(&colaExecMutex);
 			if(queue_size(colaExec) != 0) {
 				pcb_int = queue_pop(colaExec);
+				if(pcb_int->pid != pcb_interrumpido->pid) {
+					free(pcb_interrumpido->registros);
+					free(pcb_interrumpido);
+					pthread_mutex_unlock(&colaExecMutex);
+					pthread_mutex_unlock(&mutexFinQuantum);
+					break;
+				}
+				log_info(kernel_logger, "PID: %d - Desalojado por fin de Quantum", pcb_int->pid);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 
@@ -74,6 +83,8 @@ void conexion_kernel_cpu_dispatch() {
 			queue_push(colaReady, pcb_int);
 			pthread_mutex_unlock(&colaReadyMutex);
 			pthread_mutex_unlock(&mutexFinQuantum);
+			free(pcb_interrumpido->registros);
+			free(pcb_interrumpido);
 			break;
 		case WAIT:
 			t_pcb* pcb_wait = malloc(sizeof(t_pcb));
@@ -90,9 +101,8 @@ void conexion_kernel_cpu_dispatch() {
 			for(int i = 0; i < list_size(recursos); i++) {
 				t_recurso* r = list_get(recursos, i);
 				if(strcmp(recurso_wait, r->nombre) == 0) {
-					log_info(kernel_logger, "Recurso %s encontrado - Instancias %d", r->nombre, r->instancias);
 					if(r->instancias <= 0) {
-						log_info(kernel_logger, "NO hay recursos para %s", r->nombre);
+						log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_wait->pid, r->nombre);
 						// El proceso se bloquea en la cola correspondiente dependiendo el recurso tomado
            				pthread_mutex_lock(&colaExecMutex);
 						if(!queue_is_empty(colaExec)) {
@@ -101,10 +111,8 @@ void conexion_kernel_cpu_dispatch() {
 							
 							t_pcb* pcb_recv = queue_pop(colaExec);
 							if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
-								log_info(kernel_logger, "Se bloqueo por falta de Recursos");
 								pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 							} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
-								log_info(kernel_logger, "Se bloqueo por falta de Recursos");
 								pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 								// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
 								uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
@@ -124,7 +132,6 @@ void conexion_kernel_cpu_dispatch() {
             			pthread_mutex_unlock(&colaExecMutex);
 						break;
 					} else {
-						log_info(kernel_logger, "Hay recursos para %s - Instancias: %d", r->nombre, r->instancias);
 						r->instancias--;
 						// Poner recurso de la lista de recurso tomados
 						t_list* rec_tom_wait = list_get(recursos_de_procesos, pcb_wait->pid);
@@ -195,23 +202,21 @@ void conexion_kernel_cpu_dispatch() {
 			t_pcb* pcb_io_gen_sleep = malloc(sizeof(t_pcb));
 			pcb_io_gen_sleep->registros = malloc(sizeof(t_registros));
 			uint32_t unidades_de_trabajo;
-			char* nombre_recibido_sleep = malloc(MAX_LENGTH);
+			nombre_sleep = malloc(MAX_LENGTH);
+			nombre_recibido_sleep = malloc(MAX_LENGTH);
 
 			if(!recv_io_gen_sleep(fd_cpu_dispatch, pcb_io_gen_sleep, &unidades_de_trabajo, nombre_recibido_sleep)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_GEN_SLEEP");
 			}
-			// No es necesario de utilizar --> Esta asi para que la IO sepa que proceso interrumpir
-			free(pcb_io_gen_sleep->registros);
-			free(pcb_io_gen_sleep);
-			strcpy(nombre_interfaz, nombre_recibido_sleep);
+			strcpy(nombre_sleep, nombre_recibido_sleep);
 			
 			// Busca el socket de la interfaz
-			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_sleep);
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_recibido = queue_pop(colaExec);
-				log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_recibido->pid);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_sleep);
 				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
@@ -235,12 +240,15 @@ void conexion_kernel_cpu_dispatch() {
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
-				send_io_gen_sleep(fd_interfaz, pcb_recibido, unidades_de_trabajo, nombre_interfaz, strlen(nombre_interfaz) + 1);
+				send_io_gen_sleep(fd_interfaz, pcb_recibido, unidades_de_trabajo, nombre_sleep, strlen(nombre_sleep) + 1);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 			pthread_mutex_unlock(&mutexIO);
 
-            free(nombre_recibido_sleep);
+			free(pcb_io_gen_sleep->registros);
+			free(pcb_io_gen_sleep);
+            free(nombre_sleep);
+			free(nombre_recibido_sleep);
 			break;
 		case IO_STDIN_READ:
 			pthread_mutex_lock(&mutexIO);
@@ -252,23 +260,21 @@ void conexion_kernel_cpu_dispatch() {
 			pcb_io_stdin->registros = malloc(sizeof(t_registros));
 			uint32_t direccion_fisica_stdin;
 			uint32_t tamanio_maximo_stdin;
-			char* nombre_recibido_stdin = malloc(MAX_LENGTH);
+			nombre_stdin = malloc(MAX_LENGTH);
+			nombre_recibido_stdin = malloc(MAX_LENGTH);
 
 			if(!recv_io_stdin_stdout(fd_cpu_dispatch, pcb_io_stdin, &direccion_fisica_stdin, &tamanio_maximo_stdin, nombre_recibido_stdin)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_STDIN_READ");
 			}
-			// No es necesario de utilizar --> Esta asi para que la IO sepa que proceso interrumpir
-			free(pcb_io_stdin->registros);
-			free(pcb_io_stdin);
-			strcpy(nombre_interfaz, nombre_recibido_stdin);
+			strcpy(nombre_stdin, nombre_recibido_stdin);
 			
 			// Busca el socket de la interfaz
-			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_stdin);
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_recibido = queue_pop(colaExec);
-				log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_recibido->pid);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_stdin);
 				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
@@ -293,12 +299,15 @@ void conexion_kernel_cpu_dispatch() {
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
-				send_io_stdin_read(fd_interfaz, pcb_recibido, direccion_fisica_stdin, tamanio_maximo_stdin, nombre_interfaz, strlen(nombre_interfaz) + 1);
+				send_io_stdin_read(fd_interfaz, pcb_recibido, direccion_fisica_stdin, tamanio_maximo_stdin, nombre_stdin, strlen(nombre_stdin) + 1);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 			pthread_mutex_unlock(&mutexIO);
 
-            free(nombre_recibido_stdin);
+			free(pcb_io_stdin->registros);
+			free(pcb_io_stdin);
+            free(nombre_stdin);
+			free(nombre_recibido_stdin);
 			break;
 		case IO_STDOUT_WRITE:
 			pthread_mutex_lock(&mutexIO);
@@ -310,23 +319,21 @@ void conexion_kernel_cpu_dispatch() {
 			pcb_io_stdout->registros = malloc(sizeof(t_registros));
 			uint32_t direccion_fisica_stdout;
 			uint32_t tamanio_maximo_stdout;
-			char* nombre_recibido = malloc(MAX_LENGTH);
+			nombre_stdout = malloc(MAX_LENGTH);
+			nombre_recibido_stdout = malloc(MAX_LENGTH);
 
-			if(!recv_io_stdin_stdout(fd_cpu_dispatch, pcb_io_stdout, &direccion_fisica_stdout, &tamanio_maximo_stdout, nombre_recibido)) {
+			if(!recv_io_stdin_stdout(fd_cpu_dispatch, pcb_io_stdout, &direccion_fisica_stdout, &tamanio_maximo_stdout, nombre_recibido_stdout)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_STDIN_READ");
 			}
-			// No es necesario de utilizar --> Esta asi para que la IO sepa que proceso interrumpir
-			free(pcb_io_stdout->registros);
-			free(pcb_io_stdout);
-			strcpy(nombre_interfaz, nombre_recibido);
+			strcpy(nombre_stdout, nombre_recibido_stdout);
 			
 			// Busca el socket de la interfaz
-			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_interfaz);
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_stdout);
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_recibido = queue_pop(colaExec);
-				log_info(kernel_logger, "Iniciando interrupcion del proceso %d", pcb_recibido->pid);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_stdout);
 				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
@@ -351,12 +358,15 @@ void conexion_kernel_cpu_dispatch() {
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
-				send_io_stdout_write(fd_interfaz, pcb_recibido, direccion_fisica_stdout, tamanio_maximo_stdout, nombre_interfaz, strlen(nombre_interfaz) + 1);
+				send_io_stdout_write(fd_interfaz, pcb_recibido, direccion_fisica_stdout, tamanio_maximo_stdout, nombre_stdout, strlen(nombre_stdout) + 1);
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 			pthread_mutex_unlock(&mutexIO);
 
-            free(nombre_recibido);
+			free(pcb_io_stdout->registros);
+			free(pcb_io_stdout);
+            free(nombre_stdout);
+			free(nombre_recibido_stdout);
 			break;
 		case -1:
 			log_error(kernel_logger, "El servidor de CPU (Dispatch) no se encuentra activo.");
@@ -367,5 +377,4 @@ void conexion_kernel_cpu_dispatch() {
 			break;
 		}
 	}
-	free(nombre_interfaz);
 }
