@@ -155,6 +155,33 @@ void conexion_cpu_memoria() {
 					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
 					funcion_io_stdout_write(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
 					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
+				} else if (strcmp(instruccion_separada[0], "IO_FS_CREATE") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
+					funcion_io_fs_create(instruccion_separada[1], instruccion_separada[2]);
+				} else if (strcmp(instruccion_separada[0], "IO_FS_DELETE") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[2]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2]);
+					funcion_io_fs_delete(instruccion_separada[1], instruccion_separada[2]);
+				} else if (strcmp(instruccion_separada[0], "IO_FS_TRUNCATE") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[3]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
+					funcion_io_fs_truncate(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3]);
+				} else if (strcmp(instruccion_separada[0], "IO_FS_WRITE") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[5]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
+					funcion_io_fs_write(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
+					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
+				} else if (strcmp(instruccion_separada[0], "IO_FS_READ") == 0) {
+					// Elimino \n cuando es un string la ultima parte de la instruccion
+					string_trim_right(&instruccion_separada[5]);
+					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %s %s %s %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
+					funcion_io_fs_read(dictionary_registros, instruccion_separada[1], instruccion_separada[2], instruccion_separada[3], instruccion_separada[4], instruccion_separada[5]);
+					// Si es TLB miss se queda esperando datos sino solo interrumpe el proceso por IO
 				} else if (strcmp(instruccion_separada[0], "EXIT") == 0) {
 					log_info(cpu_logger, "PID: %d - Ejecutando: %s", pcb_a_ejecutar->pid, instruccion_separada[0]);
 					funcion_exit();
@@ -283,6 +310,14 @@ void conexion_cpu_memoria() {
 					// free_instruccion_pendiente(instruccion_pendiente);
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDOUT_WRITE") == 0) {
     				send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, instruccion_pendiente->tamanio, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
+					esperando_datos = false;
+					// free_instruccion_pendiente(instruccion_pendiente);
+				} else if (strcmp(instruccion_pendiente->instruccion, "IO_FS_WRITE") == 0) {
+    				send_io_fs_write(fd_kernel_dispatch, pcb_a_ejecutar, instruccion_pendiente->tamanio, direccion_fisica, instruccion_pendiente->puntero_archivo, instruccion_pendiente->nombre_archivo, strlen(instruccion_pendiente->nombre_archivo) + 1, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
+					esperando_datos = false;
+					// free_instruccion_pendiente(instruccion_pendiente);
+				} else if (strcmp(instruccion_pendiente->instruccion, "IO_FS_READ") == 0) {
+    				send_io_fs_read(fd_kernel_dispatch, pcb_a_ejecutar, instruccion_pendiente->tamanio, direccion_fisica, instruccion_pendiente->puntero_archivo, instruccion_pendiente->nombre_archivo, strlen(instruccion_pendiente->nombre_archivo) + 1, instruccion_pendiente->nombre_interfaz, strlen(instruccion_pendiente->nombre_interfaz) + 1);
 					esperando_datos = false;
 					// free_instruccion_pendiente(instruccion_pendiente);
 				}

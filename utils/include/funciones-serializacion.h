@@ -73,11 +73,11 @@ typedef enum {
     IO_GEN_SLEEP,
     IO_STDIN_READ,
     IO_STDOUT_WRITE,
-    // IO_FS_CREATE
-    // IO_FS_DELETE
-    // IO_FS_TRUNCATE
-    // IO_FS_WRITE
-    // IO_FS_READ
+    IO_FS_CREATE,
+    IO_FS_DELETE,
+    IO_FS_TRUNCATE,
+    IO_FS_WRITE,
+    IO_FS_READ
 } op_code;
 
 typedef enum {

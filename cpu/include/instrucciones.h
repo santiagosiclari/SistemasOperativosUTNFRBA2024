@@ -20,6 +20,8 @@ typedef struct {
     uint32_t tamanio;
     void* datos;
     char* nombre_interfaz;
+    uint32_t puntero_archivo;
+    char* nombre_archivo;
 } t_instruccion_pendiente;
 
 extern uint32_t tam_pagina;
@@ -42,6 +44,11 @@ void funcion_signal(char* recurso);
 void funcion_io_gen_sleep(char* interfaz, uint32_t unidades_trabajo);
 void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio);
 void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz, char* registro_direccion, char* registro_tamanio);
+void funcion_io_fs_create(char* interfaz, char* nombre_archivo);
+void funcion_io_fs_delete(char* interfaz, char* nombre_archivo);
+void funcion_io_fs_truncate(t_dictionary* dictionary_registros, char* interfaz, char* nombre_archivo, char* registro_tamanio);
+void funcion_io_fs_write(t_dictionary* dictionary_registros, char* interfaz, char* nombre_archivo, char* reg_direccion, char* reg_tamanio, char* reg_puntero_archivo);
+void funcion_io_fs_read(t_dictionary* dictionary_registros, char* interfaz, char* nombre_archivo, char* reg_direccion, char* reg_tamanio, char* reg_puntero_archivo);
 void funcion_exit();
 
 extern t_instruccion_pendiente* instruccion_pendiente;

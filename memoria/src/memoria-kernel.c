@@ -31,7 +31,7 @@ void conexion_memoria_kernel() {
 
 			strcpy(path, path_recivido);
 
-			usleep(RETARDO_RESPUESTA);
+			usleep(RETARDO_RESPUESTA * 1000);
 
 			// Loguear el path concatenado
 			log_info(memoria_logger, "Path recivido: %s", path);

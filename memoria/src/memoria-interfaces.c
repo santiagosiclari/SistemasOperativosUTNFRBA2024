@@ -20,7 +20,7 @@ void conexion_memoria_interfaces(void* arg) {
                 break;
             }
 
-            usleep(RETARDO_RESPUESTA);
+            usleep(RETARDO_RESPUESTA * 1000);
             log_info(memoria_logger, "Acceso a espacio de usuario: PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", pid_a_escribir, direccion_fisica_escribir, tamanio_a_escribir);
 
             // Buscar marco
@@ -90,7 +90,7 @@ void conexion_memoria_interfaces(void* arg) {
                 break;
             }
 
-            usleep(RETARDO_RESPUESTA);
+            usleep(RETARDO_RESPUESTA * 1000);
             log_info(memoria_logger, "Acceso a espacio de usuario: PID: %d - Accion: LEER - Direccion fisica: %u - Tamaño: %u", pid_a_leer, direccion_fisica_leer, tamanio_a_leer);
 
             // Buscar marco

@@ -407,6 +407,189 @@ void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz,
     send_io_stdout_write(fd_kernel_dispatch, pcb_a_ejecutar, direccion_fisica, tamanio_maximo, interfaz, strlen(interfaz) + 1);
 }
 
+void funcion_io_fs_create(char* interfaz, char* nombre_archivo) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    send_io_fs_create(fd_kernel_dispatch, pcb_a_ejecutar, nombre_archivo, strlen(nombre_archivo) + 1, interfaz, strlen(interfaz) + 1);
+}
+
+void funcion_io_fs_delete(char* interfaz, char* nombre_archivo) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    send_io_fs_delete(fd_kernel_dispatch, pcb_a_ejecutar, nombre_archivo, strlen(nombre_archivo) + 1, interfaz, strlen(interfaz) + 1);
+}
+
+void funcion_io_fs_truncate(t_dictionary* dictionary_registros, char* interfaz, char* nombre_archivo, char* registro_tamanio) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    uint32_t tamanio;
+    if (strlen(registro_tamanio) == 3 || !strcmp(registro_tamanio, "SI") || !strcmp(registro_tamanio, "DI") || !strcmp(registro_tamanio, "PC")) {
+        uint32_t *r_tamanio = dictionary_get(dictionary_registros, registro_tamanio);
+        tamanio = *r_tamanio;
+    } else if (strlen(registro_tamanio) == 2) {
+        uint8_t *r_tamanio = dictionary_get(dictionary_registros, registro_tamanio);
+        tamanio = *r_tamanio;
+    }
+
+    log_info(cpu_logger, "%d", tamanio);
+
+    send_io_fs_truncate(fd_kernel_dispatch, pcb_a_ejecutar, tamanio, nombre_archivo, strlen(nombre_archivo) + 1, interfaz, strlen(interfaz) + 1);
+}
+
+void funcion_io_fs_write(t_dictionary* dictionary_registros, char* interfaz, char* nombre_archivo, char* reg_direccion, char* reg_tamanio, char* reg_puntero_archivo) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    uint32_t tamanio_write;
+    if (strlen(reg_tamanio) == 3 || !strcmp(reg_tamanio, "SI") || !strcmp(reg_tamanio, "DI") || !strcmp(reg_tamanio, "PC")) {
+        uint32_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_write = *r_tamanio;
+    } else if (strlen(reg_tamanio) == 2) {
+        uint8_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_write = *r_tamanio;
+    }
+
+    uint32_t puntero_archivo;
+    if (strlen(reg_puntero_archivo) == 3 || !strcmp(reg_puntero_archivo, "SI") || !strcmp(reg_puntero_archivo, "DI") || !strcmp(reg_puntero_archivo, "PC")) {
+        uint32_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
+        puntero_archivo = *r_ptr_arch;
+    } else if (strlen(reg_tamanio) == 2) {
+        uint8_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
+        puntero_archivo = *r_ptr_arch;
+    }
+
+    // Traducir direccion logica a fisica
+    uint32_t direccion_fisica;
+    if (strlen(reg_direccion) == 3 || !strcmp(reg_direccion, "SI") || !strcmp(reg_direccion, "DI") || !strcmp(reg_direccion, "PC")) {
+        uint32_t *dir_logica = dictionary_get(dictionary_registros, reg_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_FS_WRITE";
+            instruccion_pendiente->registro_direccion = strdup(reg_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_write;
+            instruccion_pendiente->puntero_archivo = puntero_archivo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+	} else if (strlen(reg_direccion) == 2) {
+        uint8_t *dir_logica = dictionary_get(dictionary_registros, reg_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_FS_WRITE";
+            instruccion_pendiente->registro_direccion = strdup(reg_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_write;
+            instruccion_pendiente->puntero_archivo = puntero_archivo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+    }
+
+    send_io_fs_write(fd_kernel_dispatch, pcb_a_ejecutar, tamanio_write, direccion_fisica, puntero_archivo, nombre_archivo, strlen(nombre_archivo) + 1, interfaz, strlen(interfaz) + 1);
+}
+
+void funcion_io_fs_read(t_dictionary* dictionary_registros, char* interfaz, char* nombre_archivo, char* reg_direccion, char* reg_tamanio, char* reg_puntero_archivo) {
+    // Cuando envio el Contexto de ejecucion al Kernel, sabe que el proceso fue interrumpido por una interfaz IO
+    pcb_a_ejecutar->flag_int = 1;
+    pcb_a_ejecutar->pc++;
+
+    uint32_t tamanio_read;
+    if (strlen(reg_tamanio) == 3 || !strcmp(reg_tamanio, "SI") || !strcmp(reg_tamanio, "DI") || !strcmp(reg_tamanio, "PC")) {
+        uint32_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_read = *r_tamanio;
+    } else if (strlen(reg_tamanio) == 2) {
+        uint8_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_read = *r_tamanio;
+    }
+
+    uint32_t puntero_archivo;
+    if (strlen(reg_puntero_archivo) == 3 || !strcmp(reg_puntero_archivo, "SI") || !strcmp(reg_puntero_archivo, "DI") || !strcmp(reg_puntero_archivo, "PC")) {
+        uint32_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
+        puntero_archivo = *r_ptr_arch;
+    } else if (strlen(reg_tamanio) == 2) {
+        uint8_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
+        puntero_archivo = *r_ptr_arch;
+    }
+
+    // Traducir direccion logica a fisica
+    uint32_t direccion_fisica;
+    if (strlen(reg_direccion) == 3 || !strcmp(reg_direccion, "SI") || !strcmp(reg_direccion, "DI") || !strcmp(reg_direccion, "PC")) {
+        uint32_t *dir_logica = dictionary_get(dictionary_registros, reg_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_FS_READ";
+            instruccion_pendiente->registro_direccion = strdup(reg_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_read;
+            instruccion_pendiente->puntero_archivo = puntero_archivo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+	} else if (strlen(reg_direccion) == 2) {
+        uint8_t *dir_logica = dictionary_get(dictionary_registros, reg_direccion);
+        direccion_fisica = mmu(*dir_logica);
+        if (direccion_fisica == -1) {
+            // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
+            pthread_mutex_lock(&instruccion_pendiente_mutex);
+            instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
+            instruccion_pendiente->instruccion = "IO_FS_READ";
+            instruccion_pendiente->registro_direccion = strdup(reg_direccion);
+            instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = tamanio_read;
+            instruccion_pendiente->puntero_archivo = puntero_archivo;
+            instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            uint32_t numero_pagina = *dir_logica / tam_pagina;
+            uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
+            send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
+            pthread_mutex_unlock(&instruccion_pendiente_mutex);
+            // Espera recibir el marco
+            esperando_datos = true;
+            return;
+        }
+    }
+
+    send_io_fs_read(fd_kernel_dispatch, pcb_a_ejecutar, tamanio_read, direccion_fisica, puntero_archivo, nombre_archivo, strlen(nombre_archivo) + 1, interfaz, strlen(interfaz) + 1);
+}
+
 void funcion_exit() {
     send_pid_a_borrar(fd_kernel_dispatch, pcb_a_ejecutar->pid);
     free(pcb_a_ejecutar->registros);

@@ -1284,3 +1284,329 @@ bool recv_io_stdin_stdout(int fd, t_pcb* pcb_io, uint32_t* direccion_fisica, uin
 
     return true;
 }
+
+// FS
+// IO_FS_CREATE y IO_FS_DELETE
+t_buffer* serializar_io_fs_create_delete(t_pcb* pcb_io, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
+        sizeof(uint32_t) +    // longitud del nombre_archivo
+        length_nombre_archivo + // nombre_archivo
+        sizeof(uint32_t) +    // longitud del interfaz
+        length_interfaz;      // interfaz
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_io->pid);
+    cargar_uint32_al_buffer(buffer, pcb_io->pc);
+    cargar_char_al_buffer(buffer, pcb_io->estado);
+    cargar_uint32_al_buffer(buffer, pcb_io->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_io->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->DI);
+
+    cargar_string_al_buffer(buffer, nombre_archivo);
+    cargar_string_al_buffer(buffer, interfaz);
+
+    return buffer;
+}
+
+void send_io_fs_create(int fd, t_pcb* pcb_io, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = serializar_io_fs_create_delete(pcb_io, nombre_archivo, length_nombre_archivo, interfaz, length_interfaz);
+    t_paquete *a_enviar = crear_paquete(IO_FS_CREATE, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+void send_io_fs_delete(int fd, t_pcb* pcb_io, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = serializar_io_fs_create_delete(pcb_io, nombre_archivo, length_nombre_archivo, interfaz, length_interfaz);
+    t_paquete *a_enviar = crear_paquete(IO_FS_DELETE, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_io_fs_create_delete(int fd, t_pcb* pcb_io, char* nombre_archivo, char* interfaz) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    // Datos del pcb
+    pcb_io->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
+
+    char* received_nombre_arch = deserializar_string(paquete->buffer);
+    strcpy(nombre_archivo, received_nombre_arch);
+    free(received_nombre_arch);
+
+    char* received_intefaz = deserializar_string(paquete->buffer);
+    strcpy(interfaz, received_intefaz);
+    free(received_intefaz);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
+// IO_FS_TRUNCATE
+t_buffer* serializar_io_fs_truncate(t_pcb* pcb_io, uint32_t tamanio, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
+        sizeof(uint32_t) +    // tamanio
+        sizeof(uint32_t) +    // longitud del nombre_archivo
+        length_nombre_archivo + // nombre_archivo
+        sizeof(uint32_t) +    // longitud del interfaz
+        length_interfaz;      // interfaz
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_io->pid);
+    cargar_uint32_al_buffer(buffer, pcb_io->pc);
+    cargar_char_al_buffer(buffer, pcb_io->estado);
+    cargar_uint32_al_buffer(buffer, pcb_io->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_io->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->DI);
+
+    cargar_uint32_al_buffer(buffer, tamanio);
+    cargar_string_al_buffer(buffer, nombre_archivo);
+    cargar_string_al_buffer(buffer, interfaz);
+
+    return buffer;
+}
+
+void send_io_fs_truncate(int fd, t_pcb* pcb_io, uint32_t tamanio, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = serializar_io_fs_truncate(pcb_io, tamanio, nombre_archivo, length_nombre_archivo, interfaz, length_interfaz);
+    t_paquete *a_enviar = crear_paquete(IO_FS_TRUNCATE, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_io_fs_truncate(int fd, t_pcb* pcb_io, uint32_t* tamanio, char* nombre_archivo, char* interfaz) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    // Datos del pcb
+    pcb_io->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
+
+    *tamanio = extraer_uint32_del_buffer(paquete->buffer);
+
+    char* received_nombre_arch = deserializar_string(paquete->buffer);
+    strcpy(nombre_archivo, received_nombre_arch);
+    free(received_nombre_arch);
+
+    char* received_intefaz = deserializar_string(paquete->buffer);
+    strcpy(interfaz, received_intefaz);
+    free(received_intefaz);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
+
+// IO_FS_WRITE y IO_FS_READ
+t_buffer* serializar_io_fs_write_read(t_pcb* pcb_io, uint32_t tamanio, uint32_t direccion_fisica, uint32_t puntero_archivo, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint8_t) +     // pid
+        sizeof(uint32_t) +    // pc
+        sizeof(char) +        // estado
+        sizeof(uint32_t) +    // quantum
+        sizeof(uint8_t) +     // flag_int
+        sizeof(uint8_t) * 4 + sizeof(uint32_t) * 6 + // tamaño de registros
+        sizeof(uint32_t) +    // tamanio
+        sizeof(uint32_t) +    // direccion_fisica
+        sizeof(uint32_t) +    // puntero_archivo
+        sizeof(uint32_t) +    // longitud del nombre_archivo
+        length_nombre_archivo + // nombre_archivo
+        sizeof(uint32_t) +    // longitud del interfaz
+        length_interfaz;      // interfaz
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_uint8_al_buffer(buffer, pcb_io->pid);
+    cargar_uint32_al_buffer(buffer, pcb_io->pc);
+    cargar_char_al_buffer(buffer, pcb_io->estado);
+    cargar_uint32_al_buffer(buffer, pcb_io->quantum);
+    cargar_uint8_al_buffer(buffer, pcb_io->flag_int);
+
+    // Registros
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->AX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->BX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->CX);
+    cargar_uint8_al_buffer(buffer, pcb_io->registros->DX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EAX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EBX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->ECX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->EDX);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->SI);
+    cargar_uint32_al_buffer(buffer, pcb_io->registros->DI);
+
+    cargar_uint32_al_buffer(buffer, tamanio);
+    cargar_uint32_al_buffer(buffer, direccion_fisica);
+    cargar_uint32_al_buffer(buffer, puntero_archivo);
+    cargar_string_al_buffer(buffer, nombre_archivo);
+    cargar_string_al_buffer(buffer, interfaz);
+
+    return buffer;
+}
+
+void send_io_fs_write(int fd, t_pcb* pcb_io, uint32_t tamanio, uint32_t direccion_fisica, uint32_t puntero_archivo, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = serializar_io_fs_write_read(pcb_io, tamanio, direccion_fisica, puntero_archivo, nombre_archivo, length_nombre_archivo, interfaz, length_interfaz);
+    t_paquete *a_enviar = crear_paquete(IO_FS_WRITE, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+void send_io_fs_read(int fd, t_pcb* pcb_io, uint32_t tamanio, uint32_t direccion_fisica, uint32_t puntero_archivo, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz) {
+    t_buffer *buffer = serializar_io_fs_write_read(pcb_io, tamanio, direccion_fisica, puntero_archivo, nombre_archivo, length_nombre_archivo, interfaz, length_interfaz);
+    t_paquete *a_enviar = crear_paquete(IO_FS_READ, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_io_fs_write_read(int fd, t_pcb* pcb_io, uint32_t* tamanio, uint32_t* direccion_fisica, uint32_t* puntero_archivo, char* nombre_archivo, char* interfaz) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    // Datos del pcb
+    pcb_io->pid = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->pc = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->estado = extraer_char_del_buffer(paquete->buffer);
+    pcb_io->quantum = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->flag_int = extraer_uint8_del_buffer(paquete->buffer);
+
+    // Registros
+    pcb_io->registros->AX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->BX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->CX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->DX = extraer_uint8_del_buffer(paquete->buffer);
+    pcb_io->registros->EAX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EBX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->ECX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->EDX = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->SI = extraer_uint32_del_buffer(paquete->buffer);
+    pcb_io->registros->DI = extraer_uint32_del_buffer(paquete->buffer);
+
+    *tamanio = extraer_uint32_del_buffer(paquete->buffer);
+    *direccion_fisica = extraer_uint32_del_buffer(paquete->buffer);
+    *puntero_archivo = extraer_uint32_del_buffer(paquete->buffer);
+
+    char* received_nombre_arch = deserializar_string(paquete->buffer);
+    strcpy(nombre_archivo, received_nombre_arch);
+    free(received_nombre_arch);
+
+    char* received_intefaz = deserializar_string(paquete->buffer);
+    strcpy(interfaz, received_intefaz);
+    free(received_intefaz);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}

@@ -17,11 +17,11 @@ void conexion_entradasalida_memoria() {
 			if(!recv_valor_memoria(fd_memoria, &dir_fisica, &datos, &length)) {
 				log_error(entradasalida_logger, "Hubo un error al recibir los datos de memoria");
 			}
-			char* datos_char = malloc(length + 1);
+			char* datos_char = malloc(length);
 			memcpy(datos_char, datos, length);
 
 			// Muestra el string en pantalla
-			log_info(entradasalida_logger, "%s", datos_char);
+			log_info(entradasalida_logger, "%.*s", length, datos_char);
 
 			// Avisa que ya no esta mas interrumpido el proceso
 			// uint32_t length_stdout = strlen(nombre_stdout) + 1;

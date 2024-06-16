@@ -8,6 +8,10 @@ char* nombre_stdin;
 char* nombre_stdin_recibido;
 char* nombre_stdout;
 char* nombre_stdout_recibido;
+char* nombre_fs;
+char* nombre_fs_recibido;
+char* nombre_archivo;
+char* nombre_archivo_recibido;
 char* string;
 uint32_t MAX_LENGTH;
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
@@ -39,7 +43,7 @@ void conexion_entradasalida_kernel() {
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_sleep->pid, "IO_GEN_SLEEP");
 			// Hace el sleep
-			usleep(usleep_final);
+			usleep(usleep_final * 1000);
 			log_info(entradasalida_logger, "Finalizo el usleep de %d - PID: %d", usleep_final, pcb_sleep->pid);
 
 			// Avisa que ya no esta mas interrumpido el proceso
@@ -102,6 +106,159 @@ void conexion_entradasalida_kernel() {
 
 			// Logica de leer memoria y mostrar en pantalla el string (recibir_valor)
 			send_leer_memoria(fd_memoria, pcb_stdout->pid, direccion_fisica_stdout, tamanio_maximo_stdout);
+			break;
+		case IO_FS_CREATE:
+			pthread_mutex_lock(&mutexIO);
+			t_pcb* pcb_fs_create = malloc(sizeof(t_pcb));
+			pcb_fs_create->registros = malloc(sizeof(t_registros));
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_create_delete(fd_kernel, pcb_fs_create, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_FS_CREATE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_create->pid, "IO_FS_CREATE");
+
+			// Logica de cada instruccion
+			// ...
+
+			// Avisa que ya no esta mas interrumpido el proceso
+			send_fin_io(fd_kernel, pcb_fs_create->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+			// Liberar memoria
+			free(pcb_fs_create->registros);
+			free(pcb_fs_create);
+			free(nombre_fs);
+			free(nombre_fs_recibido);
+			pthread_mutex_unlock(&mutexIO);
+			break;
+		case IO_FS_DELETE:
+			pthread_mutex_lock(&mutexIO);
+			t_pcb* pcb_fs_delete = malloc(sizeof(t_pcb));
+			pcb_fs_delete->registros = malloc(sizeof(t_registros));
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_create_delete(fd_kernel, pcb_fs_delete, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_FS_DELETE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_delete->pid, "IO_FS_DELETE");
+
+			// Logica de cada instruccion
+			// ...
+
+			// Avisa que ya no esta mas interrumpido el proceso
+			send_fin_io(fd_kernel, pcb_fs_delete->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+			// Liberar memoria
+			free(pcb_fs_delete->registros);
+			free(pcb_fs_delete);
+			free(nombre_fs);
+			free(nombre_fs_recibido);
+			pthread_mutex_unlock(&mutexIO);
+			break;
+		case IO_FS_TRUNCATE:
+			pthread_mutex_lock(&mutexIO);
+			t_pcb* pcb_fs_truncate = malloc(sizeof(t_pcb));
+			pcb_fs_truncate->registros = malloc(sizeof(t_registros));
+			uint32_t tamanio_truncate;
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_truncate(fd_kernel, pcb_fs_truncate, &tamanio_truncate, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_FS_TRUNCATE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_truncate->pid, "IO_FS_TRUNCATE");
+
+			// Logica de cada instruccion
+			// ...
+
+			// Avisa que ya no esta mas interrumpido el proceso
+			send_fin_io(fd_kernel, pcb_fs_truncate->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+			// Liberar memoria
+			free(pcb_fs_truncate->registros);
+			free(pcb_fs_truncate);
+			free(nombre_fs);
+			free(nombre_fs_recibido);
+			pthread_mutex_unlock(&mutexIO);
+			break;
+		case IO_FS_WRITE:
+			pthread_mutex_lock(&mutexIO);
+			t_pcb* pcb_fs_write = malloc(sizeof(t_pcb));
+			pcb_fs_write->registros = malloc(sizeof(t_registros));
+			uint32_t tamanio_write, dir_fisica_write, ptr_archivo_write;
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_write_read(fd_kernel, pcb_fs_write, &tamanio_write, &dir_fisica_write, &ptr_archivo_write, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_FS_WRITE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_write->pid, "IO_FS_WRITE");
+
+			// Logica de cada instruccion
+			// ...
+
+			// Avisa que ya no esta mas interrumpido el proceso
+			send_fin_io(fd_kernel, pcb_fs_write->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+			// Liberar memoria
+			free(pcb_fs_write->registros);
+			free(pcb_fs_write);
+			free(nombre_fs);
+			free(nombre_fs_recibido);
+			pthread_mutex_unlock(&mutexIO);
+			break;
+		case IO_FS_READ:
+			pthread_mutex_lock(&mutexIO);
+			t_pcb* pcb_fs_read = malloc(sizeof(t_pcb));
+			pcb_fs_read->registros = malloc(sizeof(t_registros));
+			uint32_t tamanio_read, dir_fisica_read, ptr_archivo_read;
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_write_read(fd_kernel, pcb_fs_read, &tamanio_read, &dir_fisica_read, &ptr_archivo_read, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(entradasalida_logger, "Hubo un error al recibir la interfaz IO_FS_READ");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_read->pid, "IO_FS_READ");
+
+			// Logica de cada instruccion
+			// ...
+
+			// Avisa que ya no esta mas interrumpido el proceso
+			send_fin_io(fd_kernel, pcb_fs_read->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+			// Liberar memoria
+			free(pcb_fs_read->registros);
+			free(pcb_fs_read);
+			free(nombre_fs);
+			free(nombre_fs_recibido);
+			pthread_mutex_unlock(&mutexIO);
 			break;
 		case -1:
 			log_error(entradasalida_logger, "El servidor de Kernel no se encuentra activo.");

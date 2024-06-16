@@ -138,4 +138,22 @@ void send_io_stdin_read(int fd, t_pcb* pcb_io, uint32_t direccion_fisica, uint32
 void send_io_stdout_write(int fd, t_pcb* pcb_io, uint32_t direccion_fisica, uint32_t tamanio_maximo, char* nombre, uint32_t length);
 bool recv_io_stdin_stdout(int fd, t_pcb* pcb_io, uint32_t* direccion_fisica, uint32_t* tamanio_maximo, char* nombre);
 
+// FS
+// IO_FS_CREATE y IO_FS_DELETE
+t_buffer* serializar_io_fs_create_delete(t_pcb* pcb_io, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+void send_io_fs_create(int fd, t_pcb* pcb_io, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+void send_io_fs_delete(int fd, t_pcb* pcb_io, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+bool recv_io_fs_create_delete(int fd, t_pcb* pcb_io, char* nombre_archivo, char* interfaz);
+
+// IO_FS_TRUNCATE
+t_buffer* serializar_io_fs_truncate(t_pcb* pcb_io, uint32_t tamanio, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+void send_io_fs_truncate(int fd, t_pcb* pcb_io, uint32_t tamanio, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+bool recv_io_fs_truncate(int fd, t_pcb* pcb_io, uint32_t* tamanio, char* nombre_archivo, char* interfaz);
+
+// IO_FS_WRITE y IO_FS_READ
+t_buffer* serializar_io_fs_write_read(t_pcb* pcb_io, uint32_t tamanio, uint32_t direccion_fisica, uint32_t puntero_archivo, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+void send_io_fs_write(int fd, t_pcb* pcb_io, uint32_t tamanio, uint32_t direccion_fisica, uint32_t puntero_archivo, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+void send_io_fs_read(int fd, t_pcb* pcb_io, uint32_t tamanio, uint32_t direccion_fisica, uint32_t puntero_archivo, char* nombre_archivo, uint32_t length_nombre_archivo, char* interfaz, uint32_t length_interfaz);
+bool recv_io_fs_write_read(int fd, t_pcb* pcb_io, uint32_t* tamanio, uint32_t* direccion_fisica, uint32_t* puntero_archivo, char* nombre_archivo, char* interfaz);
+
 #endif

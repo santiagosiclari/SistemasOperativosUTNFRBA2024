@@ -27,7 +27,7 @@ void conexion_memoria_cpu() {
 				log_error(memoria_logger, "Hubo un error al recibir el PC de un proceso");
 			}
 
-			usleep(RETARDO_RESPUESTA);
+			usleep(RETARDO_RESPUESTA * 1000);
 
 			t_list* instrucciones = list_get(instrucciones_por_proceso, pid);
 
@@ -49,7 +49,7 @@ void conexion_memoria_cpu() {
 				log_error(memoria_logger, "Hubo un error al recibir el Resize");
 			}
 
-            usleep(RETARDO_RESPUESTA);
+            usleep(RETARDO_RESPUESTA * 1000);
 
             int paginas_necesarias = ceil(tamanio / (float)TAM_PAGINA);
 
@@ -106,7 +106,7 @@ void conexion_memoria_cpu() {
                 break;
             }
 
-            usleep(RETARDO_RESPUESTA);
+            usleep(RETARDO_RESPUESTA * 1000);
             log_info(memoria_logger, "Acceso a espacio de usuario:");
             log_info(memoria_logger, "PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", pid_a_escribir, direccion_fisica_escribir, tamanio_a_escribir);
 
@@ -177,7 +177,7 @@ void conexion_memoria_cpu() {
                 break;
             }
 
-            usleep(RETARDO_RESPUESTA);
+            usleep(RETARDO_RESPUESTA * 1000);
             log_info(memoria_logger, "Acceso a espacio de usuario:");
             log_info(memoria_logger, "PID: %d - Accion: LEER - Direccion fisica: %u - Tamaño: %u", pid_a_leer, direccion_fisica_leer, tamanio_a_leer);
 
@@ -241,7 +241,7 @@ void conexion_memoria_cpu() {
 				break;
 			}
 
-            usleep(RETARDO_RESPUESTA);
+            usleep(RETARDO_RESPUESTA * 1000);
 
 			t_list* tabla_paginas_marco = list_get(tabla_paginas_por_proceso, pid_pagina);
             uint32_t* marco_ptr = (uint32_t*)list_get(tabla_paginas_marco, numero_pagina);

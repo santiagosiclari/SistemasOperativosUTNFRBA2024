@@ -7,6 +7,10 @@ char* nombre_stdin;
 char* nombre_recibido_stdin;
 char* nombre_stdout;
 char* nombre_recibido_stdout;
+char* nombre_archivo;
+char* nombre_archivo_recibido;
+char* nombre_fs;
+char* nombre_fs_recibido;
 
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutexFinQuantum = PTHREAD_MUTEX_INITIALIZER;
@@ -22,12 +26,12 @@ void conexion_kernel_cpu_dispatch() {
 		case PAQUETE:
 			break;
 		case RECIBIR_PID_A_BORRAR:
-			// Recibo proceso a eliminar
-    		pthread_mutex_lock(&colaExecMutex);
-			t_pcb* pcb_a_borrar;
 			if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0 || strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
 			}
+			// Recibo proceso a eliminar
+    		pthread_mutex_lock(&colaExecMutex);
+			t_pcb* pcb_a_borrar;
 
 			if(!queue_is_empty(colaExec)) {
 				pcb_a_borrar = queue_pop(colaExec);
@@ -367,6 +371,314 @@ void conexion_kernel_cpu_dispatch() {
 			free(pcb_io_stdout);
             free(nombre_stdout);
 			free(nombre_recibido_stdout);
+			break;
+		case IO_FS_CREATE:
+			pthread_mutex_lock(&mutexIO);
+			// pausar tiempo --> temporal_stop(time_vrr);
+			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				temporal_stop(tiempo_vrr);
+			}
+			t_pcb* pcb_io_fs_create = malloc(sizeof(t_pcb));
+			pcb_io_fs_create->registros = malloc(sizeof(t_registros));
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_create_delete(fd_cpu_dispatch, pcb_io_fs_create, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_CREATE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			// Busca el socket de la interfaz
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+
+            pthread_mutex_lock(&colaExecMutex);
+			if(!queue_is_empty(colaExec)) {
+				t_pcb* pcb_recibido = queue_pop(colaExec);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_fs);
+				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
+					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
+					pcb_recibido->quantum -= tiempo_restante;
+					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+
+					temporal_destroy(tiempo_vrr);
+
+					if (pcb_recibido->quantum <= 0) {
+					 	pcb_recibido->quantum = QUANTUM;
+					}
+				}
+				
+				pthread_mutex_lock(&colaBlockedMutex);
+				pcb_recibido->estado = 'B';
+				queue_push(colaBlocked, pcb_recibido);
+				pthread_mutex_unlock(&colaBlockedMutex);
+				// Envia PCB y lo necesario para la IO
+				send_io_fs_create(fd_interfaz, pcb_recibido, nombre_archivo, strlen(nombre_archivo) + 1, nombre_fs, strlen(nombre_fs) + 1);
+			}
+			pthread_mutex_unlock(&colaExecMutex);
+			pthread_mutex_unlock(&mutexIO);
+
+			free(pcb_io_fs_create->registros);
+			free(pcb_io_fs_create);
+            free(nombre_archivo);
+			free(nombre_archivo_recibido);
+            free(nombre_fs);
+			free(nombre_fs_recibido);
+			break;
+		case IO_FS_DELETE:
+			pthread_mutex_lock(&mutexIO);
+			// pausar tiempo --> temporal_stop(time_vrr);
+			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				temporal_stop(tiempo_vrr);
+			}
+			t_pcb* pcb_io_fs_delete = malloc(sizeof(t_pcb));
+			pcb_io_fs_delete->registros = malloc(sizeof(t_registros));
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_create_delete(fd_cpu_dispatch, pcb_io_fs_delete, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_DELETE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			// Busca el socket de la interfaz
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+
+            pthread_mutex_lock(&colaExecMutex);
+			if(!queue_is_empty(colaExec)) {
+				t_pcb* pcb_recibido = queue_pop(colaExec);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_fs);
+				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
+					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
+					pcb_recibido->quantum -= tiempo_restante;
+					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+
+					temporal_destroy(tiempo_vrr);
+
+					if (pcb_recibido->quantum <= 0) {
+					 	pcb_recibido->quantum = QUANTUM;
+					}
+				}
+				
+				pthread_mutex_lock(&colaBlockedMutex);
+				pcb_recibido->estado = 'B';
+				queue_push(colaBlocked, pcb_recibido);
+				pthread_mutex_unlock(&colaBlockedMutex);
+				// Envia PCB y lo necesario para la IO
+				send_io_fs_delete(fd_interfaz, pcb_recibido, nombre_archivo, strlen(nombre_archivo) + 1, nombre_fs, strlen(nombre_fs) + 1);
+			}
+			pthread_mutex_unlock(&colaExecMutex);
+			pthread_mutex_unlock(&mutexIO);
+
+			free(pcb_io_fs_delete->registros);
+			free(pcb_io_fs_delete);
+            free(nombre_archivo);
+			free(nombre_archivo_recibido);
+            free(nombre_fs);
+			free(nombre_fs_recibido);
+			break;
+		case IO_FS_TRUNCATE:
+			pthread_mutex_lock(&mutexIO);
+			// pausar tiempo --> temporal_stop(time_vrr);
+			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				temporal_stop(tiempo_vrr);
+			}
+			t_pcb* pcb_io_fs_truncate = malloc(sizeof(t_pcb));
+			pcb_io_fs_truncate->registros = malloc(sizeof(t_registros));
+			uint32_t tamanio_truncate;
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_truncate(fd_cpu_dispatch, pcb_io_fs_truncate, &tamanio_truncate, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_TRUNCATE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			// Busca el socket de la interfaz
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+
+            pthread_mutex_lock(&colaExecMutex);
+			if(!queue_is_empty(colaExec)) {
+				t_pcb* pcb_recibido = queue_pop(colaExec);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_fs);
+				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
+					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
+					pcb_recibido->quantum -= tiempo_restante;
+					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+
+					temporal_destroy(tiempo_vrr);
+
+					if (pcb_recibido->quantum <= 0) {
+					 	pcb_recibido->quantum = QUANTUM;
+					}
+				}
+				
+				pthread_mutex_lock(&colaBlockedMutex);
+				pcb_recibido->estado = 'B';
+				queue_push(colaBlocked, pcb_recibido);
+				pthread_mutex_unlock(&colaBlockedMutex);
+				// Envia PCB y lo necesario para la IO
+				send_io_fs_truncate(fd_interfaz, pcb_recibido, tamanio_truncate, nombre_archivo, strlen(nombre_archivo) + 1, nombre_fs, strlen(nombre_fs) + 1);
+			}
+			pthread_mutex_unlock(&colaExecMutex);
+			pthread_mutex_unlock(&mutexIO);
+
+			free(pcb_io_fs_truncate->registros);
+			free(pcb_io_fs_truncate);
+            free(nombre_archivo);
+			free(nombre_archivo_recibido);
+            free(nombre_fs);
+			free(nombre_fs_recibido);
+			break;
+		case IO_FS_WRITE:
+			pthread_mutex_lock(&mutexIO);
+			// pausar tiempo --> temporal_stop(time_vrr);
+			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				temporal_stop(tiempo_vrr);
+			}
+			t_pcb* pcb_io_fs_write = malloc(sizeof(t_pcb));
+			pcb_io_fs_write->registros = malloc(sizeof(t_registros));
+			uint32_t tamanio_write, dir_fisica_write, ptr_archivo_write;
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_write_read(fd_cpu_dispatch, pcb_io_fs_write, &tamanio_write, &dir_fisica_write, &ptr_archivo_write, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_WRITE");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			// Busca el socket de la interfaz
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+
+            pthread_mutex_lock(&colaExecMutex);
+			if(!queue_is_empty(colaExec)) {
+				t_pcb* pcb_recibido = queue_pop(colaExec);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_fs);
+				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
+					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
+					pcb_recibido->quantum -= tiempo_restante;
+					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+
+					temporal_destroy(tiempo_vrr);
+
+					if (pcb_recibido->quantum <= 0) {
+					 	pcb_recibido->quantum = QUANTUM;
+					}
+				}
+				
+				pthread_mutex_lock(&colaBlockedMutex);
+				pcb_recibido->estado = 'B';
+				queue_push(colaBlocked, pcb_recibido);
+				pthread_mutex_unlock(&colaBlockedMutex);
+				// Envia PCB y lo necesario para la IO
+				send_io_fs_write(fd_interfaz, pcb_recibido, tamanio_write, dir_fisica_write, ptr_archivo_write, nombre_archivo, strlen(nombre_archivo) + 1, nombre_fs, strlen(nombre_fs) + 1);
+			}
+			pthread_mutex_unlock(&colaExecMutex);
+			pthread_mutex_unlock(&mutexIO);
+
+			free(pcb_io_fs_write->registros);
+			free(pcb_io_fs_write);
+            free(nombre_archivo);
+			free(nombre_archivo_recibido);
+            free(nombre_fs);
+			free(nombre_fs_recibido);
+			break;
+		case IO_FS_READ:
+			pthread_mutex_lock(&mutexIO);
+			// pausar tiempo --> temporal_stop(time_vrr);
+			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				temporal_stop(tiempo_vrr);
+			}
+			t_pcb* pcb_io_fs_read = malloc(sizeof(t_pcb));
+			pcb_io_fs_read->registros = malloc(sizeof(t_registros));
+			uint32_t tamanio_read, dir_fisica_read, ptr_archivo_read;
+			nombre_archivo = malloc(MAX_LENGTH);
+			nombre_archivo_recibido = malloc(MAX_LENGTH);
+			nombre_fs = malloc(MAX_LENGTH);
+			nombre_fs_recibido = malloc(MAX_LENGTH);
+
+			if(!recv_io_fs_write_read(fd_cpu_dispatch, pcb_io_fs_read, &tamanio_read, &dir_fisica_read, &ptr_archivo_read, nombre_archivo_recibido, nombre_fs_recibido)) {
+				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_READ");
+			}
+			strcpy(nombre_archivo, nombre_archivo_recibido);
+			strcpy(nombre_fs, nombre_fs_recibido);
+			
+			// Busca el socket de la interfaz
+			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+
+            pthread_mutex_lock(&colaExecMutex);
+			if(!queue_is_empty(colaExec)) {
+				t_pcb* pcb_recibido = queue_pop(colaExec);
+				log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_recibido->pid, nombre_fs);
+				if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
+					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
+					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
+					pcb_recibido->quantum -= tiempo_restante;
+					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+
+					temporal_destroy(tiempo_vrr);
+
+					if (pcb_recibido->quantum <= 0) {
+					 	pcb_recibido->quantum = QUANTUM;
+					}
+				}
+				
+				pthread_mutex_lock(&colaBlockedMutex);
+				pcb_recibido->estado = 'B';
+				queue_push(colaBlocked, pcb_recibido);
+				pthread_mutex_unlock(&colaBlockedMutex);
+				// Envia PCB y lo necesario para la IO
+				send_io_fs_read(fd_interfaz, pcb_recibido, tamanio_read, dir_fisica_read, ptr_archivo_read, nombre_archivo, strlen(nombre_archivo) + 1, nombre_fs, strlen(nombre_fs) + 1);
+			}
+			pthread_mutex_unlock(&colaExecMutex);
+			pthread_mutex_unlock(&mutexIO);
+
+			free(pcb_io_fs_read->registros);
+			free(pcb_io_fs_read);
+            free(nombre_archivo);
+			free(nombre_archivo_recibido);
+            free(nombre_fs);
+			free(nombre_fs_recibido);
 			break;
 		case -1:
 			log_error(kernel_logger, "El servidor de CPU (Dispatch) no se encuentra activo.");

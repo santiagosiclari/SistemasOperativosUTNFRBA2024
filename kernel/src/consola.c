@@ -163,7 +163,7 @@ void atender_instruccion (char* leido) {
 		send_iniciar_proceso(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
 		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
 	} else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0){
-        log_info(kernel_logger,"Se detiene la planificacion");
+        log_info(kernel_logger, "Se detiene la planificacion");
         sem_wait(&semaforoPlanificacion);
     } else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0) {
 		if (control_primera_vez) {
@@ -185,7 +185,7 @@ void atender_instruccion (char* leido) {
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);
-	} /*  else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0){
+	} /* else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0){
 		int nuevo_grado = atoi(comando_consola[1]);
 		GRADO_MULTIPROGRAMACION = nuevo_grado;
 
@@ -193,13 +193,9 @@ void atender_instruccion (char* leido) {
 		//esperará su finalización normal.
 
 		log_info(kernel_logger, "Grado de multiprogramacion modificado a %d", GRADO_MULTIPROGRAMACION);
-	} */
-	/* else if(strcmp(comando_consola[0], "PROCESO_ESTADO") == 0){
+	} else if(strcmp(comando_consola[0], "PROCESO_ESTADO") == 0){
 
-	} */
-	else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0){
-
-	} else {
+	} */ else {
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
 
