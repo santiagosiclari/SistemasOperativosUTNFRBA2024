@@ -38,13 +38,25 @@ void controlar_quantum(t_pcb* pcb) {
     pthread_detach(quantum_thread);
 }
 
+int size_all_queues() {
+    // Ya esta creada de antes colaAux por lo que si no es VRR sera 0
+    int size_queues = queue_size(colaReady) + queue_size(colaExec) + queue_size(colaBlocked) + queue_size(colaAux);
+    for(int i = 0; i < list_size(recursos); i++) {
+        t_recurso* recurso = list_get(recursos, i);
+        if(!queue_is_empty(recurso->blocked)) {
+            size_queues += queue_size(recurso->blocked);
+        }
+    }
+    return size_queues;
+}
+
 void planificacionFIFO() {
     // El control_planificacion se cambia a 0 una vez que se elimina el proceso y todas las queues estan vacias
     // Esto es por si solamente hay un proceso ejecutando y se interrumpe para que no haya problemas
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
-        while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -86,7 +98,7 @@ void planificacionRR() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
-        while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -133,7 +145,7 @@ void planificacionVRR() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
-        while (queue_size(colaNew) > 0 && queue_size(colaReady) <= GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -163,11 +175,11 @@ void planificacionVRR() {
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready (Prioritario)", "Exec");
 
             // Quantum
-            if (queue_size(colaReady) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
+            if (queue_size(colaAux) > 0 || queue_size(colaBlocked) > 0 || queue_size(colaExec) != 0) {
                 controlar_quantum(pcb);
             }
         } else {
-            if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
+            if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0 && queue_size(colaAux) == 0) {
                 pthread_mutex_lock(&colaExecMutex);
                 pthread_mutex_lock(&colaReadyMutex);
                 t_pcb* pcb = queue_pop(colaReady);

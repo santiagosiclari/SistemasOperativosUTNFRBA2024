@@ -91,6 +91,60 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	}
 }
 
+void listar_procesos(t_queue* cola, pthread_mutex_t mutex, char* estado) {
+    pthread_mutex_lock(&mutex);
+    if(queue_is_empty(cola)) {  
+    	log_info(kernel_logger, "Procesos en %s: -", estado);
+    } else {
+		char lista_pids[128] = "";
+        t_list* elements = cola->elements;
+        for(int i = 0; i < list_size(elements); i++) {
+            t_pcb* pcb = (t_pcb*) list_get(elements, i);
+			char pid_str[12];  // Para convertir pid a string
+            snprintf(pid_str, sizeof(pid_str), "%d - ", pcb->pid);
+            strcat(lista_pids, pid_str);
+        }
+		lista_pids[strlen(lista_pids) - 2] = '\0';
+    	log_info(kernel_logger, "Procesos en %s: %s", estado, lista_pids);
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+// Se tiene que buscar los bloqueados por IO y por recursos
+void listar_procesos_blocked() {
+    // Buffer para construir el mensaje de log
+    char lista_pids[1024] = "Procesos en Blocked:";
+    char pid_str[128];
+
+    // Loguear procesos bloqueados por IO
+    pthread_mutex_lock(&colaBlockedMutex);
+    if(!queue_is_empty(colaBlocked)) {
+        t_list* elements = colaBlocked->elements;
+        for(int i = 0; i < list_size(elements); i++) {
+            t_pcb* pcb = (t_pcb*) list_get(elements, i);
+            snprintf(pid_str, sizeof(pid_str), " %d -", pcb->pid);
+            strcat(lista_pids, pid_str);
+        }
+    }
+    pthread_mutex_unlock(&colaBlockedMutex);
+
+    // Loguear procesos bloqueados por cada recurso
+    for(int i = 0; i < list_size(recursos); i++) {
+        t_recurso* recurso = list_get(recursos, i);
+        if(!queue_is_empty(recurso->blocked)) {
+            t_list* elements = recurso->blocked->elements;
+            for(int j = 0; j < list_size(elements); j++) {
+                t_pcb* pcb = (t_pcb*) list_get(elements, j);
+                snprintf(pid_str, sizeof(pid_str), " %d -", pcb->pid);
+                strcat(lista_pids, pid_str);
+            }
+        }
+    }
+
+	lista_pids[strlen(lista_pids) - 1] = '\0';
+    log_info(kernel_logger, "%s", lista_pids);
+}
+
 void iniciar_planificacion() {
     pthread_t planificacion;
 	if(strcmp(ALGORITMO_PLANIFICACION, "FIFO") == 0) {
@@ -185,7 +239,7 @@ void atender_instruccion (char* leido) {
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);
-	} /* else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0){
+	} else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0){
 		int nuevo_grado = atoi(comando_consola[1]);
 		GRADO_MULTIPROGRAMACION = nuevo_grado;
 
@@ -194,8 +248,17 @@ void atender_instruccion (char* leido) {
 
 		log_info(kernel_logger, "Grado de multiprogramacion modificado a %d", GRADO_MULTIPROGRAMACION);
 	} else if(strcmp(comando_consola[0], "PROCESO_ESTADO") == 0){
-
-	} */ else {
+		log_info(kernel_logger, "Listando procesos por estado:");
+		
+		listar_procesos(colaNew, colaNewMutex, "New");
+		listar_procesos(colaReady, colaReadyMutex, "Ready");
+		if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+			listar_procesos(colaAux, colaAuxMutex, "Ready (prioritario)"); // Solo en VRR
+		}
+		listar_procesos(colaExec, colaExecMutex, "Exec");
+		listar_procesos_blocked();
+    	log_info(kernel_logger, "Procesos en Exit: -");
+	} else {
 		log_warning(kernel_logger, "ERROR. No se encontro el comando. Escribi HELP si necesitas ayuda con los comandos y sus parametros");
 	}
 
