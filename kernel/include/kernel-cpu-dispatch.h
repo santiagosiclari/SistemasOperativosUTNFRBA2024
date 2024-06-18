@@ -41,5 +41,6 @@ extern t_list* recursos_de_procesos;
 extern t_list* recursos;
 
 void conexion_kernel_cpu_dispatch();
+int size_all_queues();
 
 #endif

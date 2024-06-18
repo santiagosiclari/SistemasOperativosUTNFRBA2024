@@ -68,6 +68,10 @@ void conexion_kernel_interfaces(void* arg) {
 						pthread_mutex_unlock(&colaReadyMutex);
 					}
 				}
+
+				if (queue_size(colaExec) == 0) {
+					sem_post(&semaforoPlanificacion);
+				}
 			}
 			pthread_mutex_unlock(&colaBlockedMutex);
 			pthread_mutex_unlock(&reciboFinDeIO);

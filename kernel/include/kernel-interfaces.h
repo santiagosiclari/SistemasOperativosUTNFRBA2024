@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <commons/collections/queue.h>
+#include <semaphore.h>
 
 #include "logs.h"
 #include "configs.h"
@@ -14,9 +15,12 @@
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/io.h"
 
-extern t_queue* colaBlocked;
+extern t_queue* colaNew;
 extern t_queue* colaReady;
+extern t_queue* colaBlocked;
+extern t_queue* colaExec;
 extern t_queue* colaAux;
+extern sem_t semaforoPlanificacion;
 
 extern pthread_mutex_t colaBlockedMutex;
 extern pthread_mutex_t colaReadyMutex;

@@ -28,6 +28,8 @@ extern int control_planificacion;
 extern sem_t semaforoPlanificacion;
 extern bool control_primera_vez;
 
+int size_all_queues();
+
 void planificacionFIFO();
 void planificacionRR();
 void planificacionVRR();

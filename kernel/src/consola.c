@@ -28,8 +28,12 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 	// Liberar recursos
 	liberar_recursos(pid_a_borrar);
 
+	if (queue_size(colaExec) == 0) {
+		sem_post(&semaforoPlanificacion);
+	}
+
 	// Si se borra el unico proceso que quedaba entonces detener planificacion
-	if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked) && queue_is_empty(colaAux)) {
+	if ((queue_size(colaNew) + size_all_queues()) == 0) {
 		control_planificacion = 0;
 	}
 }

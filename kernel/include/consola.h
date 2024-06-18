@@ -31,5 +31,6 @@ extern sem_t semaforoPlanificacion;
 extern pthread_mutex_t colaNewMutex;
 
 void iniciar_consola(t_log* logger);
+int size_all_queues();
 
 #endif

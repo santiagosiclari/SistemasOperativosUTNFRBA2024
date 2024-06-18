@@ -36,7 +36,7 @@ void conexion_kernel_cpu_dispatch() {
 			if(!queue_is_empty(colaExec)) {
 				pcb_a_borrar = queue_pop(colaExec);
 
-				if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked) && queue_is_empty(colaAux)) {
+				if ((queue_size(colaNew) + size_all_queues()) == 0) {
 					control_planificacion = 0;
 				}
 			}

@@ -56,6 +56,13 @@ void planificacionFIFO() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
+
+        // Para que la consola no tenga lag cuando todos los procesos estan bloqueados
+        int total_size = queue_size(colaNew) + queue_size(colaReady) + queue_size(colaExec) + queue_size(colaAux);
+        if (total_size == 0) {
+            sem_wait(&semaforoPlanificacion);
+        }
+        
         while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
@@ -98,6 +105,13 @@ void planificacionRR() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
+
+        // Para que la consola no tenga lag cuando todos los procesos estan bloqueados
+        int total_size = queue_size(colaNew) + queue_size(colaReady) + queue_size(colaExec) + queue_size(colaAux);
+        if (total_size == 0) {
+            sem_wait(&semaforoPlanificacion);
+        }
+
         while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
@@ -145,6 +159,13 @@ void planificacionVRR() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
+        
+        // Para que la consola no tenga lag cuando todos los procesos estan bloqueados
+        int total_size = queue_size(colaNew) + queue_size(colaReady) + queue_size(colaExec) + queue_size(colaAux);
+        if (total_size == 0) {
+            sem_wait(&semaforoPlanificacion);
+        }
+
         while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);

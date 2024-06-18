@@ -25,7 +25,11 @@ void conexion_kernel_memoria() {
 				// Revisar si otro proceso se puede desbloquear
 				liberar_recursos(pid_oom);
 
-				if (queue_is_empty(colaReady) && queue_is_empty(colaNew) && queue_is_empty(colaExec) && queue_is_empty(colaBlocked) && queue_is_empty(colaAux)) {
+				if (queue_size(colaExec) == 0) {
+					sem_post(&semaforoPlanificacion);
+				}
+
+				if ((queue_size(colaNew) + size_all_queues()) == 0) {
 					control_planificacion = 0;
 				}
 				free(pcb_a_borrar->registros);

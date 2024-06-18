@@ -8,6 +8,7 @@
 #include "logs.h"
 #include "recursos.h"
 #include <pthread.h>
+#include <semaphore.h>
 
 #include "../../utils/include/file-descriptors.h"
 #include "../../utils/include/sockets.h"
@@ -22,7 +23,9 @@ extern t_queue* colaAux;
 extern int control_planificacion;
 
 extern pthread_mutex_t colaExecMutex;
+extern sem_t semaforoPlanificacion;
 
 void conexion_kernel_memoria();
+int size_all_queues();
 
 #endif
