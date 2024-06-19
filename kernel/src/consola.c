@@ -235,11 +235,12 @@ void atender_instruccion (char* leido) {
 	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0) {
 		// Buscar pid en queue --> pid => comando_consola[1]
 		uint8_t pid_a_borrar = atoi(comando_consola[1]);
+        log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
+		
 		t_pcb* pcb_borrar = malloc(sizeof(t_pcb));
 		pcb_borrar->registros = malloc(sizeof(t_registros));
 
 		buscar_en_queues_y_finalizar(pcb_borrar, pid_a_borrar);
-        log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);

@@ -11,6 +11,7 @@ char* nombre_archivo;
 char* nombre_archivo_recibido;
 char* nombre_fs;
 char* nombre_fs_recibido;
+int64_t tiempo_consumido;
 
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutexFinQuantum = PTHREAD_MUTEX_INITIALIZER;
@@ -66,8 +67,8 @@ void conexion_kernel_cpu_dispatch() {
 				log_error(kernel_logger, "Hubo un error al recibir el PCB interrumpido");
 				break;
 			}
-			temporal_destroy(tiempo_vrr);
 
+			pthread_mutex_lock(&colaReadyMutex);
 			pthread_mutex_lock(&colaExecMutex);
 			if(queue_size(colaExec) != 0) {
 				pcb_int = queue_pop(colaExec);
@@ -79,10 +80,13 @@ void conexion_kernel_cpu_dispatch() {
 					break;
 				}
 				log_info(kernel_logger, "PID: %d - Desalojado por fin de Quantum", pcb_int->pid);
+				if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					pcb_int->quantum = QUANTUM;
+					temporal_destroy(tiempo_vrr);
+				}
 			}
 			pthread_mutex_unlock(&colaExecMutex);
 
-			pthread_mutex_lock(&colaReadyMutex);
 			pcb_int->estado = 'R';
 			queue_push(colaReady, pcb_int);
 			pthread_mutex_unlock(&colaReadyMutex);
@@ -117,17 +121,20 @@ void conexion_kernel_cpu_dispatch() {
 							if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
 								pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 							} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+								temporal_stop(tiempo_vrr);
+								tiempo_consumido = temporal_gettime(tiempo_vrr);
 								pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 								// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-								uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-								pcb_recv->quantum -= tiempo_restante;
-								log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+								if (tiempo_consumido >= pcb_recv->quantum) {
+									log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recv->pid);
+									pcb_recv->quantum = QUANTUM;
+								} else {
+									log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+									pcb_recv->quantum -= tiempo_consumido;
+									log_info(kernel_logger, "Quantum restante: %d", pcb_recv->quantum);
+								}
 
 								temporal_destroy(tiempo_vrr);
-
-								if (pcb_recv->quantum <= 0) {
-									pcb_recv->quantum = QUANTUM;
-								}
 							}
 							
 							pcb_recv->estado = 'B';
@@ -202,6 +209,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_gen_sleep = malloc(sizeof(t_pcb));
 			pcb_io_gen_sleep->registros = malloc(sizeof(t_registros));
@@ -225,18 +233,18 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 				} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
-					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0) {
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -259,6 +267,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_stdin = malloc(sizeof(t_pcb));
 			pcb_io_stdin->registros = malloc(sizeof(t_registros));
@@ -286,16 +295,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger,"Tiempo restante de quantum: %d",tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0)
-					{
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -318,6 +327,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_stdout = malloc(sizeof(t_pcb));
 			pcb_io_stdout->registros = malloc(sizeof(t_registros));
@@ -345,16 +355,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger,"Tiempo restante de quantum: %d",tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0)
-					{
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -377,6 +387,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_fs_create = malloc(sizeof(t_pcb));
 			pcb_io_fs_create->registros = malloc(sizeof(t_registros));
@@ -405,15 +416,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0) {
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -438,6 +450,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_fs_delete = malloc(sizeof(t_pcb));
 			pcb_io_fs_delete->registros = malloc(sizeof(t_registros));
@@ -466,15 +479,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0) {
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -499,6 +513,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_fs_truncate = malloc(sizeof(t_pcb));
 			pcb_io_fs_truncate->registros = malloc(sizeof(t_registros));
@@ -528,15 +543,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0) {
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -561,6 +577,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_fs_write = malloc(sizeof(t_pcb));
 			pcb_io_fs_write->registros = malloc(sizeof(t_registros));
@@ -590,15 +607,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0) {
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
@@ -623,6 +641,7 @@ void conexion_kernel_cpu_dispatch() {
 			// pausar tiempo --> temporal_stop(time_vrr);
 			if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
 				temporal_stop(tiempo_vrr);
+				tiempo_consumido = temporal_gettime(tiempo_vrr);
 			}
 			t_pcb* pcb_io_fs_read = malloc(sizeof(t_pcb));
 			pcb_io_fs_read->registros = malloc(sizeof(t_registros));
@@ -652,15 +671,16 @@ void conexion_kernel_cpu_dispatch() {
 					log_info(kernel_logger, "Se recibio una IO antes del Quantum");
 					pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando recibe una IO
 					// Resto el tiempo tomado de time.h con el pcb_recibido->quantum
-					uint32_t tiempo_restante = temporal_gettime(tiempo_vrr);
-					pcb_recibido->quantum -= tiempo_restante;
-					log_info(kernel_logger, "Tiempo restante de quantum: %d", tiempo_restante);
+					if (tiempo_consumido >= pcb_recibido->quantum) {
+						log_info(kernel_logger, "PID: %d - No tiene Quantum restante", pcb_recibido->pid);
+						pcb_recibido->quantum = QUANTUM;
+					} else {
+						log_info(kernel_logger, "Se recibio una IO antes del Quantum");
+						pcb_recibido->quantum -= tiempo_consumido;
+						log_info(kernel_logger, "Quantum restante: %d", pcb_recibido->quantum);
+					}
 
 					temporal_destroy(tiempo_vrr);
-
-					if (pcb_recibido->quantum <= 0) {
-					 	pcb_recibido->quantum = QUANTUM;
-					}
 				}
 				
 				pthread_mutex_lock(&colaBlockedMutex);
