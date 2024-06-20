@@ -5,9 +5,11 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <readline/readline.h>
+#include <commons/bitarray.h>
 
 #include "configs.h"
 #include "logs.h"
+#include "fs.h"
 
 #include "../../utils/include/file-descriptors.h"
 #include "../../utils/include/sockets.h"
@@ -17,6 +19,7 @@
 extern t_pcb* pcb_stdout;
 extern t_pcb* pcb_stdin;
 extern pthread_mutex_t mutexIO;
+extern t_bitarray* bitmap_blocks;
 
 void conexion_entradasalida_kernel();
 

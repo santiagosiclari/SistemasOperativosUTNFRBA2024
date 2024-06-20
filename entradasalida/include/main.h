@@ -10,11 +10,16 @@
 #include "terminar-entradasalida.h"
 #include "entradasalida-kernel.h"
 #include "entradasalida-memoria.h"
+#include "fs.h"
 #include <readline/readline.h>
 
 #include "../../utils/include/sockets.h"
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/file-descriptors.h"
+
+extern t_bitarray* bitmap_blocks;
+extern char* path_bloques;
+extern char* path_bitmap;
 
 int fd_kernel;
 int fd_memoria;

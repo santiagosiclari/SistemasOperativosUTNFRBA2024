@@ -1,5 +1,9 @@
 #include "../include/main.h"
 
+t_bitarray* bitmap_blocks;
+char* path_bloques;
+char* path_bitmap;
+
 int main(int argc, char* argv[]) {
 
     // Inicializamos logger y logger debug
@@ -16,6 +20,24 @@ int main(int argc, char* argv[]) {
 
     // Inicializamos config
     init_entradasalida_config(config);
+
+    // Inicializamos bloques y bitmap
+    if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+        // Concatenar con path de PATH_BASE_DIALFS
+        uint32_t MAX_LENGTH = 256;
+        path_bloques = malloc(MAX_LENGTH);
+        strcpy(path_bloques, PATH_BASE_DIALFS);
+        strcat(path_bloques, "/bloques.dat");
+
+        init_bloques(path_bloques); // bloques.dat
+
+        // Concatenar con path de PATH_BASE_DIALFS
+        path_bitmap = malloc(MAX_LENGTH);
+        strcpy(path_bitmap, PATH_BASE_DIALFS);
+        strcat(path_bitmap, "/bitmap.dat");
+
+        init_bitmap(path_bitmap); // bitmap.dat
+    }
 
     // Conexiones
     // Conexión con Memoria

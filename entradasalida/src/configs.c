@@ -25,7 +25,7 @@ void init_entradasalida_config(char* config) {
         PUERTO_KERNEL = config_get_string_value(entradasalida_config, "PUERTO_KERNEL");
         IP_MEMORIA = config_get_string_value(entradasalida_config, "IP_MEMORIA");
         PUERTO_MEMORIA = config_get_string_value(entradasalida_config, "PUERTO_MEMORIA");
-    } else if(strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
+    } else if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
         TIEMPO_UNIDAD_TRABAJO = config_get_int_value(entradasalida_config, "TIEMPO_UNIDAD_TRABAJO");
         IP_KERNEL = config_get_string_value(entradasalida_config, "IP_KERNEL");
         PUERTO_KERNEL = config_get_string_value(entradasalida_config, "PUERTO_KERNEL");

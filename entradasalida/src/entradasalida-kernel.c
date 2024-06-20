@@ -121,11 +121,14 @@ void conexion_entradasalida_kernel() {
 			}
 			strcpy(nombre_archivo, nombre_archivo_recibido);
 			strcpy(nombre_fs, nombre_fs_recibido);
+
+			usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_create->pid, "IO_FS_CREATE");
+			log_info(entradasalida_logger, "PID: %d - Crear Archivo: %s", pcb_fs_create->pid, nombre_archivo);
 
 			// Logica de cada instruccion
-			// ...
+			crear_archivo(nombre_archivo, bitmap_blocks);
 
 			// Avisa que ya no esta mas interrumpido el proceso
 			send_fin_io(fd_kernel, pcb_fs_create->pid, nombre_fs, strlen(nombre_fs) + 1);
@@ -151,11 +154,14 @@ void conexion_entradasalida_kernel() {
 			}
 			strcpy(nombre_archivo, nombre_archivo_recibido);
 			strcpy(nombre_fs, nombre_fs_recibido);
+
+			usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_delete->pid, "IO_FS_DELETE");
+			log_info(entradasalida_logger, "PID: %d - Eliminar Archivo: %s", pcb_fs_delete->pid, nombre_archivo);
 
 			// Logica de cada instruccion
-			// ...
+			borrar_archivo(nombre_archivo, bitmap_blocks);
 
 			// Avisa que ya no esta mas interrumpido el proceso
 			send_fin_io(fd_kernel, pcb_fs_delete->pid, nombre_fs, strlen(nombre_fs) + 1);
@@ -182,8 +188,11 @@ void conexion_entradasalida_kernel() {
 			}
 			strcpy(nombre_archivo, nombre_archivo_recibido);
 			strcpy(nombre_fs, nombre_fs_recibido);
+
+			usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_truncate->pid, "IO_FS_TRUNCATE");
+			log_info(entradasalida_logger, "PID: %d - Truncar Archivo: %s - Tamaño: %d", pcb_fs_truncate->pid, nombre_archivo, tamanio_truncate);
 
 			// Logica de cada instruccion
 			// ...
@@ -213,8 +222,11 @@ void conexion_entradasalida_kernel() {
 			}
 			strcpy(nombre_archivo, nombre_archivo_recibido);
 			strcpy(nombre_fs, nombre_fs_recibido);
+
+			usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_write->pid, "IO_FS_WRITE");
+			log_info(entradasalida_logger, "PID: %d - Escribir Archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %d", pcb_fs_write->pid, nombre_archivo, tamanio_write, ptr_archivo_write);
 
 			// Logica de cada instruccion
 			// ...
@@ -244,8 +256,11 @@ void conexion_entradasalida_kernel() {
 			}
 			strcpy(nombre_archivo, nombre_archivo_recibido);
 			strcpy(nombre_fs, nombre_fs_recibido);
+
+			usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_read->pid, "IO_FS_READ");
+			log_info(entradasalida_logger, "PID: %d - Escribir Archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", pcb_fs_read->pid, nombre_archivo, tamanio_read, ptr_archivo_read);
 
 			// Logica de cada instruccion
 			// ...

@@ -21,6 +21,6 @@ extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
 extern int RETRASO_COMPACTACION;
 
-void init_entradasalida_config();
+void init_entradasalida_config(char* config);
 
 #endif
