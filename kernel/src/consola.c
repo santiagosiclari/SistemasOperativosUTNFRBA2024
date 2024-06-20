@@ -174,7 +174,7 @@ void atender_instruccion (char* leido) {
 				"INICIAR_PLANIFICACION\n"
 				"MULTIPROGRAMACION [valor]\n"
 				"PROCESO_ESTADO\n\n");
-	} else if(strcmp(comando_consola[0], "EJECUTAR_SCRIPT") == 0) {
+	} else if(strcmp(comando_consola[0], "EJECUTAR_SCRIPT") == 0 || strcmp(comando_consola[0], "ES") == 0) {
 		log_info(kernel_logger, "Path del script: %s", comando_consola[1]);
 
 		// Concatenar con path de carpeta scripts-pruebas
@@ -206,7 +206,7 @@ void atender_instruccion (char* leido) {
 		fclose(archivo); // Cerrar el archivo
 		free(linea); // Libero memoria
     	free(path); // Liberar memoria del path
-	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0) {
+	} else if(strcmp(comando_consola[0], "INICIAR_PROCESO") == 0 || strcmp(comando_consola[0], "IPRO") == 0) {
 		t_pcb* pcb = crear_pcb();
 		send_pcb(fd_cpu_dispatch, pcb);
 		log_info(kernel_logger, "Se crea el proceso %d en NEW", pcb->pid);
@@ -220,10 +220,10 @@ void atender_instruccion (char* leido) {
 
 		send_iniciar_proceso(fd_memoria, pcb->pid, comando_consola[1], strlen(comando_consola[1]) + 1);
 		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
-	} else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0){
+	} else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0 || strcmp(comando_consola[0], "DP") == 0) {
         log_info(kernel_logger, "Se detiene la planificacion");
         sem_wait(&semaforoPlanificacion);
-    } else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0) {
+    } else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0 || strcmp(comando_consola[0], "IPLAN") == 0) {
 		if (control_primera_vez) {
             log_info(kernel_logger, "Comienza la planificacion");
             control_primera_vez = false;
@@ -232,7 +232,7 @@ void atender_instruccion (char* leido) {
         }
         sem_post(&semaforoPlanificacion);
         iniciar_planificacion();
-	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0) {
+	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0 || strcmp(comando_consola[0], "FP") == 0) {
 		// Buscar pid en queue --> pid => comando_consola[1]
 		uint8_t pid_a_borrar = atoi(comando_consola[1]);
         log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
@@ -244,7 +244,7 @@ void atender_instruccion (char* leido) {
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);
-	} else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0){
+	} else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0 || strcmp(comando_consola[0], "MP") == 0){
 		int nuevo_grado = atoi(comando_consola[1]);
 		GRADO_MULTIPROGRAMACION = nuevo_grado;
 
@@ -252,7 +252,7 @@ void atender_instruccion (char* leido) {
 		//esperará su finalización normal.
 
 		log_info(kernel_logger, "Grado de multiprogramacion modificado a %d", GRADO_MULTIPROGRAMACION);
-	} else if(strcmp(comando_consola[0], "PROCESO_ESTADO") == 0){
+	} else if(strcmp(comando_consola[0], "PROCESO_ESTADO") == 0 || strcmp(comando_consola[0], "PE") == 0){
 		log_info(kernel_logger, "Listando procesos por estado:");
 		
 		listar_procesos(colaNew, colaNewMutex, "New");
