@@ -195,7 +195,7 @@ void conexion_entradasalida_kernel() {
 			log_info(entradasalida_logger, "PID: %d - Truncar Archivo: %s - Tamaño: %d", pcb_fs_truncate->pid, nombre_archivo, tamanio_truncate);
 
 			// Logica de cada instruccion
-			// ...
+			truncate_archivo(nombre_archivo, tamanio_truncate, bitmap_blocks);
 
 			// Avisa que ya no esta mas interrumpido el proceso
 			send_fin_io(fd_kernel, pcb_fs_truncate->pid, nombre_fs, strlen(nombre_fs) + 1);

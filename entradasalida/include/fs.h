@@ -25,6 +25,8 @@ void crear_archivo(char* nombre, t_bitarray* bitmap_bloques);
 void liberar_bloque(t_bitarray* bitmap_bloques, int bloque);
 void borrar_archivo(char* nombre, t_bitarray* bitmap_bloques);
 int contar_bloques_libres(t_bitarray* bitmap_bloques);
-int bloques_libres_continuos(t_bitarray* bitmap_bloques, int bloque_inicial, int bloques_necesarios);
+int contar_bloques_libres_continuos(t_bitarray* bitmap_bloques, int bloque_inicial, int bloques_necesarios);
+void ocupar_bloque(t_bitarray* bitmap_bloques, int bloque);
+void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloques);
 
 #endif

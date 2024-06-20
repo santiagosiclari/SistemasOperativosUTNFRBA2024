@@ -90,6 +90,8 @@ void crear_archivo(char* nombre, t_bitarray* bitmap_bloques) {
     fclose(metadata);
 
     log_info(entradasalida_logger, "Archivo '%s' creado con bloque inicial %d y tamaño 0.", nombre, primer_bloque);
+
+    free(path_archivo_a_crear);
 }
 
 // Borrar archivo
@@ -142,9 +144,9 @@ int contar_bloques_libres(t_bitarray* bitmap_bloques) {
 }
 
 // Ver si hay que compactar
-int bloques_libres_continuos(t_bitarray* bitmap_bloques, int bloque_inicial, int bloques_necesarios) {
+int contar_bloques_libres_continuos(t_bitarray* bitmap_bloques, int bloque_inicial, int bloques_necesarios) {
     int bloques_libres = 0;
-    int index = bloque_inicial;
+    int index = bloque_inicial + 1;
     
     while (index < bitarray_get_max_bit(bitmap_bloques)) {
         if (!bitarray_test_bit(bitmap_bloques, index)) {
@@ -153,10 +155,86 @@ int bloques_libres_continuos(t_bitarray* bitmap_bloques, int bloque_inicial, int
                 break; // Ya encontramos suficientes bloques libres
             }
         } else {
-            break; // Encontramos un bloque ocupado, detenemos la búsqueda
+            break; // Encontramos un bloque ocupado
         }
         index++;
     }
 
     return bloques_libres;
+}
+
+void ocupar_bloque(t_bitarray* bitmap_bloques, int bloque) {
+    bitarray_set_bit(bitmap_bloques, bloque);
+}
+
+// Truncate
+void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloques) {
+    // Concatenar nombre con PATH_BASE_DIALFS
+    uint32_t MAX_LENGTH = 256;
+    char* path_archivo_a_truncar = malloc(MAX_LENGTH);
+    strcpy(path_archivo_a_truncar, PATH_BASE_DIALFS);
+    strcat(path_archivo_a_truncar, "/");
+    strcat(path_archivo_a_truncar, nombre);
+
+    t_config* metadata = config_create(path_archivo_a_truncar);
+
+    // Leer los valores como si fuera config
+    int bloque_inicial = config_get_int_value(metadata, "BLOQUE_INICIAL");
+    int tamanio_actual = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
+
+    config_destroy(metadata);
+
+    int bloques_actuales = ceil(tamanio_actual / (float)BLOCK_SIZE);
+    // Cuanto bloques necesito
+    int bloques_necesarios = ceil(tamanio_nuevo / (float)BLOCK_SIZE) - 1; // Restamos 1 porque ya tiene un bloque inicial
+
+    // Logica de cambiar tamaño
+    int bloques_libres = contar_bloques_libres(bitmap_blocks);
+    if (bloques_libres < bloques_necesarios) {
+        log_error(entradasalida_logger, "No hay suficiente espacio para el archivo");
+        return;
+    }
+
+    log_info(entradasalida_logger, "Tamanio actual: %d", tamanio_actual);
+    log_info(entradasalida_logger, "Tamanio nuevo: %d", tamanio_nuevo);
+    if(tamanio_actual > tamanio_nuevo) {
+        // Disminuir tamaño
+        int bloque_final = bloque_inicial + bloques_actuales;
+        for (int i = 0; i < bloques_necesarios; i++) {
+            liberar_bloque(bitmap_blocks, bloque_final);
+            log_info(entradasalida_logger, "Bloque %d liberado", bloque_final);
+            bloque_final--;
+        }
+    } else if(tamanio_actual < tamanio_nuevo) {
+        int bloques_libres_continuos = contar_bloques_libres_continuos(bitmap_blocks, bloque_inicial, bloques_necesarios);
+
+        log_info(entradasalida_logger, "Bloques necesarios: %d", bloques_necesarios);
+        log_info(entradasalida_logger, "Bloques libres continuos: %d", bloques_libres_continuos);
+        if(bloques_libres_continuos < bloques_necesarios) {
+            log_info(entradasalida_logger, "Iniciando compactacion");
+            // Compactar
+            usleep(RETRASO_COMPACTACION * 1000);
+        } else {
+            // Aumentar tamaño
+            log_info(entradasalida_logger, "Aumentando tamanio");
+            int bloque_final = bloque_inicial + bloques_actuales;
+            for (int i = 0; i < bloques_necesarios; i++) {
+                bloque_final++;
+                ocupar_bloque(bitmap_blocks, bloque_final);
+                log_info(entradasalida_logger, "Bloque %d ocupado", bloque_final);
+            }
+        }
+    }
+
+    FILE* archivo_a_truncar = fopen(path_archivo_a_truncar, "w");
+    if (!archivo_a_truncar) {
+        log_error(entradasalida_logger, "Error: No se pudo crear el archivo a truncar.");
+        return;
+    }
+
+    // Escribir nuevo tamaño en el archivo
+    fprintf(archivo_a_truncar, "BLOQUE_INICIAL=%d\n", bloque_inicial);
+    fprintf(archivo_a_truncar, "TAMANIO_ARCHIVO=%d", tamanio_nuevo);
+    
+    fclose(archivo_a_truncar);
 }
