@@ -168,7 +168,7 @@ void ocupar_bloque(t_bitarray* bitmap_bloques, int bloque) {
 }
 
 // Truncate
-void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloques) {
+void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloques, t_pcb* pcb) {
     // Concatenar nombre con PATH_BASE_DIALFS
     uint32_t MAX_LENGTH = 256;
     char* path_archivo_a_truncar = malloc(MAX_LENGTH);
@@ -211,8 +211,9 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
         log_info(entradasalida_logger, "Bloques necesarios: %d", bloques_necesarios);
         log_info(entradasalida_logger, "Bloques libres continuos: %d", bloques_libres_continuos);
         if(bloques_libres_continuos < bloques_necesarios) {
-            log_info(entradasalida_logger, "Iniciando compactacion");
+            log_info(entradasalida_logger, "PID: %d - Inicio Compactacion.", pcb->pid);
             // Compactar
+            log_info(entradasalida_logger, "PID: %d - Fin Compactacion.", pcb->pid);
             usleep(RETRASO_COMPACTACION * 1000);
         } else {
             // Aumentar tamaño
@@ -237,4 +238,68 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
     fprintf(archivo_a_truncar, "TAMANIO_ARCHIVO=%d", tamanio_nuevo);
     
     fclose(archivo_a_truncar);
+}
+
+// Write
+void write_archivo(char* nombre, void* datos, int tamanio_write, int ptr_archivo_write, t_bitarray* bitmap_bloques) {
+    // Concatenar nombre con PATH_BASE_DIALFS
+    uint32_t MAX_LENGTH = 256;
+    char* path_archivo_write = malloc(MAX_LENGTH);
+    strcpy(path_archivo_write, PATH_BASE_DIALFS);
+    strcat(path_archivo_write, "/");
+    strcat(path_archivo_write, nombre);
+
+    // Leo de memoria, espero recibir los datos y lo escribo en el archivo
+    FILE* archivo_write = fopen(path_archivo_write, "rb+");
+    if(archivo_write == NULL) {
+        log_error(entradasalida_logger, "Error al abrir el archivo a escribir");
+        return;
+    }
+
+    // Moverse al puntero archivo
+    if (fseek(archivo_write, ptr_archivo_write, SEEK_SET) != 0) {
+        log_error(entradasalida_logger, "Error al moverse al puntero del archivo");
+        fclose(archivo_write);
+        return;
+    }
+
+    // Escribir los datos
+    fwrite(datos, 1, tamanio_write, archivo_write);
+
+    fclose(archivo_write);
+    free(path_archivo_write);
+}
+
+// Read
+void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_archivo_read, t_pcb* pcb_fs_read, t_bitarray* bitmap_bloques) {
+    // Concatenar nombre con PATH_BASE_DIALFS
+    uint32_t MAX_LENGTH = 256;
+    char* path_archivo_read = malloc(MAX_LENGTH);
+    strcpy(path_archivo_read, PATH_BASE_DIALFS);
+    strcat(path_archivo_read, "/");
+    strcat(path_archivo_read, nombre);
+
+    // Leo de archivo, envio los datos a escribir en memoria y recibo si la escritura fue ejecutada
+    FILE* archivo_read = fopen(path_archivo_read, "rb+");
+    if(archivo_read == NULL) {
+        log_error(entradasalida_logger, "Error al abrir el archivo a escribir");
+        return;
+    }
+
+    // Moverse a la posición deseada
+    if (fseek(archivo_read, ptr_archivo_read, SEEK_SET) != 0) {
+        log_error(entradasalida_logger, "Error al moverse al puntero del archivo");
+        fclose(archivo_read);
+        free(path_archivo_read);
+        return;
+    }
+
+    // Escribir los datos
+    void* datos_leidos = malloc(tamanio_read);
+    fread(datos_leidos, 1, tamanio_read, archivo_read);
+
+    send_escribir_memoria(fd_memoria, pcb_fs_read->pid, dir_fisica_read, datos_leidos, tamanio_read);
+
+    fclose(archivo_read);
+    free(path_archivo_read);
 }

@@ -2,6 +2,8 @@
 
 t_pcb* pcb_stdout;
 t_pcb* pcb_stdin;
+t_pcb* pcb_fs_write;
+t_pcb* pcb_fs_read;
 char* nombre_sleep;
 char* nombre_sleep_recibido;
 char* nombre_stdin;
@@ -13,6 +15,7 @@ char* nombre_fs_recibido;
 char* nombre_archivo;
 char* nombre_archivo_recibido;
 char* string;
+uint32_t ptr_archivo_write;
 uint32_t MAX_LENGTH;
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 
@@ -195,7 +198,7 @@ void conexion_entradasalida_kernel() {
 			log_info(entradasalida_logger, "PID: %d - Truncar Archivo: %s - Tamaño: %d", pcb_fs_truncate->pid, nombre_archivo, tamanio_truncate);
 
 			// Logica de cada instruccion
-			truncate_archivo(nombre_archivo, tamanio_truncate, bitmap_blocks);
+			truncate_archivo(nombre_archivo, tamanio_truncate, bitmap_blocks, pcb_fs_truncate);
 
 			// Avisa que ya no esta mas interrumpido el proceso
 			send_fin_io(fd_kernel, pcb_fs_truncate->pid, nombre_fs, strlen(nombre_fs) + 1);
@@ -209,9 +212,9 @@ void conexion_entradasalida_kernel() {
 			break;
 		case IO_FS_WRITE:
 			pthread_mutex_lock(&mutexIO);
-			t_pcb* pcb_fs_write = malloc(sizeof(t_pcb));
+			pcb_fs_write = malloc(sizeof(t_pcb));
 			pcb_fs_write->registros = malloc(sizeof(t_registros));
-			uint32_t tamanio_write, dir_fisica_write, ptr_archivo_write;
+			uint32_t tamanio_write, dir_fisica_write;
 			nombre_fs = malloc(MAX_LENGTH);
 			nombre_fs_recibido = malloc(MAX_LENGTH);
 			nombre_archivo = malloc(MAX_LENGTH);
@@ -229,21 +232,11 @@ void conexion_entradasalida_kernel() {
 			log_info(entradasalida_logger, "PID: %d - Escribir Archivo: %s - Tamaño a Escribir: %d - Puntero Archivo: %d", pcb_fs_write->pid, nombre_archivo, tamanio_write, ptr_archivo_write);
 
 			// Logica de cada instruccion
-			// ...
-
-			// Avisa que ya no esta mas interrumpido el proceso
-			send_fin_io(fd_kernel, pcb_fs_write->pid, nombre_fs, strlen(nombre_fs) + 1);
-
-			// Liberar memoria
-			free(pcb_fs_write->registros);
-			free(pcb_fs_write);
-			free(nombre_fs);
-			free(nombre_fs_recibido);
-			pthread_mutex_unlock(&mutexIO);
+			send_leer_memoria(fd_memoria, pcb_fs_write->pid, dir_fisica_write, tamanio_write);
 			break;
 		case IO_FS_READ:
 			pthread_mutex_lock(&mutexIO);
-			t_pcb* pcb_fs_read = malloc(sizeof(t_pcb));
+			pcb_fs_read = malloc(sizeof(t_pcb));
 			pcb_fs_read->registros = malloc(sizeof(t_registros));
 			uint32_t tamanio_read, dir_fisica_read, ptr_archivo_read;
 			nombre_fs = malloc(MAX_LENGTH);
@@ -263,17 +256,7 @@ void conexion_entradasalida_kernel() {
 			log_info(entradasalida_logger, "PID: %d - Escribir Archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", pcb_fs_read->pid, nombre_archivo, tamanio_read, ptr_archivo_read);
 
 			// Logica de cada instruccion
-			// ...
-
-			// Avisa que ya no esta mas interrumpido el proceso
-			send_fin_io(fd_kernel, pcb_fs_read->pid, nombre_fs, strlen(nombre_fs) + 1);
-
-			// Liberar memoria
-			free(pcb_fs_read->registros);
-			free(pcb_fs_read);
-			free(nombre_fs);
-			free(nombre_fs_recibido);
-			pthread_mutex_unlock(&mutexIO);
+			read_archivo(nombre_archivo, tamanio_read, dir_fisica_read, ptr_archivo_read, pcb_fs_read, bitmap_blocks);
 			break;
 		case -1:
 			log_error(entradasalida_logger, "El servidor de Kernel no se encuentra activo.");

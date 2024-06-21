@@ -18,8 +18,11 @@
 
 extern t_pcb* pcb_stdout;
 extern t_pcb* pcb_stdin;
+extern t_pcb* pcb_fs_write;
+extern t_pcb* pcb_fs_read;
 extern pthread_mutex_t mutexIO;
 extern t_bitarray* bitmap_blocks;
+extern uint32_t ptr_archivo_write;
 
 void conexion_entradasalida_kernel();
 
@@ -27,6 +30,8 @@ extern char* nombre_stdin;
 extern char* nombre_stdout;
 extern char* nombre_stdin_recibido;
 extern char* nombre_stdout_recibido;
+extern char* nombre_archivo;
+extern char* nombre_archivo_recibido;
 extern char* string;
 
 #endif

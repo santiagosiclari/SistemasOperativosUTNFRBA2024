@@ -10,30 +10,44 @@ void conexion_entradasalida_memoria() {
 		case PAQUETE:
 			break;
 		case RECIBIR_VALOR_MEMORIA:
-			// Cambiar el length de uint8 a uint32 !!
 			void* datos;
 			uint32_t length;
 			uint32_t dir_fisica;
 			if(!recv_valor_memoria(fd_memoria, &dir_fisica, &datos, &length)) {
 				log_error(entradasalida_logger, "Hubo un error al recibir los datos de memoria");
 			}
-			char* datos_char = malloc(length);
-			memcpy(datos_char, datos, length);
 
-			// Muestra el string en pantalla
-			log_info(entradasalida_logger, "%.*s", length, datos_char);
+			if(strcmp(TIPO_INTERFAZ, "STDOUT") == 0) {
+				char* datos_char = malloc(length);
+				memcpy(datos_char, datos, length);
 
-			// Avisa que ya no esta mas interrumpido el proceso
-			// uint32_t length_stdout = strlen(nombre_stdout) + 1;
-			send_fin_io(fd_kernel, pcb_stdout->pid, nombre_stdout, strlen(nombre_stdout) + 1);
+				// Muestra el string en pantalla
+				log_info(entradasalida_logger, "%.*s", length, datos_char);
 
-			// Liberar memoria
-			free(pcb_stdout->registros);
-			free(pcb_stdout);
-			free(nombre_stdout);
-			free(nombre_stdout_recibido);
-			free(datos_char);
-			free(datos);
+				// Avisa que ya no esta mas interrumpido el proceso
+				send_fin_io(fd_kernel, pcb_stdout->pid, nombre_stdout, strlen(nombre_stdout) + 1);
+
+				// Liberar memoria
+				free(pcb_stdout->registros);
+				free(pcb_stdout);
+				free(nombre_stdout);
+				free(nombre_stdout_recibido);
+				free(datos_char);
+				free(datos);
+			} else if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+				// Escribir en el bloques.dat los datos recibidos
+				write_archivo(nombre_archivo, datos, length, ptr_archivo_write, bitmap_blocks);
+
+				// Avisa que ya no esta mas interrumpido el proceso
+				send_fin_io(fd_kernel, pcb_fs_write->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+				// Liberar memoria
+				free(pcb_fs_write->registros);
+				free(pcb_fs_write);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+				free(datos);
+			}
 
 			pthread_mutex_unlock(&mutexIO);
 			break;
@@ -50,16 +64,26 @@ void conexion_entradasalida_memoria() {
 				log_error(entradasalida_logger, "Error en la escritura");
 			}
 
-			// Avisa que ya no esta mas interrumpido el proceso
-			// uint32_t length_stdin = strlen(nombre_stdin) + 1;
-			send_fin_io(fd_kernel, pcb_stdin->pid, nombre_stdin, strlen(nombre_stdin) + 1);
+			if(strcmp(TIPO_INTERFAZ, "STDIN") == 0) {
+				// Avisa que ya no esta mas interrumpido el proceso
+				send_fin_io(fd_kernel, pcb_stdin->pid, nombre_stdin, strlen(nombre_stdin) + 1);
 
-			// Liberar memoria
-			free(pcb_stdin->registros);
-			free(pcb_stdin);
-			free(nombre_stdin);
-			free(nombre_stdin_recibido);
-			free(string);
+				// Liberar memoria
+				free(pcb_stdin->registros);
+				free(pcb_stdin);
+				free(nombre_stdin);
+				free(nombre_stdin_recibido);
+				free(string);
+			} else if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+				// Avisa que ya no esta mas interrumpido el proceso
+				send_fin_io(fd_kernel, pcb_fs_read->pid, nombre_fs, strlen(nombre_fs) + 1);
+
+				// Liberar memoria
+				free(pcb_fs_read->registros);
+				free(pcb_fs_read);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+			}
 
 			pthread_mutex_unlock(&mutexIO);
 			break;

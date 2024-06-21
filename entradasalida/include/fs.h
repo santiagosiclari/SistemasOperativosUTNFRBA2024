@@ -27,6 +27,8 @@ void borrar_archivo(char* nombre, t_bitarray* bitmap_bloques);
 int contar_bloques_libres(t_bitarray* bitmap_bloques);
 int contar_bloques_libres_continuos(t_bitarray* bitmap_bloques, int bloque_inicial, int bloques_necesarios);
 void ocupar_bloque(t_bitarray* bitmap_bloques, int bloque);
-void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloques);
+void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloques, t_pcb* pcb);
+void write_archivo(char* nombre, void* datos, int tamanio_write, int ptr_archivo_write, t_bitarray* bitmap_bloques);
+void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_archivo_read, t_pcb* pcb_fs_read, t_bitarray* bitmap_bloques);
 
 #endif
