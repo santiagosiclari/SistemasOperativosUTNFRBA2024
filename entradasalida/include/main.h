@@ -20,6 +20,7 @@
 extern t_bitarray* bitmap_blocks;
 extern char* path_bloques;
 extern char* path_bitmap;
+extern t_list* lista_metadata;
 
 int fd_kernel;
 int fd_memoria;

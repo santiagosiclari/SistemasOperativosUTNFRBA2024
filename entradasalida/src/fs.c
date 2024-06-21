@@ -86,6 +86,15 @@ void crear_archivo(char* nombre, t_bitarray* bitmap_bloques) {
     // Escribir bloque inicial y tamaño en el archivo
     fprintf(metadata, "BLOQUE_INICIAL=%d\n", primer_bloque);
     fprintf(metadata, "TAMANIO_ARCHIVO=0");
+
+    t_metadata* metadata_archivo = malloc(sizeof(t_metadata));
+    metadata_archivo->nombre = malloc(strlen(nombre) + 1);
+
+    strcpy(metadata_archivo->nombre, nombre);
+    metadata_archivo->bloque_inicial = primer_bloque;
+    metadata_archivo->tamanio_archivo = 0;
+
+    list_add(lista_metadata, metadata_archivo);
     
     fclose(metadata);
 
@@ -97,6 +106,12 @@ void crear_archivo(char* nombre, t_bitarray* bitmap_bloques) {
 // Borrar archivo
 void liberar_bloque(t_bitarray* bitmap_bloques, int bloque) {
     bitarray_clean_bit(bitmap_bloques, bloque);
+}
+
+void borrar_metadata(void* metadata) {
+    t_metadata* metadata_a_borrar = (t_metadata*) metadata;
+    free(metadata_a_borrar->nombre);
+    free(metadata_a_borrar);
 }
 
 void borrar_archivo(char* nombre, t_bitarray* bitmap_bloques) {
@@ -126,6 +141,15 @@ void borrar_archivo(char* nombre, t_bitarray* bitmap_bloques) {
         log_error(entradasalida_logger, "No se pudo eliminar el archivo de metadata.");
     } else {
         log_info(entradasalida_logger, "Archivo '%s' borrado y bloques liberados.", nombre);
+    }
+
+    // Borrar de la lista
+    for (int i = 0; i < list_size(lista_metadata); i++) {
+        t_metadata* metadata_a_borrar = list_get(lista_metadata, i);
+        if(strcmp(metadata_a_borrar->nombre, nombre) == 0) {
+            list_remove_and_destroy_element(lista_metadata, i, borrar_metadata);
+            break;
+        }
     }
 
     config_destroy(metadata);
@@ -181,6 +205,15 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
     // Leer los valores como si fuera config
     int bloque_inicial = config_get_int_value(metadata, "BLOQUE_INICIAL");
     int tamanio_actual = config_get_int_value(metadata, "TAMANIO_ARCHIVO");
+
+    // Cambiar tamaño en la lista
+    for (int i = 0; i < list_size(lista_metadata); i++) {
+        t_metadata* metadata_truncate = list_get(lista_metadata, i);
+        if(strcmp(metadata_truncate->nombre, nombre) == 0) {
+            metadata_truncate->tamanio_archivo = tamanio_nuevo;
+            break;
+        }
+    }
 
     config_destroy(metadata);
 
@@ -302,4 +335,79 @@ void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_a
 
     fclose(archivo_read);
     free(path_archivo_read);
+}
+
+// Compactacion
+void limpiar_bitmap(t_bitarray* bitmap_bloques) {
+    int index = 0;
+    while (index < bitarray_get_max_bit(bitmap_bloques)) {
+        if (bitarray_test_bit(bitmap_bloques, index)) {
+            liberar_bloque(bitmap_bloques, index);
+        }
+        index++;
+    }
+}
+
+void iniciar_compactacion(t_bitarray* bitmap_bloques, char* path_bloques) {
+    uint32_t MAX_LENGTH = 256;
+
+    // Abrir el archivo de bloques
+    FILE* archivo_bloques = fopen(path_bloques, "rb+");
+    if (archivo_bloques == NULL) {
+        log_error(entradasalida_logger, "Error al abrir bloques.dat para compactacion");
+        return;
+    }
+
+    // Poner todo el bitmap en 0
+    limpiar_bitmap(bitmap_blocks);
+
+    for (int i = 0; i < list_size(lista_metadata); i++) {
+        t_metadata* metadata = list_get(lista_metadata, i);
+        int bloques_actuales = ceil(metadata->tamanio_archivo / (float)BLOCK_SIZE);
+        
+        int bloque_nuevo = primer_bloque_libre(bitmap_bloques);
+        if (bloque_nuevo == -1) {
+            log_error(entradasalida_logger, "No hay suficientes bloques libres para la compactacion");
+            fclose(archivo_bloques);
+            return;
+        }
+        
+        for (int j = 0; j < bloques_actuales; j++) {
+            int bloque_origen = metadata->bloque_inicial + j;
+            int bloque_destino = bloque_nuevo + j;
+
+            // Leer datos del bloque origen
+            void* buffer = malloc(BLOCK_SIZE);
+            fseek(archivo_bloques, bloque_origen * BLOCK_SIZE, SEEK_SET);
+            fread(buffer, 1, BLOCK_SIZE, archivo_bloques);
+
+            // Escribir datos en el bloque destino
+            fseek(archivo_bloques, bloque_destino * BLOCK_SIZE, SEEK_SET);
+            fwrite(buffer, 1, BLOCK_SIZE, archivo_bloques);
+
+            // Marcar el bloque destino como ocupado
+            ocupar_bloque(bitmap_bloques, bloque_destino);
+
+            free(buffer);
+        }
+
+        // Actualizar el bloque inicial en los metadatos
+        metadata->bloque_inicial = bloque_nuevo;
+
+        // Guardar los cambios
+        char* path_archivo = malloc(MAX_LENGTH);
+        snprintf(path_archivo, MAX_LENGTH, "%s/%s", PATH_BASE_DIALFS, metadata->nombre);
+        FILE* archivo_metadata = fopen(path_archivo, "w");
+        if (!archivo_metadata) {
+            log_error(entradasalida_logger, "Error al abrir el archivo de metadatos para escritura");
+            fclose(archivo_bloques);
+            return;
+        }
+        fprintf(archivo_metadata, "BLOQUE_INICIAL=%d\n", metadata->bloque_inicial);
+        fprintf(archivo_metadata, "TAMANIO_ARCHIVO=%d", metadata->tamanio_archivo);
+        fclose(archivo_metadata);
+    }
+
+    fclose(archivo_bloques);
+    log_info(entradasalida_logger, "Compactacion completada con exito.");
 }

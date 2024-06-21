@@ -16,7 +16,14 @@
 #include "../../utils/include/protocolo.h"
 #include "../../utils/include/file-descriptors.h"
 
+typedef struct {
+    char* nombre;
+    int bloque_inicial;
+    int tamanio_archivo;
+} t_metadata;
+
 extern t_bitarray* bitmap_blocks;
+extern t_list* lista_metadata;
 
 void init_bloques(char* path);
 void init_bitmap(char* path);
