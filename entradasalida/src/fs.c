@@ -246,6 +246,7 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
         if(bloques_libres_continuos < bloques_necesarios) {
             log_info(entradasalida_logger, "PID: %d - Inicio Compactacion.", pcb->pid);
             // Compactar
+            iniciar_compactacion(bitmap_blocks);
             log_info(entradasalida_logger, "PID: %d - Fin Compactacion.", pcb->pid);
             usleep(RETRASO_COMPACTACION * 1000);
         } else {
@@ -348,7 +349,7 @@ void limpiar_bitmap(t_bitarray* bitmap_bloques) {
     }
 }
 
-void iniciar_compactacion(t_bitarray* bitmap_bloques, char* path_bloques) {
+void iniciar_compactacion(t_bitarray* bitmap_bloques) {
     uint32_t MAX_LENGTH = 256;
 
     // Abrir el archivo de bloques
