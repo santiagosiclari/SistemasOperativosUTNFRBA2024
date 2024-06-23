@@ -131,6 +131,11 @@ void borrar_archivo(char* nombre, t_bitarray* bitmap_bloques) {
     // Cuantos bloques tiene el archivo
     int bloques_ocupados = ceil(tamanio_archivo / (float)BLOCK_SIZE);
 
+    // Solamente tiene el bloque inicial pero su tamaño es 0
+    if (bloques_ocupados == 0) {
+        liberar_bloque(bitmap_bloques, bloque_inicial);
+    }
+
     // Liberar los bloques en el bitmap
     for (int i = 0; i < bloques_ocupados; i++) {
         liberar_bloque(bitmap_bloques, bloque_inicial + i);
@@ -218,27 +223,32 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
     config_destroy(metadata);
 
     int bloques_actuales = ceil(tamanio_actual / (float)BLOCK_SIZE);
-    // Cuanto bloques necesito
-    int bloques_necesarios = ceil(tamanio_nuevo / (float)BLOCK_SIZE) - 1; // Restamos 1 porque ya tiene un bloque inicial
-
-    // Logica de cambiar tamaño
-    int bloques_libres = contar_bloques_libres(bitmap_blocks);
-    if (bloques_libres < bloques_necesarios) {
-        log_error(entradasalida_logger, "No hay suficiente espacio para el archivo");
-        return;
+    if (bloques_actuales == 0) {
+        bloques_actuales++; // Tiene tamaño 0 pero tiene un bloque inicial
     }
+    // Cuanto bloques necesito
+    int bloques_necesarios = ceil(tamanio_nuevo / (float)BLOCK_SIZE) - bloques_actuales; // Restamos 1 porque ya tiene un bloque inicial
 
-    log_info(entradasalida_logger, "Tamanio actual: %d", tamanio_actual);
-    log_info(entradasalida_logger, "Tamanio nuevo: %d", tamanio_nuevo);
+    bool compactacion_realizada = false;
     if(tamanio_actual > tamanio_nuevo) {
         // Disminuir tamaño
-        int bloque_final = bloque_inicial + bloques_actuales;
-        for (int i = 0; i < bloques_necesarios; i++) {
+        int bloques_a_eliminar = abs(bloques_necesarios);
+        log_info(entradasalida_logger, "Bloques a eliminar %d", bloques_a_eliminar);
+        int bloque_final = bloque_inicial + bloques_actuales - 1;
+        for (int i = 0; i < bloques_a_eliminar; i++) {
             liberar_bloque(bitmap_blocks, bloque_final);
             log_info(entradasalida_logger, "Bloque %d liberado", bloque_final);
             bloque_final--;
         }
     } else if(tamanio_actual < tamanio_nuevo) {
+        // Logica de cambiar tamaño
+        int bloques_libres = contar_bloques_libres(bitmap_blocks);
+        if (bloques_libres < bloques_necesarios) {
+            log_error(entradasalida_logger, "No hay suficiente espacio para el archivo");
+            return;
+        }
+
+        // Bloques libres continuos
         int bloques_libres_continuos = contar_bloques_libres_continuos(bitmap_blocks, bloque_inicial, bloques_necesarios);
 
         log_info(entradasalida_logger, "Bloques necesarios: %d", bloques_necesarios);
@@ -248,11 +258,11 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
             // Compactar
             iniciar_compactacion(bitmap_blocks);
             log_info(entradasalida_logger, "PID: %d - Fin Compactacion.", pcb->pid);
+            compactacion_realizada = true;
             usleep(RETRASO_COMPACTACION * 1000);
         } else {
             // Aumentar tamaño
-            log_info(entradasalida_logger, "Aumentando tamanio");
-            int bloque_final = bloque_inicial + bloques_actuales;
+            int bloque_final = bloque_inicial + bloques_actuales - 1;
             for (int i = 0; i < bloques_necesarios; i++) {
                 bloque_final++;
                 ocupar_bloque(bitmap_blocks, bloque_final);
@@ -261,17 +271,22 @@ void truncate_archivo(char* nombre, int tamanio_nuevo, t_bitarray* bitmap_bloque
         }
     }
 
-    FILE* archivo_a_truncar = fopen(path_archivo_a_truncar, "w");
-    if (!archivo_a_truncar) {
-        log_error(entradasalida_logger, "Error: No se pudo crear el archivo a truncar.");
-        return;
+    // Escribir nuevo tamaño en el archivo si no se tuvo que hacer compactacion
+    if (!compactacion_realizada) {
+        FILE* archivo_a_truncar = fopen(path_archivo_a_truncar, "w");
+        if (!archivo_a_truncar) {
+            log_error(entradasalida_logger, "Error: No se pudo crear el archivo a truncar.");
+            return;
+        }
+
+        // Escribir nuevo tamaño en el archivo
+        fprintf(archivo_a_truncar, "BLOQUE_INICIAL=%d\n", bloque_inicial);
+        fprintf(archivo_a_truncar, "TAMANIO_ARCHIVO=%d", tamanio_nuevo);
+
+        fclose(archivo_a_truncar);
     }
 
-    // Escribir nuevo tamaño en el archivo
-    fprintf(archivo_a_truncar, "BLOQUE_INICIAL=%d\n", bloque_inicial);
-    fprintf(archivo_a_truncar, "TAMANIO_ARCHIVO=%d", tamanio_nuevo);
-    
-    fclose(archivo_a_truncar);
+    free(path_archivo_a_truncar);
 }
 
 // Write
@@ -320,7 +335,7 @@ void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_a
         return;
     }
 
-    // Moverse a la posición deseada
+    // Moverse a la posicion deseada
     if (fseek(archivo_read, ptr_archivo_read, SEEK_SET) != 0) {
         log_error(entradasalida_logger, "Error al moverse al puntero del archivo");
         fclose(archivo_read);
@@ -365,6 +380,9 @@ void iniciar_compactacion(t_bitarray* bitmap_bloques) {
     for (int i = 0; i < list_size(lista_metadata); i++) {
         t_metadata* metadata = list_get(lista_metadata, i);
         int bloques_actuales = ceil(metadata->tamanio_archivo / (float)BLOCK_SIZE);
+        if (bloques_actuales == 0) {
+            bloques_actuales++; // Solo tiene el bloque inicial pero su tamaño es 0
+        }
         
         int bloque_nuevo = primer_bloque_libre(bitmap_bloques);
         if (bloque_nuevo == -1) {
@@ -407,6 +425,7 @@ void iniciar_compactacion(t_bitarray* bitmap_bloques) {
         fprintf(archivo_metadata, "BLOQUE_INICIAL=%d\n", metadata->bloque_inicial);
         fprintf(archivo_metadata, "TAMANIO_ARCHIVO=%d", metadata->tamanio_archivo);
         fclose(archivo_metadata);
+        free(path_archivo);
     }
 
     fclose(archivo_bloques);

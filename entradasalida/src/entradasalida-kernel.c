@@ -141,6 +141,8 @@ void conexion_entradasalida_kernel() {
 			free(pcb_fs_create);
 			free(nombre_fs);
 			free(nombre_fs_recibido);
+			free(nombre_archivo);
+			free(nombre_archivo_recibido);
 			pthread_mutex_unlock(&mutexIO);
 			break;
 		case IO_FS_DELETE:
@@ -174,6 +176,8 @@ void conexion_entradasalida_kernel() {
 			free(pcb_fs_delete);
 			free(nombre_fs);
 			free(nombre_fs_recibido);
+			free(nombre_archivo);
+			free(nombre_archivo_recibido);
 			pthread_mutex_unlock(&mutexIO);
 			break;
 		case IO_FS_TRUNCATE:
@@ -208,6 +212,8 @@ void conexion_entradasalida_kernel() {
 			free(pcb_fs_truncate);
 			free(nombre_fs);
 			free(nombre_fs_recibido);
+			free(nombre_archivo);
+			free(nombre_archivo_recibido);
 			pthread_mutex_unlock(&mutexIO);
 			break;
 		case IO_FS_WRITE:
