@@ -64,10 +64,10 @@ void conexion_cpu_kernel_dispatch() {
 			}
 
 			if(recursos_ok == 1) {
-				log_info(cpu_logger, "Hay recursos disponibles segui con el proceso");
+				log_info(cpu_logger, "Recurso OK segui con el proceso");
 			} else {
-				log_info(cpu_logger, "No hay mas recursos disponibles. Bloqueando proceso");
-				esperando_datos = false; 
+				log_info(cpu_logger, "No hay mas recursos disponibles o el recurso no existe");
+				esperando_datos = false;
 				free(instruccion);
 				free(instruccion_recibida);
 				// Liberar el arreglo de la instrucción separada

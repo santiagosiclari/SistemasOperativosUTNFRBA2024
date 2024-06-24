@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
         send_handshake(entradasalida_logger, fd_memoria, HANDSHAKE_MEMORIA, "IO/Memoria");
 
         // Enviar a Memoria el nombre
-        send_interfaz(fd_memoria, nombre, strlen(nombre) + 1);
+        send_interfaz(fd_memoria, nombre, strlen(nombre) + 1, TIPO_INTERFAZ, strlen(TIPO_INTERFAZ) + 1);
 
         // Hilos para Memoria
         pthread_t entradasalida_memoria;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     send_handshake(entradasalida_logger, fd_kernel, HANDSHAKE_KERNEL, "IO/Kernel");
 
     // Envia a Kernel el nombre
-    send_interfaz(fd_kernel, nombre, strlen(nombre) + 1);
+    send_interfaz(fd_kernel, nombre, strlen(nombre) + 1, TIPO_INTERFAZ, strlen(TIPO_INTERFAZ) + 1);
 
     // Hilos
     pthread_t entradasalida_kernel;

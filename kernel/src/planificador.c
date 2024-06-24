@@ -65,7 +65,7 @@ void planificacionFIFO() {
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
         
-        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && size_all_queues() <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -112,7 +112,7 @@ void planificacionRR() {
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
 
-        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && size_all_queues() <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -162,7 +162,7 @@ void planificacionVRR() {
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
 
-        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && size_all_queues() <= GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);

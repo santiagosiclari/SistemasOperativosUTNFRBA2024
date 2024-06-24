@@ -8,6 +8,7 @@
 typedef struct {
     int socket;
     char* nombre;
+    char* tipo;
 } t_interfaz;
 
 bool coincide_nombre(t_interfaz* interfaz, char* nombre_interfaz);

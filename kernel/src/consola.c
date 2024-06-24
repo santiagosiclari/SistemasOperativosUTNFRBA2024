@@ -8,7 +8,6 @@ t_pcb* buscar_pcb_a_finalizar(t_queue* cola, uint8_t pid_a_borrar) {
         t_pcb* pcb = queue_pop(cola);
         if (pcb->pid == pid_a_borrar) {
             pcb_encontrado = pcb;
-			break;
         } else {
             queue_push(cola_temp, pcb);
         }

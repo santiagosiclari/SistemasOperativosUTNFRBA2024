@@ -14,16 +14,20 @@ void conexion_kernel_entradasalida() {
 			t_interfaz* interfaz = malloc(sizeof(t_interfaz));
 			char* nombre = malloc(MAX_LENGTH);
 			char* nombre_recibido = malloc(MAX_LENGTH);
+			char* tipo = malloc(MAX_LENGTH);
+			char* tipo_recibido = malloc(MAX_LENGTH);
 			
 			// Recibo nombre de la interfaz conectada
-			if(!recv_interfaz(fd_entradasalida, nombre_recibido)) {
+			if(!recv_interfaz(fd_entradasalida, nombre_recibido, tipo_recibido)) {
 				log_error(kernel_logger, "Hubo un erro al recibir el nombre de la interfaz.");
 			}
 			strcpy(nombre, nombre_recibido);
+			strcpy(tipo, tipo_recibido);
 
 			// Guarda en una lista por cada interfaz (t_interfaz)
 			interfaz->nombre = nombre;
 			interfaz->socket = fd_entradasalida;
+			interfaz->tipo = tipo;
 			list_add(listaInterfaces, interfaz);
 
 			// Crear hilo de conexion de cada interfaz
@@ -35,6 +39,7 @@ void conexion_kernel_entradasalida() {
 			
 			// Liberar memoria
 			free(nombre_recibido);
+			free(tipo_recibido);
 
 			// Termina este servidor y se va al de la interfaz en especifico
 			control = 0;

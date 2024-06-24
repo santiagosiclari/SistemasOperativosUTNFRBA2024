@@ -119,8 +119,9 @@ bool recv_fin_proceso(int fd, uint8_t* pid_fin);
 
 // IOs
 // Nombre de interfaz
-void send_interfaz(int fd, char* nombre_interfaz, uint32_t length);
-bool recv_interfaz(int fd, char* nombre_interfaz);
+t_buffer* serializar_dos_string(char* string1, uint32_t length1, char* string2, uint32_t length2);
+void send_interfaz(int fd, char* nombre_interfaz, uint32_t length, char* tipo_interfaz, uint32_t length_tipo);
+bool recv_interfaz(int fd, char* nombre_interfaz, char* tipo_interfaz);
 
 // Finalizar IO
 t_buffer* serializar_fin_io(uint8_t pid_fin_io, char* nombre, uint32_t length);
