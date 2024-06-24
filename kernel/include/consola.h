@@ -30,6 +30,13 @@ extern sem_t semaforoPlanificacion;
 
 extern pthread_mutex_t colaNewMutex;
 
+t_pcb* buscar_pcb(t_queue* cola, uint8_t pid_a_borrar);
+void finalizar_proceso(uint8_t pid_a_borrar);
+void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar);
+void listar_procesos(t_queue* cola, pthread_mutex_t mutex, char* estado);
+void listar_procesos_blocked();
+void iniciar_planificacion();
+void atender_instruccion (char* leido);
 void iniciar_consola(t_log* logger);
 int size_all_queues();
 

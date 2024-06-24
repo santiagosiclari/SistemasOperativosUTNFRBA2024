@@ -30,7 +30,7 @@ void conexion_kernel_interfaces(void* arg) {
 			
 			pthread_mutex_lock(&colaBlockedMutex);
 			if(!queue_is_empty(colaBlocked)) {
-				t_pcb* pcb_recibido = buscar_pcb_a_finalizar(colaBlocked, pid_fin_io);
+				t_pcb* pcb_recibido = buscar_pcb(colaBlocked, pid_fin_io);
 				if(pcb_recibido == NULL) {
 					pthread_mutex_unlock(&colaBlockedMutex);
 					pthread_mutex_unlock(&reciboFinDeIO);
@@ -42,30 +42,33 @@ void conexion_kernel_interfaces(void* arg) {
 					if(pcb_recibido->quantum > 0 && pcb_recibido->quantum < QUANTUM) {
 						if (pcb_recibido != NULL) {
             				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Blocked", "Ready (Prioridad)");
-							pthread_mutex_lock(&colaAuxMutex);
 							pcb_recibido->estado = 'A';
 							pcb_recibido->flag_int = 0;
+							pthread_mutex_lock(&colaAuxMutex);
 							queue_push(colaAux, pcb_recibido);
 							pthread_mutex_unlock(&colaAuxMutex);
+                        	ingreso_ready_aux(colaAux, colaAuxMutex, "Ready Prioritario");
 						}
 					} else {
 						if (pcb_recibido != NULL) {
             				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Blocked", "Ready");
-							pthread_mutex_lock(&colaReadyMutex);
 							pcb_recibido->estado = 'R';
 							pcb_recibido->flag_int = 0;
+							pthread_mutex_lock(&colaReadyMutex);
 							queue_push(colaReady, pcb_recibido);
 							pthread_mutex_unlock(&colaReadyMutex);
+                        	ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
 						}
 					}
 				} else {
 					if (pcb_recibido != NULL) {
             			log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Blocked", "Ready");
-						pthread_mutex_lock(&colaReadyMutex);
 						pcb_recibido->estado = 'R';
 						pcb_recibido->flag_int = 0;
+						pthread_mutex_lock(&colaReadyMutex);
 						queue_push(colaReady, pcb_recibido);
 						pthread_mutex_unlock(&colaReadyMutex);
+                        ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
 					}
 				}
 

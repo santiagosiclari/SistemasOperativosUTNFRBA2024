@@ -28,7 +28,10 @@ extern t_list* recursos;
 
 extern t_queue* colaReady;
 extern pthread_mutex_t colaReadyMutex;
+extern t_queue* colaAux;
+extern pthread_mutex_t colaAuxMutex;
 
+void ingreso_ready_aux(t_queue* cola, pthread_mutex_t mutex, char* estado);
 void iniciar_recursos();
 // Finaliza un proceso (de consola o cuando termina proceso normalmente)
 void liberar_recursos(uint8_t pid);

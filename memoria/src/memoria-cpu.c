@@ -31,8 +31,10 @@ void conexion_memoria_cpu() {
 
 			t_list* instrucciones = list_get(instrucciones_por_proceso, pid);
 
-			if (instrucciones == NULL) {
+			if (list_is_empty(instrucciones)) {
 				log_warning(memoria_logger, "La lista de instrucciones se encuentra vacia");
+                pthread_mutex_unlock(&programCounter);
+                break;
             }
 			
 			if (pc <= list_size(instrucciones)) {

@@ -40,7 +40,24 @@ void controlar_quantum(t_pcb* pcb) {
 
 int size_all_queues() {
     // Ya esta creada de antes colaAux por lo que si no es VRR sera 0
-    int size_queues = queue_size(colaReady) + queue_size(colaExec) + queue_size(colaBlocked) + queue_size(colaAux);
+    int size_queues = 0;
+
+    pthread_mutex_lock(&colaReadyMutex);
+    size_queues += queue_size(colaReady);
+    pthread_mutex_unlock(&colaReadyMutex);
+
+    pthread_mutex_lock(&colaExecMutex);
+    size_queues += queue_size(colaExec);
+    pthread_mutex_unlock(&colaExecMutex);
+
+    pthread_mutex_lock(&colaBlockedMutex);
+    size_queues += queue_size(colaBlocked);
+    pthread_mutex_unlock(&colaBlockedMutex);
+
+    pthread_mutex_lock(&colaAuxMutex);
+    size_queues += queue_size(colaAux);
+    pthread_mutex_unlock(&colaAuxMutex);
+
     for(int i = 0; i < list_size(recursos); i++) {
         t_recurso* recurso = list_get(recursos, i);
         if(!queue_is_empty(recurso->blocked)) {
@@ -51,11 +68,47 @@ int size_all_queues() {
 }
 
 void verificar_si_todos_estan_bloqueados() {
-    int total_size = queue_size(colaNew) + queue_size(colaReady) + queue_size(colaExec) + queue_size(colaAux);
+    int total_size = 0;
+
+    pthread_mutex_lock(&colaNewMutex);
+    total_size += queue_size(colaNew);
+    pthread_mutex_unlock(&colaNewMutex);
+
+    pthread_mutex_lock(&colaExecMutex);
+    total_size += queue_size(colaExec);
+    pthread_mutex_unlock(&colaExecMutex);
+
+    pthread_mutex_lock(&colaAuxMutex);
+    total_size += queue_size(colaAux);
+    pthread_mutex_unlock(&colaAuxMutex);
+
+    pthread_mutex_lock(&colaReadyMutex);
+    total_size += queue_size(colaReady);
+    pthread_mutex_unlock(&colaReadyMutex);
     
     if (total_size == 0) {
         sem_wait(&semaforoPlanificacion);
     }
+}
+
+// Log minimo de ingreso a Ready / Ready Prioridad
+void ingreso_ready_aux(t_queue* cola, pthread_mutex_t mutex, char* estado) {
+    pthread_mutex_lock(&mutex);
+    if(queue_is_empty(cola)) {  
+    	log_info(kernel_logger, "Cola %s: []", estado);
+    } else {
+		char lista_pids[128] = "";
+        t_list* elements = cola->elements;
+        for(int i = 0; i < list_size(elements); i++) {
+            t_pcb* pcb = (t_pcb*) list_get(elements, i);
+			char pid_str[12];  // Para convertir pid a string
+            snprintf(pid_str, sizeof(pid_str), "%d, ", pcb->pid);
+            strcat(lista_pids, pid_str);
+        }
+		lista_pids[strlen(lista_pids) - 2] = '\0';
+    	log_info(kernel_logger, "Cola %s: [%s]", estado, lista_pids);
+    }
+    pthread_mutex_unlock(&mutex);
 }
 
 void planificacionFIFO() {
@@ -73,6 +126,7 @@ void planificacionFIFO() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
+            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
         }
 
@@ -120,6 +174,7 @@ void planificacionRR() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
+            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
         }
 
@@ -170,6 +225,7 @@ void planificacionVRR() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
+            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
         }
 

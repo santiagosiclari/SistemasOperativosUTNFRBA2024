@@ -30,7 +30,8 @@ extern char* nombre_interfaz;
 
 extern t_list* listaInterfaces;
 
+void ingreso_ready_aux(t_queue* cola, pthread_mutex_t mutex, char* estado);
 void conexion_kernel_interfaces(void* arg);
-t_pcb* buscar_pcb_a_finalizar(t_queue* cola, uint8_t pid_a_borrar);
+t_pcb* buscar_pcb(t_queue* cola, uint8_t pid_a_borrar);
 
 #endif

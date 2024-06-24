@@ -1,6 +1,6 @@
 #include <../include/consola.h>
 
-t_pcb* buscar_pcb_a_finalizar(t_queue* cola, uint8_t pid_a_borrar) {
+t_pcb* buscar_pcb(t_queue* cola, uint8_t pid_a_borrar) {
 	// Buscar en cola
 	t_pcb* pcb_encontrado = NULL;
     t_queue* cola_temp = queue_create();
@@ -38,47 +38,52 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 }
 
 void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
+	// Exec
+    pthread_mutex_lock(&colaExecMutex);
+	pcb_borrar = buscar_pcb(colaExec, pid_a_borrar);
+    pthread_mutex_unlock(&colaExecMutex);
+	if(pcb_borrar != NULL) {
+		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Exec", "Exit");
+		finalizar_proceso(pid_a_borrar);
+		return;
+	}
+
 	// New
     pthread_mutex_lock(&colaNewMutex);
-	pcb_borrar = buscar_pcb_a_finalizar(colaNew, pid_a_borrar);
+	pcb_borrar = buscar_pcb(colaNew, pid_a_borrar);
     pthread_mutex_unlock(&colaNewMutex);
 	if(pcb_borrar != NULL) {
+		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "New", "Exit");
 		finalizar_proceso(pid_a_borrar);
 		return;
 	}
 
 	// Ready
     pthread_mutex_lock(&colaReadyMutex);
-	pcb_borrar = buscar_pcb_a_finalizar(colaReady, pid_a_borrar);
+	pcb_borrar = buscar_pcb(colaReady, pid_a_borrar);
     pthread_mutex_unlock(&colaReadyMutex);
 	if(pcb_borrar != NULL) {
+		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Ready", "Exit");
 		finalizar_proceso(pid_a_borrar);
 		return;
 	}
 
 	// Blocked
     pthread_mutex_lock(&colaBlockedMutex);
-	pcb_borrar = buscar_pcb_a_finalizar(colaBlocked, pid_a_borrar);
+	pcb_borrar = buscar_pcb(colaBlocked, pid_a_borrar);
     pthread_mutex_unlock(&colaBlockedMutex);
 	if(pcb_borrar != NULL) {
-		finalizar_proceso(pid_a_borrar);
-		return;
-	}
-
-	// Exec
-    pthread_mutex_lock(&colaExecMutex);
-	pcb_borrar = buscar_pcb_a_finalizar(colaExec, pid_a_borrar);
-    pthread_mutex_unlock(&colaExecMutex);
-	if(pcb_borrar != NULL) {
+		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Blocked", "Exit");
 		finalizar_proceso(pid_a_borrar);
 		return;
 	}
 
 	// Aux (Ready prioritaria de VRR)
     pthread_mutex_lock(&colaAuxMutex);
-	pcb_borrar = buscar_pcb_a_finalizar(colaAux, pid_a_borrar);
+	pcb_borrar = buscar_pcb(colaAux, pid_a_borrar);
     pthread_mutex_unlock(&colaAuxMutex);
 	if(pcb_borrar != NULL) {
+		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Ready (Prioritario)", "Exit");
 		finalizar_proceso(pid_a_borrar);
 		return;
 	}
@@ -86,8 +91,9 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	// Blocked de cada recurso
 	for(int i = 0; i < list_size(recursos); i++) {
 		t_recurso* r = list_get(recursos, i);
-		pcb_borrar = buscar_pcb_a_finalizar(r->blocked, pid_a_borrar);
+		pcb_borrar = buscar_pcb(r->blocked, pid_a_borrar);
 		if(pcb_borrar != NULL) {
+			log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Blocked", "Exit");
 			finalizar_proceso(pid_a_borrar);
 			return;
 		}
@@ -234,12 +240,12 @@ void atender_instruccion (char* leido) {
 	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0 || strcmp(comando_consola[0], "FP") == 0) {
 		// Buscar pid en queue --> pid => comando_consola[1]
 		uint8_t pid_a_borrar = atoi(comando_consola[1]);
-        log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
 		
 		t_pcb* pcb_borrar = malloc(sizeof(t_pcb));
 		pcb_borrar->registros = malloc(sizeof(t_registros));
 
 		buscar_en_queues_y_finalizar(pcb_borrar, pid_a_borrar);
+        log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
 
 		free(pcb_borrar->registros);
 		free(pcb_borrar);

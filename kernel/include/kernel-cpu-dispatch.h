@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <commons/string.h>
+#include <semaphore.h>
 
 #include "configs.h"
 #include "logs.h"
@@ -40,6 +41,9 @@ extern pthread_mutex_t colaBlockedMutex;
 extern t_list* recursos_de_procesos;
 extern t_list* recursos;
 
+extern sem_t semaforoPlanificacion;
+
+void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar);
 void conexion_kernel_cpu_dispatch();
 int size_all_queues();
 

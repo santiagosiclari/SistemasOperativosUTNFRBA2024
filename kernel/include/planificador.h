@@ -29,6 +29,7 @@ extern sem_t semaforoPlanificacion;
 extern bool control_primera_vez;
 
 int size_all_queues();
+void ingreso_ready_aux(t_queue* cola, pthread_mutex_t mutex, char* estado);
 
 void planificacionFIFO();
 void planificacionRR();

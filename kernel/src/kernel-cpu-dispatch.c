@@ -39,6 +39,7 @@ void mandar_a_exit(char* razon, uint8_t pid) {
 	// Revisar si otro proceso se puede desbloquear
 	liberar_recursos(pid);
 	send_fin_proceso(fd_memoria, pid);
+    log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid, "Exec", "Exit");
 	log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid, razon);
 
 	free(pcb_a_borrar->registros);
@@ -56,12 +57,26 @@ void conexion_kernel_cpu_dispatch() {
 		case PAQUETE:
 			break;
 		case RECIBIR_PID_A_BORRAR:
+			if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+				pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
+			} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+				temporal_stop(tiempo_vrr);
+				pthread_cancel(quantum_thread);
+				temporal_destroy(tiempo_vrr);
+			}
+
+			t_pcb* pcb_a_borrar = malloc(sizeof(t_pcb));
+			pcb_a_borrar->registros = malloc(sizeof(t_registros));
 			uint8_t pid_a_borrar;
 			if(!recv_pid_a_borrar(fd_cpu_dispatch, &pid_a_borrar)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
 			}
 
-			mandar_a_exit("Success", pid_a_borrar);
+			buscar_en_queues_y_finalizar(pcb_a_borrar, pid_a_borrar);
+			log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Success");
+
+			free(pcb_a_borrar->registros);
+			free(pcb_a_borrar);
 			break;
 		case RECIBIR_PCB:
 			// PCB interrumpido por fin de quantum
@@ -83,6 +98,7 @@ void conexion_kernel_cpu_dispatch() {
 					free(pcb_interrumpido->registros);
 					free(pcb_interrumpido);
 					pthread_mutex_unlock(&colaExecMutex);
+					pthread_mutex_unlock(&colaReadyMutex);
 					pthread_mutex_unlock(&mutexFinQuantum);
 					break;
 				}
@@ -95,8 +111,11 @@ void conexion_kernel_cpu_dispatch() {
 			pthread_mutex_unlock(&colaExecMutex);
 
 			pcb_int->estado = 'R';
+            log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_int->pid, "Exec", "Ready");
 			queue_push(colaReady, pcb_int);
 			pthread_mutex_unlock(&colaReadyMutex);
+			ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
+
 			pthread_mutex_unlock(&mutexFinQuantum);
 			free(pcb_interrumpido->registros);
 			free(pcb_interrumpido);
@@ -166,6 +185,7 @@ void conexion_kernel_cpu_dispatch() {
 							}
 							
 							pcb_recv->estado = 'B';
+            				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recv->pid, "Exec", "Blocked");
 							queue_push(r->blocked, pcb_recv);
 						}
             			pthread_mutex_unlock(&colaExecMutex);
@@ -243,10 +263,43 @@ void conexion_kernel_cpu_dispatch() {
 
 			if(!queue_is_empty(r->blocked)) {
 				t_pcb* pcb_desbloqueado = queue_pop(r->blocked);
-				pthread_mutex_lock(&colaReadyMutex);
-				queue_push(colaReady, pcb_desbloqueado);
-				pthread_mutex_unlock(&colaReadyMutex);
-				log_info(kernel_logger, "Proceso %d desbloqueado y enviado a Ready", pcb_desbloqueado->pid);
+				if(strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+					if(pcb_desbloqueado->quantum > 0 && pcb_desbloqueado->quantum < QUANTUM) {
+						if (pcb_desbloqueado != NULL) {
+							log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_desbloqueado->pid, "Blocked", "Ready (Prioridad)");
+							pcb_desbloqueado->estado = 'A';
+							pcb_desbloqueado->flag_int = 0;
+							pthread_mutex_lock(&colaAuxMutex);
+							queue_push(colaAux, pcb_desbloqueado);
+							pthread_mutex_unlock(&colaAuxMutex);
+							ingreso_ready_aux(colaAux, colaAuxMutex, "Ready Prioridad");
+						}
+					} else {
+						if (pcb_desbloqueado != NULL) {
+							log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_desbloqueado->pid, "Blocked", "Ready");
+							pcb_desbloqueado->estado = 'R';
+							pcb_desbloqueado->flag_int = 0;
+							pthread_mutex_lock(&colaReadyMutex);
+							queue_push(colaReady, pcb_desbloqueado);
+							pthread_mutex_unlock(&colaReadyMutex);
+							ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
+						}
+					}
+				} else {
+					if (pcb_desbloqueado != NULL) {
+						log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_desbloqueado->pid, "Blocked", "Ready");
+						pcb_desbloqueado->estado = 'R';
+						pcb_desbloqueado->flag_int = 0;
+						pthread_mutex_lock(&colaReadyMutex);
+						queue_push(colaReady, pcb_desbloqueado);
+						pthread_mutex_unlock(&colaReadyMutex);
+						ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
+					}
+				}
+
+				if (queue_size(colaExec) == 0) {
+					sem_post(&semaforoPlanificacion);
+				}
 			}
 
 			// Ejecucion correcta de SIGNAL
@@ -337,8 +390,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -432,8 +486,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -527,8 +582,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -627,8 +683,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -729,8 +786,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -832,8 +890,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -934,8 +993,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO
@@ -1036,8 +1096,9 @@ void conexion_kernel_cpu_dispatch() {
 					temporal_destroy(tiempo_vrr);
 				}
 				
-				pthread_mutex_lock(&colaBlockedMutex);
 				pcb_recibido->estado = 'B';
+				pthread_mutex_lock(&colaBlockedMutex);
+				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
 				// Envia PCB y lo necesario para la IO

@@ -245,17 +245,17 @@ void conexion_cpu_memoria() {
 				// Fetch --> seguir pidiendo instrucciones
 				send_pc_pid(fd_memoria, pcb_a_ejecutar->pc, pcb_a_ejecutar->pid);
 				log_info(cpu_logger, "PID: %d - FETCH - Program Counter: %d", pcb_a_ejecutar->pid, pcb_a_ejecutar->pc);
-			}
 
-			// Libera la instruccion anterior
-			free(instruccion);
-			free(instruccion_recibida);
-			// Liberar el arreglo de la instrucción separada
-			for (int i = 0; instruccion_separada[i] != NULL; i++) {
-				free(instruccion_separada[i]);
+				// Libera la instruccion anterior
+				free(instruccion);
+				free(instruccion_recibida);
+				// Liberar el arreglo de la instrucción separada
+				for (int i = 0; instruccion_separada[i] != NULL; i++) {
+					free(instruccion_separada[i]);
+				}
+				free(instruccion_separada);
+				dictionary_destroy(dictionary_registros);
 			}
-			free(instruccion_separada);
-			dictionary_destroy(dictionary_registros);
 			break;
         case RECIBIR_MARCO: // TLB Miss
 			uint8_t pid_marco;
