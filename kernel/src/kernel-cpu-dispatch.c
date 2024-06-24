@@ -12,9 +12,38 @@ char* nombre_archivo_recibido;
 char* nombre_fs;
 char* nombre_fs_recibido;
 int64_t tiempo_consumido;
+bool existe_recurso;
+bool acepta_instruccion_io;
 
 pthread_mutex_t mutexIO = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutexFinQuantum = PTHREAD_MUTEX_INITIALIZER;
+
+void mandar_a_exit(char* razon, uint8_t pid) {
+	if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0) {
+		pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
+	} else if (strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
+		temporal_stop(tiempo_vrr);
+		pthread_cancel(quantum_thread);
+		temporal_destroy(tiempo_vrr);
+	}
+	
+	t_pcb* pcb_a_borrar;
+	if(!queue_is_empty(colaExec)) {
+		pcb_a_borrar = queue_pop(colaExec);
+
+		if ((queue_size(colaNew) + size_all_queues()) == 0) {
+			control_planificacion = 0;
+		}
+	}
+
+	// Revisar si otro proceso se puede desbloquear
+	liberar_recursos(pid);
+	send_fin_proceso(fd_memoria, pid);
+	log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid, razon);
+
+	free(pcb_a_borrar->registros);
+	free(pcb_a_borrar);
+}
 
 void conexion_kernel_cpu_dispatch() {
 	uint8_t MAX_LENGTH = 128;
@@ -27,34 +56,12 @@ void conexion_kernel_cpu_dispatch() {
 		case PAQUETE:
 			break;
 		case RECIBIR_PID_A_BORRAR:
-			if (strcmp(ALGORITMO_PLANIFICACION, "RR") == 0 || strcmp(ALGORITMO_PLANIFICACION, "VRR") == 0) {
-				pthread_cancel(quantum_thread); // Cancelar el hilo del quantum cuando se tiene que borrar el proceso
-			}
-			// Recibo proceso a eliminar
-    		pthread_mutex_lock(&colaExecMutex);
-			t_pcb* pcb_a_borrar;
-
-			if(!queue_is_empty(colaExec)) {
-				pcb_a_borrar = queue_pop(colaExec);
-
-				if ((queue_size(colaNew) + size_all_queues()) == 0) {
-					control_planificacion = 0;
-				}
-			}
-
 			uint8_t pid_a_borrar;
 			if(!recv_pid_a_borrar(fd_cpu_dispatch, &pid_a_borrar)) {
 				log_error(kernel_logger, "Hubo un error al recibir el PID.");
 			}
 
-			// Revisar si otro proceso se puede desbloquear
-			liberar_recursos(pid_a_borrar);
-			send_fin_proceso(fd_memoria, pid_a_borrar);
-            log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pcb_a_borrar->pid, "Success");
-
-			free(pcb_a_borrar->registros);
-			free(pcb_a_borrar);
-			pthread_mutex_unlock(&colaExecMutex);
+			mandar_a_exit("Success", pid_a_borrar);
 			break;
 		case RECIBIR_PCB:
 			// PCB interrumpido por fin de quantum
@@ -99,12 +106,33 @@ void conexion_kernel_cpu_dispatch() {
 			pcb_wait->registros = malloc(sizeof(t_registros));
 			char* recurso_wait = malloc(MAX_LENGTH);
 			char* recurso_wait_recibido = malloc(MAX_LENGTH);
+			existe_recurso = false;
 
 			if(!recv_wait_signal(fd_cpu_dispatch, pcb_wait, recurso_wait_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir el WAIT");
 			}
 			strcpy(recurso_wait, recurso_wait_recibido);
 			string_trim_right(&recurso_wait);
+
+			// Revisar si existe el recurso
+			for(int i = 0; i < list_size(recursos); i++) {
+				t_recurso* r = list_get(recursos, i);
+				if(strcmp(recurso_wait, r->nombre) == 0) {
+					existe_recurso = true;
+				}
+			}
+
+			if (!existe_recurso) {
+				// No existe el nombre del recurso para que siga ejecutando
+				send_recursos_ok(fd_cpu_dispatch, -1);
+
+				mandar_a_exit("Invalid Resource", pcb_wait->pid);
+				free(pcb_wait->registros);
+				free(pcb_wait);
+				free(recurso_wait_recibido);
+				free(recurso_wait);
+				break;
+			}
 
 			for(int i = 0; i < list_size(recursos); i++) {
 				t_recurso* r = list_get(recursos, i);
@@ -148,7 +176,7 @@ void conexion_kernel_cpu_dispatch() {
 						t_list* rec_tom_wait = list_get(recursos_de_procesos, pcb_wait->pid);
 						list_add(rec_tom_wait, r);
 
-						// No hay recursos necesarias para que siga ejecutando
+						// Segui ejecutando
 						send_recursos_ok(fd_cpu_dispatch, 1);
 						break;
 					}
@@ -166,12 +194,34 @@ void conexion_kernel_cpu_dispatch() {
 			char* recurso_signal = malloc(MAX_LENGTH);
 			char* recurso_signal_recibido = malloc(MAX_LENGTH);
 			t_recurso* r;
+			existe_recurso = false;
 
 			if(!recv_wait_signal(fd_cpu_dispatch, pcb_signal, recurso_signal_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir el SIGNAL");
 			}
 			strcpy(recurso_signal, recurso_signal_recibido);
 			string_trim_right(&recurso_signal);
+
+			// Revisar si existe el recurso
+			for(int i = 0; i < list_size(recursos); i++) {
+				t_recurso* r = list_get(recursos, i);
+				if(strcmp(recurso_signal, r->nombre) == 0) {
+					existe_recurso = true;
+				}
+			}
+
+			if (!existe_recurso) {
+				// No existe el nombre del recurso para que siga ejecutando
+				send_recursos_ok(fd_cpu_dispatch, -1);
+
+				mandar_a_exit("Invalid Resource", pcb_signal->pid);
+				free(pcb_signal->registros);
+				free(pcb_signal);
+				free(recurso_signal_recibido);
+				free(recurso_signal);
+				pthread_mutex_unlock(&colaExecMutex);
+				break;
+			}
 
 			for(int i = 0; i < list_size(recursos); i++) {
 				r = list_get(recursos, i);
@@ -199,6 +249,9 @@ void conexion_kernel_cpu_dispatch() {
 				log_info(kernel_logger, "Proceso %d desbloqueado y enviado a Ready", pcb_desbloqueado->pid);
 			}
 
+			// Ejecucion correcta de SIGNAL
+			send_recursos_ok(fd_cpu_dispatch, 1);
+
 			free(pcb_signal->registros);
 			free(pcb_signal);
 			free(recurso_signal);
@@ -216,6 +269,7 @@ void conexion_kernel_cpu_dispatch() {
 			uint32_t unidades_de_trabajo;
 			nombre_sleep = malloc(MAX_LENGTH);
 			nombre_recibido_sleep = malloc(MAX_LENGTH);
+			acepta_instruccion_io = false;
 
 			if(!recv_io_gen_sleep(fd_cpu_dispatch, pcb_io_gen_sleep, &unidades_de_trabajo, nombre_recibido_sleep)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_GEN_SLEEP");
@@ -224,6 +278,42 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_sleep);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_gen_sleep->pid);
+
+				free(pcb_io_gen_sleep->registros);
+				free(pcb_io_gen_sleep);
+				free(nombre_sleep);
+				free(nombre_recibido_sleep);
+				pthread_mutex_unlock(&mutexIO);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_sleep)) {
+					if (strcmp(interfaz->tipo, "GENERICA") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_gen_sleep->pid);
+
+						free(pcb_io_gen_sleep->registros);
+						free(pcb_io_gen_sleep);
+						free(nombre_sleep);
+						free(nombre_recibido_sleep);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				pthread_mutex_unlock(&mutexIO);
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -275,6 +365,7 @@ void conexion_kernel_cpu_dispatch() {
 			uint32_t tamanio_maximo_stdin;
 			nombre_stdin = malloc(MAX_LENGTH);
 			nombre_recibido_stdin = malloc(MAX_LENGTH);
+			acepta_instruccion_io = false;
 
 			if(!recv_io_stdin_stdout(fd_cpu_dispatch, pcb_io_stdin, &direccion_fisica_stdin, &tamanio_maximo_stdin, nombre_recibido_stdin)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_STDIN_READ");
@@ -283,6 +374,40 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_stdin);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_stdin->pid);
+
+				free(pcb_io_stdin->registros);
+				free(pcb_io_stdin);
+				free(nombre_stdin);
+				free(nombre_recibido_stdin);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_stdin)) {
+					if (strcmp(interfaz->tipo, "STDIN") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_stdin->pid);
+
+						free(pcb_io_stdin->registros);
+						free(pcb_io_stdin);
+						free(nombre_stdin);
+						free(nombre_recibido_stdin);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -335,14 +460,49 @@ void conexion_kernel_cpu_dispatch() {
 			uint32_t tamanio_maximo_stdout;
 			nombre_stdout = malloc(MAX_LENGTH);
 			nombre_recibido_stdout = malloc(MAX_LENGTH);
+			acepta_instruccion_io = false;
 
 			if(!recv_io_stdin_stdout(fd_cpu_dispatch, pcb_io_stdout, &direccion_fisica_stdout, &tamanio_maximo_stdout, nombre_recibido_stdout)) {
-				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_STDIN_READ");
+				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_STDOUT_WRITE");
 			}
 			strcpy(nombre_stdout, nombre_recibido_stdout);
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_stdout);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_stdout->pid);
+
+				free(pcb_io_stdout->registros);
+				free(pcb_io_stdout);
+				free(nombre_stdout);
+				free(nombre_recibido_stdout);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_stdout)) {
+					if (strcmp(interfaz->tipo, "STDOUT") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_stdout->pid);
+
+						free(pcb_io_stdout->registros);
+						free(pcb_io_stdout);
+						free(nombre_stdout);
+						free(nombre_recibido_stdout);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -395,6 +555,7 @@ void conexion_kernel_cpu_dispatch() {
 			nombre_archivo_recibido = malloc(MAX_LENGTH);
 			nombre_fs = malloc(MAX_LENGTH);
 			nombre_fs_recibido = malloc(MAX_LENGTH);
+			acepta_instruccion_io = false;
 
 			if(!recv_io_fs_create_delete(fd_cpu_dispatch, pcb_io_fs_create, nombre_archivo_recibido, nombre_fs_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_CREATE");
@@ -404,6 +565,44 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_fs_create->pid);
+
+				free(pcb_io_fs_create->registros);
+				free(pcb_io_fs_create);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_fs)) {
+					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_fs_create->pid);
+
+						free(pcb_io_fs_create->registros);
+						free(pcb_io_fs_create);
+						free(nombre_archivo);
+						free(nombre_archivo_recibido);
+						free(nombre_fs);
+						free(nombre_fs_recibido);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -458,6 +657,7 @@ void conexion_kernel_cpu_dispatch() {
 			nombre_archivo_recibido = malloc(MAX_LENGTH);
 			nombre_fs = malloc(MAX_LENGTH);
 			nombre_fs_recibido = malloc(MAX_LENGTH);
+			acepta_instruccion_io = false;
 
 			if(!recv_io_fs_create_delete(fd_cpu_dispatch, pcb_io_fs_delete, nombre_archivo_recibido, nombre_fs_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_DELETE");
@@ -467,6 +667,44 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_fs_delete->pid);
+
+				free(pcb_io_fs_delete->registros);
+				free(pcb_io_fs_delete);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_fs)) {
+					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_fs_delete->pid);
+
+						free(pcb_io_fs_delete->registros);
+						free(pcb_io_fs_delete);
+						free(nombre_archivo);
+						free(nombre_archivo_recibido);
+						free(nombre_fs);
+						free(nombre_fs_recibido);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -522,6 +760,7 @@ void conexion_kernel_cpu_dispatch() {
 			nombre_archivo_recibido = malloc(MAX_LENGTH);
 			nombre_fs = malloc(MAX_LENGTH);
 			nombre_fs_recibido = malloc(MAX_LENGTH);
+			acepta_instruccion_io = false;
 
 			if(!recv_io_fs_truncate(fd_cpu_dispatch, pcb_io_fs_truncate, &tamanio_truncate, nombre_archivo_recibido, nombre_fs_recibido)) {
 				log_error(kernel_logger, "Hubo un error al recibir la interfaz IO_FS_TRUNCATE");
@@ -531,6 +770,44 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_fs_truncate->pid);
+
+				free(pcb_io_fs_truncate->registros);
+				free(pcb_io_fs_truncate);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_fs)) {
+					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_fs_truncate->pid);
+
+						free(pcb_io_fs_truncate->registros);
+						free(pcb_io_fs_truncate);
+						free(nombre_archivo);
+						free(nombre_archivo_recibido);
+						free(nombre_fs);
+						free(nombre_fs_recibido);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -595,6 +872,44 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_fs_write->pid);
+
+				free(pcb_io_fs_write->registros);
+				free(pcb_io_fs_write);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_fs)) {
+					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_fs_write->pid);
+
+						free(pcb_io_fs_write->registros);
+						free(pcb_io_fs_write);
+						free(nombre_archivo);
+						free(nombre_archivo_recibido);
+						free(nombre_fs);
+						free(nombre_fs_recibido);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
@@ -659,6 +974,44 @@ void conexion_kernel_cpu_dispatch() {
 			
 			// Busca el socket de la interfaz
 			fd_interfaz = buscar_socket_interfaz(listaInterfaces, nombre_fs);
+			if (fd_interfaz == -1) { 
+				// No se encontro el nombre de la interfaz
+				mandar_a_exit("Invalid Interface", pcb_io_fs_read->pid);
+
+				free(pcb_io_fs_read->registros);
+				free(pcb_io_fs_read);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
+				free(nombre_fs);
+				free(nombre_fs_recibido);
+				break;
+			}
+
+			// Ver si acepta la instruccion segun el tipo
+			for (int i = 0; i < list_size(listaInterfaces); i++) {
+				t_interfaz* interfaz = list_get(listaInterfaces, i);
+				if (coincide_nombre(interfaz, nombre_fs)) {
+					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+						acepta_instruccion_io = true;
+						break;
+					} else {
+						// No acepta la instruccion segun el tipo de IO
+						mandar_a_exit("Invalid Interface", pcb_io_fs_read->pid);
+
+						free(pcb_io_fs_read->registros);
+						free(pcb_io_fs_read);
+						free(nombre_archivo);
+						free(nombre_archivo_recibido);
+						free(nombre_fs);
+						free(nombre_fs_recibido);
+						break;
+					}
+				}
+			}
+
+			if(!acepta_instruccion_io) {
+				break;
+			}
 
             pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {

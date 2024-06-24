@@ -139,6 +139,8 @@ void conexion_cpu_memoria() {
 					string_trim_right(&instruccion_separada[1]);
 					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1]);
 					funcion_signal(instruccion_separada[1]);
+					// Tiene que esperar a recibir un dato
+					esperando_datos = true;
 				} else if (strcmp(instruccion_separada[0], "IO_GEN_SLEEP") == 0) {
 					uint32_t unidades_trabajo = atoi(instruccion_separada[2]);
 					log_info(cpu_logger, "PID: %d - Ejecutando: %s - %s %d", pcb_a_ejecutar->pid, instruccion_separada[0], instruccion_separada[1], unidades_trabajo);

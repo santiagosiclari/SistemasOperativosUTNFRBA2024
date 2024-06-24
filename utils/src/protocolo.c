@@ -993,15 +993,33 @@ bool recv_fin_proceso(int fd, uint8_t* pid_fin) {
 }
 
 // Interfaces IO
-// Envio de nombre de interfaz
-void send_interfaz(int fd, char* nombre_interfaz, uint32_t length) {
-    t_buffer *buffer = serializar_string(nombre_interfaz, length);
+// Envio de nombre de 
+t_buffer* serializar_dos_string(char* string1, uint32_t length1, char* string2, uint32_t length2) {
+    t_buffer *buffer = malloc(sizeof(t_buffer));
+
+    buffer->size =
+        sizeof(uint32_t) + // longitud del string1
+        sizeof(uint32_t) + // longitud del string2
+        length1 +          // string1
+        length2;           // string2
+
+    buffer->offset = 0;
+    buffer->stream = malloc(buffer->size);
+
+    cargar_string_al_buffer(buffer, string1);
+    cargar_string_al_buffer(buffer, string2);
+
+    return buffer;
+}
+
+void send_interfaz(int fd, char* nombre_interfaz, uint32_t length, char* tipo_interfaz, uint32_t length_tipo) {
+    t_buffer *buffer = serializar_dos_string(nombre_interfaz, length, tipo_interfaz, length_tipo);
     t_paquete *a_enviar = crear_paquete(RECIBIR_NOMBRE_IO, buffer);
     enviar_paquete(a_enviar, fd);
     eliminar_paquete(a_enviar);
 }
 
-bool recv_interfaz(int fd, char* nombre_interfaz) {
+bool recv_interfaz(int fd, char* nombre_interfaz, char* tipo_interfaz) {
     t_paquete* paquete = malloc(sizeof(t_paquete));
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->offset = 0;
@@ -1021,6 +1039,10 @@ bool recv_interfaz(int fd, char* nombre_interfaz) {
     char* nombre_interfaz_recibido = deserializar_string(paquete->buffer);
     strcpy(nombre_interfaz, nombre_interfaz_recibido);
     free(nombre_interfaz_recibido);
+
+    char* tipo_interfaz_recibido = deserializar_string(paquete->buffer);
+    strcpy(tipo_interfaz, tipo_interfaz_recibido);
+    free(tipo_interfaz_recibido);
 
     eliminar_paquete(paquete);
 
