@@ -40,15 +40,7 @@ void controlar_quantum(t_pcb* pcb) {
 
 int size_all_queues() {
     // Ya esta creada de antes colaAux por lo que si no es VRR sera 0
-    pthread_mutex_lock(&colaBlockedMutex);
-    pthread_mutex_lock(&colaReadyMutex);
-    pthread_mutex_lock(&colaAuxMutex);
-    pthread_mutex_lock(&colaExecMutex);
     int size_queues = queue_size(colaReady) + queue_size(colaExec) + queue_size(colaBlocked) + queue_size(colaAux);
-    pthread_mutex_unlock(&colaExecMutex);
-    pthread_mutex_unlock(&colaAuxMutex);
-    pthread_mutex_unlock(&colaReadyMutex);
-    pthread_mutex_unlock(&colaBlockedMutex);
     for(int i = 0; i < list_size(recursos); i++) {
         t_recurso* recurso = list_get(recursos, i);
         if(!queue_is_empty(recurso->blocked)) {
@@ -59,15 +51,7 @@ int size_all_queues() {
 }
 
 void verificar_si_todos_estan_bloqueados() {
-    pthread_mutex_lock(&colaNewMutex);
-    pthread_mutex_lock(&colaReadyMutex);
-    pthread_mutex_lock(&colaAuxMutex);
-    pthread_mutex_lock(&colaExecMutex);
     int total_size = queue_size(colaNew) + queue_size(colaReady) + queue_size(colaExec) + queue_size(colaAux);
-    pthread_mutex_unlock(&colaExecMutex);
-    pthread_mutex_unlock(&colaAuxMutex);
-    pthread_mutex_unlock(&colaReadyMutex);
-    pthread_mutex_unlock(&colaNewMutex);
     
     if (total_size == 0) {
         sem_wait(&semaforoPlanificacion);
