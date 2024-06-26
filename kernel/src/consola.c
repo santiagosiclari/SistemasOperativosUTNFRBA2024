@@ -27,7 +27,7 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 	// Liberar recursos
 	liberar_recursos(pid_a_borrar);
 
-	if (queue_size(colaExec) == 0) {
+	if ((queue_size(colaExec) == 0 && (queue_size(colaNew) + size_all_queues()) > 0)) {
 		sem_post(&semaforoPlanificacion);
 	}
 
