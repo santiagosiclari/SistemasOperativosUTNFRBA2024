@@ -188,7 +188,7 @@ void conexion_cpu_memoria() {
 					log_info(cpu_logger, "PID: %d - Ejecutando: %s", pcb_a_ejecutar->pid, instruccion_separada[0]);
 					funcion_exit();
 				} else {
-					log_warning(cpu_logger, "No se pudo encontrar la instruccion: %s\n", instruccion_separada[0]);
+					log_warning(cpu_logger, "No se pudo encontrar la instruccion: %s", instruccion_separada[0]);
 				}
 				pthread_mutex_unlock(&pcbEjecutarMutex);
 
@@ -232,6 +232,23 @@ void conexion_cpu_memoria() {
 				if(pcb_a_ejecutar->flag_int == 2) {
 					log_info(cpu_logger, "Proceso %d finalizo su quantum", pcb_a_ejecutar->pid);
 					send_pcb(fd_kernel_dispatch, pcb_a_ejecutar);
+					free(instruccion);
+					free(instruccion_recibida);
+					for (int i = 0; instruccion_separada[i] != NULL; i++) {
+						free(instruccion_separada[i]);
+					}
+					free(instruccion_separada);
+					dictionary_destroy(dictionary_registros);
+					break;
+				}
+
+				// Interrupcion por fin FINALIZAR_PROCESO
+				if(pcb_a_ejecutar->flag_int == 3) {
+					log_info(cpu_logger, "Proceso %d fue interrumpido por el usuario (FINALIZAR_PROCESO)", pcb_a_ejecutar->pid);
+					send_pcb_fp(fd_kernel_dispatch, pcb_a_ejecutar);
+					free(pcb_a_ejecutar->registros);
+					free(pcb_a_ejecutar);
+					pcb_a_ejecutar = NULL;
 					free(instruccion);
 					free(instruccion_recibida);
 					for (int i = 0; instruccion_separada[i] != NULL; i++) {
@@ -418,6 +435,23 @@ void conexion_cpu_memoria() {
 				break;
 			}
 
+			// Interrupcion por fin FINALIZAR_PROCESO
+			if(pcb_a_ejecutar->flag_int == 3) {
+				log_info(cpu_logger, "Proceso %d fue interrumpido por el usuario (FINALIZAR_PROCESO)", pcb_a_ejecutar->pid);
+				send_pcb_fp(fd_kernel_dispatch, pcb_a_ejecutar);
+				free(pcb_a_ejecutar->registros);
+				free(pcb_a_ejecutar);
+				pcb_a_ejecutar = NULL;
+				free(instruccion);
+				free(instruccion_recibida);
+				for (int i = 0; instruccion_separada[i] != NULL; i++) {
+					free(instruccion_separada[i]);
+				}
+				free(instruccion_separada);
+				dictionary_destroy(dictionary_registros);
+				break;
+			}
+
 			// Libera la instruccion anterior
 			free(instruccion);
 			free(instruccion_recibida);
@@ -464,6 +498,22 @@ void conexion_cpu_memoria() {
 				}
 				free(instruccion_separada);
 				// free_instruccion_pendiente(instruccion_pendiente);
+				dictionary_destroy(dictionary_registros);
+				break;
+			}
+
+			if(pcb_a_ejecutar->flag_int == 3) {
+				log_info(cpu_logger, "Proceso %d fue interrumpido por el usuario (FINALIZAR_PROCESO)", pcb_a_ejecutar->pid);
+				send_pcb_fp(fd_kernel_dispatch, pcb_a_ejecutar);
+				free(pcb_a_ejecutar->registros);
+				free(pcb_a_ejecutar);
+				pcb_a_ejecutar = NULL;
+				free(instruccion);
+				free(instruccion_recibida);
+				for (int i = 0; instruccion_separada[i] != NULL; i++) {
+					free(instruccion_separada[i]);
+				}
+				free(instruccion_separada);
 				dictionary_destroy(dictionary_registros);
 				break;
 			}

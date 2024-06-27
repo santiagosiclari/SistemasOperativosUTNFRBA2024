@@ -43,6 +43,8 @@ extern t_list* recursos;
 
 extern sem_t semaforoPlanificacion;
 
+t_pcb* buscar_pcb(t_queue* cola, uint8_t pid_a_borrar);
+void finalizar_proceso(uint8_t pid_a_borrar);
 void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar);
 void conexion_kernel_cpu_dispatch();
 int size_all_queues();

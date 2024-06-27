@@ -45,9 +45,11 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	if(pcb_borrar != NULL) {
 		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Exec", "Exit");
 		finalizar_proceso(pid_a_borrar);
+		free(pcb_borrar->registros);
+		free(pcb_borrar);
 		return;
 	}
-
+	
 	// New
     pthread_mutex_lock(&colaNewMutex);
 	pcb_borrar = buscar_pcb(colaNew, pid_a_borrar);
@@ -55,6 +57,8 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	if(pcb_borrar != NULL) {
 		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "New", "Exit");
 		finalizar_proceso(pid_a_borrar);
+		free(pcb_borrar->registros);
+		free(pcb_borrar);
 		return;
 	}
 
@@ -65,6 +69,8 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	if(pcb_borrar != NULL) {
 		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Ready", "Exit");
 		finalizar_proceso(pid_a_borrar);
+		free(pcb_borrar->registros);
+		free(pcb_borrar);
 		return;
 	}
 
@@ -75,6 +81,8 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	if(pcb_borrar != NULL) {
 		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Blocked", "Exit");
 		finalizar_proceso(pid_a_borrar);
+		free(pcb_borrar->registros);
+		free(pcb_borrar);
 		return;
 	}
 
@@ -85,6 +93,8 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 	if(pcb_borrar != NULL) {
 		log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Ready (Prioritario)", "Exit");
 		finalizar_proceso(pid_a_borrar);
+		free(pcb_borrar->registros);
+		free(pcb_borrar);
 		return;
 	}
 
@@ -95,6 +105,8 @@ void buscar_en_queues_y_finalizar(t_pcb* pcb_borrar, uint8_t pid_a_borrar) {
 		if(pcb_borrar != NULL) {
 			log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid_a_borrar, "Blocked", "Exit");
 			finalizar_proceso(pid_a_borrar);
+			free(pcb_borrar->registros);
+			free(pcb_borrar);
 			return;
 		}
 	}
@@ -149,6 +161,11 @@ void listar_procesos_blocked() {
             }
         }
     }
+
+	if (strlen(lista_pids) == 20) { // Procesos en Blocked: --> nada mas
+    	log_info(kernel_logger, "Procesos en Blocked: -");
+		return;
+	}
 
 	lista_pids[strlen(lista_pids) - 1] = '\0';
     log_info(kernel_logger, "%s", lista_pids);
@@ -244,11 +261,30 @@ void atender_instruccion (char* leido) {
 		t_pcb* pcb_borrar = malloc(sizeof(t_pcb));
 		pcb_borrar->registros = malloc(sizeof(t_registros));
 
+		// Exec --> Enviar señal a CPU si esta ejecutando el proceso a finalizar
+		pthread_mutex_lock(&colaExecMutex);
+		pcb_borrar = buscar_pcb(colaExec, pid_a_borrar);
+		if(pcb_borrar != NULL) {
+        	log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
+			send_pid_a_borrar(fd_cpu_interrupt, pid_a_borrar);
+
+			// Liberar memoria
+			free(pcb_borrar->registros);
+			free(pcb_borrar);
+			// Liberar cada elemento
+			int i = 0;
+			while (comando_consola[i] != NULL) {
+				free(comando_consola[i]);
+				i++;
+			}
+			// Liberar el array
+			free(comando_consola);
+			return;
+		}
+		pthread_mutex_unlock(&colaExecMutex);
+
 		buscar_en_queues_y_finalizar(pcb_borrar, pid_a_borrar);
         log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid_a_borrar, "Interrupted by User");
-
-		free(pcb_borrar->registros);
-		free(pcb_borrar);
 	} else if(strcmp(comando_consola[0], "MULTIPROGRAMACION") == 0 || strcmp(comando_consola[0], "MP") == 0){
 		int nuevo_grado = atoi(comando_consola[1]);
 		GRADO_MULTIPROGRAMACION = nuevo_grado;

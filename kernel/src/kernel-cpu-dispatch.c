@@ -120,6 +120,30 @@ void conexion_kernel_cpu_dispatch() {
 			free(pcb_interrumpido->registros);
 			free(pcb_interrumpido);
 			break;
+		case RECIBIR_PCB_FP: // Recibir cont de ejecucion por fin de proceso
+			t_pcb* pcb_fp = malloc(sizeof(t_pcb));
+			pcb_fp->registros = malloc(sizeof(t_pcb));
+
+			if(!recv_pcb_fp(fd_cpu_dispatch, pcb_fp)) {
+				log_error(kernel_logger, "Hubo un error al recibir el PCB al FINALIZAR_PROCESO");
+				break;
+			}
+			
+			pthread_mutex_unlock(&colaExecMutex);
+			log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_fp->pid, "Exec", "Exit");
+			// Liberar memoria
+			send_fin_proceso(fd_memoria, pcb_fp->pid);
+			// Liberar recursos
+			liberar_recursos(pcb_fp->pid);
+
+			// Si se borra el unico proceso que quedaba entonces detener planificacion
+			if ((queue_size(colaNew) + size_all_queues()) == 0) {
+				control_planificacion = 0;
+			}
+
+			free(pcb_fp->registros);
+			free(pcb_fp);
+			break;
 		case WAIT:
 			t_pcb* pcb_wait = malloc(sizeof(t_pcb));
 			pcb_wait->registros = malloc(sizeof(t_registros));

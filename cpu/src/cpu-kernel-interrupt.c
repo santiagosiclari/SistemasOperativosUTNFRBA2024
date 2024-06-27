@@ -26,6 +26,22 @@ void conexion_cpu_kernel_interrupt() {
 			}
 			pthread_mutex_unlock(&pcbEjecutarMutex);
 			break;
+		case RECIBIR_PID_A_BORRAR:
+			uint8_t pid_a_borrar;
+			if (!recv_pid_a_borrar(fd_kernel_interrupt, &pid_a_borrar)) {
+				log_error(cpu_logger, "Hubo un error al recibir el PID a borrar");
+			}
+
+			pthread_mutex_lock(&pcbEjecutarMutex);
+			if (pcb_a_ejecutar != NULL) {
+				if(pid_a_borrar == pcb_a_ejecutar->pid) {
+					pcb_a_ejecutar->flag_int = 3; // 3 --> interrupcion por FINALIZAR_PROCESO
+					pthread_mutex_unlock(&pcbEjecutarMutex);
+					break;
+				}
+			}
+			pthread_mutex_unlock(&pcbEjecutarMutex);
+			break;
 		case -1:
 			log_error(cpu_logger, "El Kernel (Interrupt) se desconecto. Terminando servidor");
 			control = 0;

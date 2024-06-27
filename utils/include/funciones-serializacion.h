@@ -77,7 +77,10 @@ typedef enum {
     IO_FS_DELETE,
     IO_FS_TRUNCATE,
     IO_FS_WRITE,
-    IO_FS_READ
+    IO_FS_READ,
+
+    // Consola
+    RECIBIR_PCB_FP // Recibir PCB si esta en Exec al hacer FINALIZAR_PROCESO
 } op_code;
 
 typedef enum {

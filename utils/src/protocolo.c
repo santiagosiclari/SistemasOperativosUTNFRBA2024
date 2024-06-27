@@ -1632,3 +1632,35 @@ bool recv_io_fs_write_read(int fd, t_pcb* pcb_io, uint32_t* tamanio, uint32_t* d
 
     return true;
 }
+
+// PCB al FINALIZAR_PROCESO
+void send_pcb_fp(int fd, t_pcb* pcb_fp) {
+    t_buffer *buffer = serializar_pcb(pcb_fp);
+    t_paquete *a_enviar = crear_paquete(RECIBIR_PCB_FP, buffer);
+    enviar_paquete(a_enviar, fd);
+    eliminar_paquete(a_enviar);
+}
+
+bool recv_pcb_fp(int fd, t_pcb* pcb_fp) {
+    t_paquete* paquete = malloc(sizeof(t_paquete));
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->offset = 0;
+
+    // Control para recibir el buffer
+    int bytes_recibidos = recv(fd, &(paquete->buffer->size), sizeof(uint32_t), 0);
+    if (bytes_recibidos != sizeof(uint32_t)) {
+        printf("Error: No se recibió el tamaño del buffer completo\n");
+        free(paquete->buffer);
+        free(paquete);
+        return false;
+    }
+
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    bytes_recibidos = recv(fd, paquete->buffer->stream, paquete->buffer->size, 0);
+
+    deserializar_pcb(paquete->buffer, pcb_fp);
+
+    eliminar_paquete(paquete);
+
+    return true;
+}
