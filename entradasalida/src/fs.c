@@ -297,6 +297,7 @@ void write_archivo(char* nombre, void* datos, int tamanio_write, int ptr_archivo
     strcpy(path_archivo_write, PATH_BASE_DIALFS);
     strcat(path_archivo_write, "/");
     strcat(path_archivo_write, nombre);
+    int posicion_archivo_write;
 
     // Leo de memoria, espero recibir los datos y lo escribo en el archivo
     FILE* archivo_write = fopen(path_archivo_write, "rb+");
@@ -305,8 +306,17 @@ void write_archivo(char* nombre, void* datos, int tamanio_write, int ptr_archivo
         return;
     }
 
+    // Buscar metadata por nombre para obtener bloque inicial
+    for (int i = 0; i < list_size(lista_metadata); i++) {
+        t_metadata* metadata = list_get(lista_metadata, i);
+        if (strcmp(metadata->nombre, nombre) == 0) {
+            posicion_archivo_write = metadata->bloque_inicial * BLOCK_SIZE + ptr_archivo_write;
+            break;
+        }
+    }
+
     // Moverse al puntero archivo
-    if (fseek(archivo_write, ptr_archivo_write, SEEK_SET) != 0) {
+    if (fseek(archivo_write, posicion_archivo_write, SEEK_SET) != 0) {
         log_error(entradasalida_logger, "Error al moverse al puntero del archivo");
         fclose(archivo_write);
         return;
@@ -327,6 +337,7 @@ void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_a
     strcpy(path_archivo_read, PATH_BASE_DIALFS);
     strcat(path_archivo_read, "/");
     strcat(path_archivo_read, nombre);
+    int posicion_archivo_read;
 
     // Leo de archivo, envio los datos a escribir en memoria y recibo si la escritura fue ejecutada
     FILE* archivo_read = fopen(path_archivo_read, "rb+");
@@ -335,8 +346,17 @@ void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_a
         return;
     }
 
+    // Buscar metadata por nombre para obtener bloque inicial
+    for (int i = 0; i < list_size(lista_metadata); i++) {
+        t_metadata* metadata = list_get(lista_metadata, i);
+        if (strcmp(metadata->nombre, nombre) == 0) {
+            posicion_archivo_read = metadata->bloque_inicial * BLOCK_SIZE + ptr_archivo_read;
+            break;
+        }
+    }
+
     // Moverse a la posicion deseada
-    if (fseek(archivo_read, ptr_archivo_read, SEEK_SET) != 0) {
+    if (fseek(archivo_read, posicion_archivo_read, SEEK_SET) != 0) {
         log_error(entradasalida_logger, "Error al moverse al puntero del archivo");
         fclose(archivo_read);
         free(path_archivo_read);
@@ -374,6 +394,11 @@ void iniciar_compactacion(t_bitarray* bitmap_bloques) {
         return;
     }
 
+    uint32_t file_size = BLOCK_SIZE * BLOCK_COUNT;
+    void* buffer_viejo = malloc(file_size); // Tiene todo el archivo anterior a la compactacion y lo va utilizando para no pisar datos
+
+    // Leer el archivo completo en el buffer viejo
+    fread(buffer_viejo, 1, file_size, archivo_bloques);
     // Poner todo el bitmap en 0
     limpiar_bitmap(bitmap_blocks);
 
@@ -395,19 +420,15 @@ void iniciar_compactacion(t_bitarray* bitmap_bloques) {
             int bloque_origen = metadata->bloque_inicial + j;
             int bloque_destino = bloque_nuevo + j;
 
-            // Leer datos del bloque origen
-            void* buffer = malloc(BLOCK_SIZE);
-            fseek(archivo_bloques, bloque_origen * BLOCK_SIZE, SEEK_SET);
-            fread(buffer, 1, BLOCK_SIZE, archivo_bloques);
+            // Leer datos del bloque origen desde el buffer de los datos del archivo anterior a la compactacion
+            void* datos_bloque = (char*)buffer_viejo + bloque_origen * BLOCK_SIZE;
 
-            // Escribir datos en el bloque destino
+            // Escribir datos en el bloque destino en el archivo de bloques (bloques.dat)
             fseek(archivo_bloques, bloque_destino * BLOCK_SIZE, SEEK_SET);
-            fwrite(buffer, 1, BLOCK_SIZE, archivo_bloques);
+            fwrite(datos_bloque, 1, BLOCK_SIZE, archivo_bloques);
 
             // Marcar el bloque destino como ocupado
             ocupar_bloque(bitmap_bloques, bloque_destino);
-
-            free(buffer);
         }
 
         // Actualizar el bloque inicial en los metadatos
@@ -430,4 +451,5 @@ void iniciar_compactacion(t_bitarray* bitmap_bloques) {
 
     fclose(archivo_bloques);
     log_info(entradasalida_logger, "Compactacion completada con exito.");
+    free(buffer_viejo);
 }
