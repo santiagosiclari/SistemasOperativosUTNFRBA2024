@@ -19,7 +19,7 @@
 
 typedef struct {
     char* nombre;
-    uint8_t instancias;
+    int instancias;
     t_queue* blocked;
 } t_recurso;
 

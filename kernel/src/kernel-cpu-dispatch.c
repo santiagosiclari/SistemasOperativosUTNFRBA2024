@@ -180,7 +180,12 @@ void conexion_kernel_cpu_dispatch() {
 			for(int i = 0; i < list_size(recursos); i++) {
 				t_recurso* r = list_get(recursos, i);
 				if(strcmp(recurso_wait, r->nombre) == 0) {
-					if(r->instancias <= 0) {
+					r->instancias--;
+					// Poner recurso de la lista de recurso tomados
+					t_list* rec_tom_wait = list_get(recursos_de_procesos, pcb_wait->pid);
+					list_add(rec_tom_wait, r);
+
+					if(r->instancias < 0) {
 						log_info(kernel_logger, "PID: %d - Bloqueado por: %s", pcb_wait->pid, r->nombre);
 						// El proceso se bloquea en la cola correspondiente dependiendo el recurso tomado
            				pthread_mutex_lock(&colaExecMutex);
@@ -213,17 +218,11 @@ void conexion_kernel_cpu_dispatch() {
 							queue_push(r->blocked, pcb_recv);
 						}
             			pthread_mutex_unlock(&colaExecMutex);
-						break;
 					} else {
-						r->instancias--;
-						// Poner recurso de la lista de recurso tomados
-						t_list* rec_tom_wait = list_get(recursos_de_procesos, pcb_wait->pid);
-						list_add(rec_tom_wait, r);
-
 						// Segui ejecutando
 						send_recursos_ok(fd_cpu_dispatch, 1);
-						break;
 					}
+					break;
 				}
 			}
 
