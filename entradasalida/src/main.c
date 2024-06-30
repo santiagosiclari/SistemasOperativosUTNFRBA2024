@@ -3,7 +3,6 @@
 t_bitarray* bitmap_blocks;
 char* path_bloques;
 char* path_bitmap;
-t_list* lista_metadata;
 
 int main(int argc, char* argv[]) {
 
@@ -38,9 +37,6 @@ int main(int argc, char* argv[]) {
         strcat(path_bitmap, "/bitmap.dat");
 
         init_bitmap(path_bitmap); // bitmap.dat
-
-        // Iniciar lista de metadata
-        lista_metadata = list_create();
     }
 
     // Conexiones

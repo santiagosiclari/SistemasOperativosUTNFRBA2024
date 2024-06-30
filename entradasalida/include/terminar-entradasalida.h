@@ -19,6 +19,7 @@ extern t_bitarray* bitmap_blocks;
 extern char* path_bloques;
 extern char* path_bitmap;
 
+void terminar_bitmap();
 void terminar_entradasalida();
 
 #endif

@@ -2,7 +2,7 @@
 
 void terminar_entradasalida() {
     if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
-        bitarray_destroy(bitmap_blocks);
+        terminar_bitmap();
         free(path_bloques);
         free(path_bitmap);
     }

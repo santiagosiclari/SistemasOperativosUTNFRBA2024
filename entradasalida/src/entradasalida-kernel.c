@@ -259,7 +259,7 @@ void conexion_entradasalida_kernel() {
 			usleep(TIEMPO_UNIDAD_TRABAJO * 1000);
 			
 			log_info(entradasalida_logger, "PID: %d - Operacion: %s", pcb_fs_read->pid, "IO_FS_READ");
-			log_info(entradasalida_logger, "PID: %d - Escribir Archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", pcb_fs_read->pid, nombre_archivo, tamanio_read, ptr_archivo_read);
+			log_info(entradasalida_logger, "PID: %d - Leer Archivo: %s - Tamaño a Leer: %d - Puntero Archivo: %d", pcb_fs_read->pid, nombre_archivo, tamanio_read, ptr_archivo_read);
 
 			// Logica de cada instruccion
 			read_archivo(nombre_archivo, tamanio_read, dir_fisica_read, ptr_archivo_read, pcb_fs_read, bitmap_blocks);
