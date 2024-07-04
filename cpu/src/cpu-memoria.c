@@ -284,7 +284,9 @@ void conexion_cpu_memoria() {
 
 			log_info(cpu_logger, "PID: %d - OBTENER MARCO - Pagina: %d - Marco: %d", pid_marco, numero_pagina, marco);
 			
-			agregar_a_tlb(pid_marco, numero_pagina, marco);
+			if (CANTIDAD_ENTRADAS_TLB != 0) {
+				agregar_a_tlb(pid_marco, numero_pagina, marco);
+			}
 
 			// Calculo para la instruccion que esperaba recibir algun dato, como un marco, etc.
 			uint32_t desplazamiento = instruccion_pendiente->direccion_logica - numero_pagina * tam_pagina;
@@ -320,7 +322,7 @@ void conexion_cpu_memoria() {
 					if (strcmp(instruccion_pendiente->registro_datos, "SI") == 0) {
                         send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->tamanio);
                     } else if (strcmp(instruccion_pendiente->registro_datos, "DI") == 0) {
-						log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %s", pcb_a_ejecutar->pid, direccion_fisica, (char*)instruccion_pendiente->datos);
+						log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %.*s", pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->tamanio, (char*)instruccion_pendiente->datos);
                         send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, instruccion_pendiente->datos, instruccion_pendiente->tamanio);
                     }
 				} else if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0) {
@@ -404,7 +406,7 @@ void conexion_cpu_memoria() {
 					}
 
 					// TLB hit
-					log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %s", pcb_a_ejecutar->pid, direccion_fisica_di, (char*)valor);
+					log_info(cpu_logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: %d - Valor: %.*s", pcb_a_ejecutar->pid, direccion_fisica_di, tam_dato, (char*)valor);
 					send_escribir_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica_di, valor, tam_dato);
 					break;
 				}

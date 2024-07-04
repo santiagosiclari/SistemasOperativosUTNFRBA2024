@@ -46,6 +46,8 @@ void conexion_entradasalida_memoria() {
 				free(pcb_fs_write);
 				free(nombre_fs);
 				free(nombre_fs_recibido);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
 				free(datos);
 			}
 
@@ -83,6 +85,8 @@ void conexion_entradasalida_memoria() {
 				free(pcb_fs_read);
 				free(nombre_fs);
 				free(nombre_fs_recibido);
+				free(nombre_archivo);
+				free(nombre_archivo_recibido);
 			}
 
 			pthread_mutex_unlock(&mutexIO);

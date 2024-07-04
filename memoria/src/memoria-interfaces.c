@@ -80,7 +80,7 @@ void conexion_memoria_interfaces(void* arg) {
             // Escritura OK --> envia 1
             log_info(memoria_logger, "Escritura en memoria completada correctamente para el PID: %d", pid_a_escribir);
             send_escritura_ok(fd_interfaz, 1);
-            free(datos_escribir);
+            // free(datos_escribir);
             break;
 		case LEER_MEMORIA:
             uint8_t pid_a_leer;

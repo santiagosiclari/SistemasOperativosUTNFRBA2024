@@ -376,6 +376,7 @@ void read_archivo(char* nombre, int tamanio_read, int dir_fisica_read, int ptr_a
 
     send_escribir_memoria(fd_memoria, pcb_fs_read->pid, dir_fisica_read, datos_leidos, tamanio_read);
 
+    free(datos_leidos);
     fclose(archivo_bloques);
     free(path_archivo_read);
 }

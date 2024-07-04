@@ -437,8 +437,6 @@ void funcion_io_fs_truncate(t_dictionary* dictionary_registros, char* interfaz, 
         tamanio = *r_tamanio;
     }
 
-    log_info(cpu_logger, "%d", tamanio);
-
     send_io_fs_truncate(fd_kernel_dispatch, pcb_a_ejecutar, tamanio, nombre_archivo, strlen(nombre_archivo) + 1, interfaz, strlen(interfaz) + 1);
 }
 
@@ -447,16 +445,7 @@ void funcion_io_fs_write(t_dictionary* dictionary_registros, char* interfaz, cha
     pcb_a_ejecutar->flag_int = 1;
     pcb_a_ejecutar->pc++;
 
-    uint32_t tamanio_write;
-    if (strlen(reg_tamanio) == 3 || !strcmp(reg_tamanio, "SI") || !strcmp(reg_tamanio, "DI") || !strcmp(reg_tamanio, "PC")) {
-        uint32_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
-        tamanio_write = *r_tamanio;
-    } else if (strlen(reg_tamanio) == 2) {
-        uint8_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
-        tamanio_write = *r_tamanio;
-    }
-
-    uint32_t puntero_archivo;
+    uint32_t puntero_archivo = 0;
     if (strlen(reg_puntero_archivo) == 3 || !strcmp(reg_puntero_archivo, "SI") || !strcmp(reg_puntero_archivo, "DI") || !strcmp(reg_puntero_archivo, "PC")) {
         uint32_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
         puntero_archivo = *r_ptr_arch;
@@ -465,8 +454,17 @@ void funcion_io_fs_write(t_dictionary* dictionary_registros, char* interfaz, cha
         puntero_archivo = *r_ptr_arch;
     }
 
+    uint32_t tamanio_write = 0;
+    if (strlen(reg_tamanio) == 3 || !strcmp(reg_tamanio, "SI") || !strcmp(reg_tamanio, "DI") || !strcmp(reg_tamanio, "PC")) {
+        uint32_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_write = *r_tamanio;
+    } else if (strlen(reg_tamanio) == 2) {
+        uint8_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_write = *r_tamanio;
+    }
+
     // Traducir direccion logica a fisica
-    uint32_t direccion_fisica;
+    uint32_t direccion_fisica = 0;
     if (strlen(reg_direccion) == 3 || !strcmp(reg_direccion, "SI") || !strcmp(reg_direccion, "DI") || !strcmp(reg_direccion, "PC")) {
         uint32_t *dir_logica = dictionary_get(dictionary_registros, reg_direccion);
         direccion_fisica = mmu(*dir_logica);
@@ -521,15 +519,6 @@ void funcion_io_fs_read(t_dictionary* dictionary_registros, char* interfaz, char
     pcb_a_ejecutar->flag_int = 1;
     pcb_a_ejecutar->pc++;
 
-    uint32_t tamanio_read;
-    if (strlen(reg_tamanio) == 3 || !strcmp(reg_tamanio, "SI") || !strcmp(reg_tamanio, "DI") || !strcmp(reg_tamanio, "PC")) {
-        uint32_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
-        tamanio_read = *r_tamanio;
-    } else if (strlen(reg_tamanio) == 2) {
-        uint8_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
-        tamanio_read = *r_tamanio;
-    }
-
     uint32_t puntero_archivo;
     if (strlen(reg_puntero_archivo) == 3 || !strcmp(reg_puntero_archivo, "SI") || !strcmp(reg_puntero_archivo, "DI") || !strcmp(reg_puntero_archivo, "PC")) {
         uint32_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
@@ -537,6 +526,15 @@ void funcion_io_fs_read(t_dictionary* dictionary_registros, char* interfaz, char
     } else if (strlen(reg_tamanio) == 2) {
         uint8_t *r_ptr_arch = dictionary_get(dictionary_registros, reg_puntero_archivo);
         puntero_archivo = *r_ptr_arch;
+    }
+
+    uint32_t tamanio_read;
+    if (strlen(reg_tamanio) == 3 || !strcmp(reg_tamanio, "SI") || !strcmp(reg_tamanio, "DI") || !strcmp(reg_tamanio, "PC")) {
+        uint32_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_read = *r_tamanio;
+    } else if (strlen(reg_tamanio) == 2) {
+        uint8_t *r_tamanio = dictionary_get(dictionary_registros, reg_tamanio);
+        tamanio_read = *r_tamanio;
     }
 
     // Traducir direccion logica a fisica
