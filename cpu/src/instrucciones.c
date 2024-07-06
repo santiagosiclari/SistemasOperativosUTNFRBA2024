@@ -100,10 +100,15 @@ void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, ch
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "MOV_IN";
+            instruccion_pendiente->instruccion = strdup("MOV_IN");
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = 0; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -117,10 +122,15 @@ void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, ch
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "MOV_IN";
+            instruccion_pendiente->instruccion = strdup("MOV_IN");
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = 0; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -135,18 +145,30 @@ void funcion_mov_in(t_dictionary* dictionary_registros, char* registro_datos, ch
 		send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, tamanio_a_leer);
         pthread_mutex_lock(&instruccion_pendiente_mutex);
         instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-        instruccion_pendiente->instruccion = "MOV_IN";
+        instruccion_pendiente->instruccion = strdup("MOV_IN");
         instruccion_pendiente->registro_datos = strdup(registro_datos);
         instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+        instruccion_pendiente->direccion_logica = 0; // Ya se tradujo
+        instruccion_pendiente->tamanio = 0; // No tiene
+        instruccion_pendiente->datos = NULL; // No tiene
+        instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+        instruccion_pendiente->puntero_archivo = 0; // No tiene
+        instruccion_pendiente->nombre_archivo = NULL; // No tiene
         pthread_mutex_unlock(&instruccion_pendiente_mutex);
 	} else if (strlen(registro_datos) == 2) {
         uint32_t tamanio_a_leer = sizeof(uint8_t);
 		send_leer_memoria(fd_memoria, pcb_a_ejecutar->pid, direccion_fisica, tamanio_a_leer);
         pthread_mutex_lock(&instruccion_pendiente_mutex);
         instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-        instruccion_pendiente->instruccion = "MOV_IN";
+        instruccion_pendiente->instruccion = strdup("MOV_IN");
         instruccion_pendiente->registro_datos = strdup(registro_datos);
         instruccion_pendiente->registro_direccion = strdup(registro_direccion);
+        instruccion_pendiente->direccion_logica = 0; // Ya se tradujo
+        instruccion_pendiente->tamanio = 0; // No tiene
+        instruccion_pendiente->datos = NULL; // No tiene
+        instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+        instruccion_pendiente->puntero_archivo = 0; // No tiene
+        instruccion_pendiente->nombre_archivo = NULL; // No tiene
         pthread_mutex_unlock(&instruccion_pendiente_mutex);
 	}
 
@@ -163,10 +185,15 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "MOV_OUT";
+            instruccion_pendiente->instruccion = strdup("MOV_OUT");
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = 0; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -180,10 +207,15 @@ void funcion_mov_out(t_dictionary* dictionary_registros, char* registro_direccio
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "MOV_OUT";
+            instruccion_pendiente->instruccion = strdup("MOV_OUT");
             instruccion_pendiente->registro_datos = strdup(registro_datos);
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
+            instruccion_pendiente->tamanio = 0; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -237,10 +269,15 @@ void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio) {
         // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
         pthread_mutex_lock(&instruccion_pendiente_mutex);
         instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-        instruccion_pendiente->instruccion = "COPY_STRING";
+        instruccion_pendiente->instruccion = strdup("COPY_STRING");
         instruccion_pendiente->direccion_logica = *reg_si;
         instruccion_pendiente->registro_datos = strdup("SI");
         instruccion_pendiente->tamanio = tamanio;
+        instruccion_pendiente->registro_direccion = NULL; // No tiene
+        instruccion_pendiente->datos = NULL; // No tiene
+        instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+        instruccion_pendiente->puntero_archivo = 0; // No tiene
+        instruccion_pendiente->nombre_archivo = NULL; // No tiene
         uint32_t numero_pagina = *reg_si / tam_pagina;
         uint32_t desplazamiento = *reg_si - numero_pagina * tam_pagina;
         send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -253,10 +290,15 @@ void funcion_copy_string(t_dictionary* dictionary_registros, uint32_t tamanio) {
     
     pthread_mutex_lock(&instruccion_pendiente_mutex);
     instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-    instruccion_pendiente->instruccion = "COPY_STRING";
+    instruccion_pendiente->instruccion = strdup("COPY_STRING");
     instruccion_pendiente->direccion_logica = *reg_si;
     instruccion_pendiente->registro_datos = strdup("SI");
     instruccion_pendiente->tamanio = tamanio;
+    instruccion_pendiente->registro_direccion = NULL; // No tiene
+    instruccion_pendiente->datos = NULL; // No tiene
+    instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+    instruccion_pendiente->puntero_archivo = 0; // No tiene
+    instruccion_pendiente->nombre_archivo = NULL; // No tiene
     pthread_mutex_unlock(&instruccion_pendiente_mutex);
 
     // Sigue cuando recibe el marco (si es necesario) o cuando recibe el valor de memoria (string)
@@ -303,11 +345,15 @@ void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, c
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_STDIN_READ";
+            instruccion_pendiente->instruccion = strdup("IO_STDIN_READ");
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -323,11 +369,15 @@ void funcion_io_stdin_read(t_dictionary* dictionary_registros, char* interfaz, c
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_STDIN_READ";
+            instruccion_pendiente->instruccion = strdup("IO_STDIN_READ");
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -367,11 +417,15 @@ void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz,
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_STDOUT_WRITE";
+            instruccion_pendiente->instruccion = strdup("IO_STDOUT_WRITE");
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -387,11 +441,15 @@ void funcion_io_stdout_write(t_dictionary* dictionary_registros, char* interfaz,
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_STDOUT_WRITE";
+            instruccion_pendiente->instruccion = strdup("IO_STDOUT_WRITE");
             instruccion_pendiente->registro_direccion = strdup(registro_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_maximo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
+            instruccion_pendiente->puntero_archivo = 0; // No tiene
+            instruccion_pendiente->nombre_archivo = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -472,13 +530,15 @@ void funcion_io_fs_write(t_dictionary* dictionary_registros, char* interfaz, cha
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_FS_WRITE";
+            instruccion_pendiente->instruccion = strdup("IO_FS_WRITE");
             instruccion_pendiente->registro_direccion = strdup(reg_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_write;
             instruccion_pendiente->puntero_archivo = puntero_archivo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
             instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -494,13 +554,15 @@ void funcion_io_fs_write(t_dictionary* dictionary_registros, char* interfaz, cha
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_FS_WRITE";
+            instruccion_pendiente->instruccion = strdup("IO_FS_WRITE");
             instruccion_pendiente->registro_direccion = strdup(reg_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_write;
             instruccion_pendiente->puntero_archivo = puntero_archivo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
             instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -546,13 +608,15 @@ void funcion_io_fs_read(t_dictionary* dictionary_registros, char* interfaz, char
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_FS_READ";
+            instruccion_pendiente->instruccion = strdup("IO_FS_READ");
             instruccion_pendiente->registro_direccion = strdup(reg_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_read;
             instruccion_pendiente->puntero_archivo = puntero_archivo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
             instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
@@ -568,13 +632,15 @@ void funcion_io_fs_read(t_dictionary* dictionary_registros, char* interfaz, char
             // TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
             pthread_mutex_lock(&instruccion_pendiente_mutex);
             instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-            instruccion_pendiente->instruccion = "IO_FS_READ";
+            instruccion_pendiente->instruccion = strdup("IO_FS_READ");
             instruccion_pendiente->registro_direccion = strdup(reg_direccion);
             instruccion_pendiente->direccion_logica = *dir_logica;
             instruccion_pendiente->tamanio = tamanio_read;
             instruccion_pendiente->puntero_archivo = puntero_archivo;
             instruccion_pendiente->nombre_interfaz = strdup(interfaz);
             instruccion_pendiente->nombre_archivo = strdup(nombre_archivo);
+            instruccion_pendiente->registro_datos = NULL; // No tiene
+            instruccion_pendiente->datos = NULL; // No tiene
             uint32_t numero_pagina = *dir_logica / tam_pagina;
             uint32_t desplazamiento = *dir_logica - numero_pagina * tam_pagina;
             send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);

@@ -126,8 +126,8 @@ void planificacionFIFO() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
-            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
+            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
         }
 
         if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
@@ -174,8 +174,8 @@ void planificacionRR() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
-            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
+            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
         }
 
         if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
@@ -225,8 +225,8 @@ void planificacionVRR() {
             pthread_mutex_lock(&colaReadyMutex);
             queue_push(colaReady, pcb_nuevo);
             pthread_mutex_unlock(&colaReadyMutex);
-            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
+            ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
         }
 
         if(queue_size(colaAux) > 0 && queue_size(colaExec) == 0) {

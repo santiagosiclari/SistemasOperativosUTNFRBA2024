@@ -19,14 +19,28 @@ void printear_pcb() {
 }
 
 void free_instruccion_pendiente(t_instruccion_pendiente* instruccion_pendiente) {
-	// Liberar la memoria de la instrucción pendiente
+	// Liberar la memoria de la instruccion pendiente
+    free(instruccion_pendiente->registro_datos);
+    free(instruccion_pendiente->registro_direccion);
+
+	if (strcmp(instruccion_pendiente->instruccion, "COPY_STRING") == 0) {
+		free(instruccion_pendiente->datos);
+	}
+
+    if (strcmp(instruccion_pendiente->instruccion, "IO_STDIN_READ") == 0 || 
+        strcmp(instruccion_pendiente->instruccion, "IO_STDOUT_WRITE") == 0 || 
+        strcmp(instruccion_pendiente->instruccion, "IO_FS_READ") == 0 || 
+        strcmp(instruccion_pendiente->instruccion, "IO_FS_WRITE") == 0) {
+        free(instruccion_pendiente->nombre_interfaz);
+    }
+
+    if (strcmp(instruccion_pendiente->instruccion, "IO_FS_READ") == 0 || 
+        strcmp(instruccion_pendiente->instruccion, "IO_FS_WRITE") == 0) {
+        free(instruccion_pendiente->nombre_archivo);
+    }
+
 	free(instruccion_pendiente->instruccion);
-	free(instruccion_pendiente->registro_datos);
-	free(instruccion_pendiente->registro_direccion);
-	free(instruccion_pendiente->datos);
-	free(instruccion_pendiente->nombre_interfaz);
 	free(instruccion_pendiente);
-	instruccion_pendiente = NULL;
 }
 
 void crear_diccionario(t_dictionary* dictionary_registros) {
@@ -68,6 +82,7 @@ void conexion_cpu_memoria() {
 				// Si habia una instruccion pendiente, que la libere
 				if(instruccion_pendiente != NULL) {
 					free_instruccion_pendiente(instruccion_pendiente);
+					instruccion_pendiente = NULL;
 				}
 				// Creo diccionario
 				dictionary_registros = dictionary_create();
@@ -393,11 +408,15 @@ void conexion_cpu_memoria() {
 					if (direccion_fisica_di == -1) {
 						// TLB miss, guardar la instruccion pendiente y esperar a recibir el marco
 						instruccion_pendiente = malloc(sizeof(t_instruccion_pendiente));
-						instruccion_pendiente->instruccion = "COPY_STRING";
+						instruccion_pendiente->instruccion = strdup("COPY_STRING");
 						instruccion_pendiente->direccion_logica = *reg_di;
 						instruccion_pendiente->registro_datos = strdup("DI");
 						instruccion_pendiente->datos = valor;
 						instruccion_pendiente->tamanio = tam_dato;
+						instruccion_pendiente->registro_direccion = NULL; // No tiene
+						instruccion_pendiente->nombre_interfaz = NULL; // No tiene
+						instruccion_pendiente->puntero_archivo = 0; // No tiene
+						instruccion_pendiente->nombre_archivo = NULL; // No tiene
 						uint32_t numero_pagina = *reg_di / tam_pagina;
 						uint32_t desplazamiento = *reg_di - numero_pagina * tam_pagina;
 						send_num_pagina(fd_memoria, pcb_a_ejecutar->pid, numero_pagina, desplazamiento);
