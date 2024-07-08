@@ -118,7 +118,7 @@ void planificacionFIFO() {
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
         
-        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && contador_procesos < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -128,6 +128,7 @@ void planificacionFIFO() {
             pthread_mutex_unlock(&colaReadyMutex);
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
             ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
+            contador_procesos++;
         }
 
         if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
@@ -166,7 +167,7 @@ void planificacionRR() {
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
 
-        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && contador_procesos < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -176,6 +177,7 @@ void planificacionRR() {
             pthread_mutex_unlock(&colaReadyMutex);
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
             ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
+            contador_procesos++;
         }
 
         if (queue_size(colaReady) > 0 && queue_size(colaExec) == 0) {
@@ -217,7 +219,7 @@ void planificacionVRR() {
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
 
-        while (queue_size(colaNew) > 0 && size_all_queues() < GRADO_MULTIPROGRAMACION) {
+        while (queue_size(colaNew) > 0 && contador_procesos < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
             t_pcb* pcb_nuevo = queue_pop(colaNew);
             pthread_mutex_unlock(&colaNewMutex);
@@ -227,6 +229,7 @@ void planificacionVRR() {
             pthread_mutex_unlock(&colaReadyMutex);
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_nuevo->pid, "New", "Ready");
             ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
+            contador_procesos++;
         }
 
         if(queue_size(colaAux) > 0 && queue_size(colaExec) == 0) {

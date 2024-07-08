@@ -3,6 +3,17 @@
 t_pcb* pcb_a_ejecutar;
 t_list* procesos;
 
+void destruir_pcb(void* ptr_pcb) {
+    t_pcb* pcb = (t_pcb*)ptr_pcb;
+    // Liberar recursos del PCB
+    if (pcb && pcb->registros) {
+        free(pcb->registros);
+    }
+    if (pcb) {
+        free(pcb);
+    }
+}
+
 void conexion_cpu_kernel_dispatch() {
     bool control = 1;
 	procesos = list_create();
@@ -124,5 +135,5 @@ void conexion_cpu_kernel_dispatch() {
 			break;
 		}
 	}
-    list_destroy_and_destroy_elements(procesos, free);
+    list_destroy_and_destroy_elements(procesos, destruir_pcb);
 }

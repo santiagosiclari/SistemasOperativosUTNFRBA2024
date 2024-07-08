@@ -31,6 +31,7 @@ extern pthread_t quantum_thread;
 
 extern t_temporal* tiempo_vrr;
 extern int control_planificacion;
+extern int contador_procesos;
 
 extern t_list* listaInterfaces;
 

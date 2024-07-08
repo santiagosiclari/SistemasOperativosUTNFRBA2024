@@ -39,6 +39,7 @@ void mandar_a_exit(char* razon, uint8_t pid) {
 	// Revisar si otro proceso se puede desbloquear
 	liberar_recursos(pid);
 	send_fin_proceso(fd_memoria, pid);
+	contador_procesos--;
     log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid, "Exec", "Exit");
 	log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid, razon);
 
@@ -135,6 +136,7 @@ void conexion_kernel_cpu_dispatch() {
 			send_fin_proceso(fd_memoria, pcb_fp->pid);
 			// Liberar recursos
 			liberar_recursos(pcb_fp->pid);
+			contador_procesos--;
 
 			// Si se borra el unico proceso que quedaba entonces detener planificacion
 			if ((queue_size(colaNew) + size_all_queues()) == 0) {

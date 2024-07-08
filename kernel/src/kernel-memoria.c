@@ -25,6 +25,7 @@ void conexion_kernel_memoria() {
 				send_fin_proceso(fd_memoria, pid_oom);
 				// Revisar si otro proceso se puede desbloquear
 				liberar_recursos(pid_oom);
+				contador_procesos--;
 
 				if ((queue_size(colaExec) == 0 && (queue_size(colaNew) + size_all_queues()) > 0)) {
 					sem_post(&semaforoPlanificacion);

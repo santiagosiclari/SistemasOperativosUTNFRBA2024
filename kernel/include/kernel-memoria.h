@@ -21,6 +21,7 @@ extern t_queue* colaBlocked;
 extern t_queue* colaAux;
 
 extern int control_planificacion;
+extern int contador_procesos;
 
 extern pthread_mutex_t colaExecMutex;
 extern sem_t semaforoPlanificacion;

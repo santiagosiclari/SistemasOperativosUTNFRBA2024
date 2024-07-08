@@ -1,5 +1,7 @@
 #include <../include/consola.h>
 
+int contador_procesos;
+
 t_pcb* buscar_pcb(t_queue* cola, uint8_t pid_a_borrar) {
 	// Buscar en cola
 	t_pcb* pcb_encontrado = NULL;
@@ -26,6 +28,7 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 	send_fin_proceso(fd_memoria, pid_a_borrar);
 	// Liberar recursos
 	liberar_recursos(pid_a_borrar);
+	contador_procesos--;
 
 	if ((queue_size(colaExec) == 0 && (queue_size(colaNew) + size_all_queues()) > 0)) {
 		sem_post(&semaforoPlanificacion);
@@ -248,6 +251,7 @@ void atender_instruccion (char* leido) {
     } else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0 || strcmp(comando_consola[0], "IPLAN") == 0) {
 		if (control_primera_vez) {
             log_info(kernel_logger, "Comienza la planificacion");
+			contador_procesos = 0;
             control_primera_vez = false;
         } else {
             log_info(kernel_logger, "Se retoma la planificacion");

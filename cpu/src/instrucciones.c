@@ -257,6 +257,19 @@ void funcion_jnz(t_dictionary* dictionary_registros, char* registro, uint32_t va
 }
 
 void funcion_resize(uint32_t tamanio) {
+    if(tamanio == 0) {
+        int i = 0;
+        while (i < list_size(lista_tlb)) {
+            t_tlb* entrada_a_buscar = list_get(lista_tlb, i);
+            if (entrada_a_buscar->pid == pcb_a_ejecutar->pid) {
+                t_tlb* entrada_a_borrar = list_remove(lista_tlb, i);
+                free(entrada_a_borrar);
+            } else {
+                i++;
+            }
+        }
+    }
+
     send_tamanio(fd_memoria, tamanio, pcb_a_ejecutar->pid);
     pcb_a_ejecutar->pc++;
 }
