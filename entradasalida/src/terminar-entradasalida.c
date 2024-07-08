@@ -1,7 +1,7 @@
 #include "../include/terminar-entradasalida.h"
 
 void terminar_entradasalida() {
-    if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+    if(strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
         terminar_bitmap();
         free(path_bloques);
         free(path_bitmap);

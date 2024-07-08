@@ -1,7 +1,7 @@
 #include <../include/configs.h>
 
 void init_kernel_config(void) {
-    kernel_config = config_create("/home/utnso/tp-2024-1c-ChacoForSystem/kernel/kernel.config");
+    kernel_config = config_create("kernel.config");
     if (kernel_config == NULL) {
         perror("Error al intertar cargar el config.");
         exit(EXIT_FAILURE);

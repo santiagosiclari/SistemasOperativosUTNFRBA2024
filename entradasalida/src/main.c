@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     init_entradasalida_config(config);
 
     // Inicializamos bloques y bitmap
-    if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+    if (strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
         // Concatenar con path de PATH_BASE_DIALFS
         uint32_t MAX_LENGTH = 256;
         path_bloques = malloc(MAX_LENGTH);

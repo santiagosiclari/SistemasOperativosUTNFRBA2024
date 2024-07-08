@@ -663,7 +663,7 @@ void conexion_kernel_cpu_dispatch() {
 			for (int i = 0; i < list_size(listaInterfaces); i++) {
 				t_interfaz* interfaz = list_get(listaInterfaces, i);
 				if (coincide_nombre(interfaz, nombre_fs)) {
-					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+					if (strcmp(interfaz->tipo, "DIALFS") == 0) {
 						acepta_instruccion_io = true;
 						break;
 					} else {
@@ -766,7 +766,7 @@ void conexion_kernel_cpu_dispatch() {
 			for (int i = 0; i < list_size(listaInterfaces); i++) {
 				t_interfaz* interfaz = list_get(listaInterfaces, i);
 				if (coincide_nombre(interfaz, nombre_fs)) {
-					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+					if (strcmp(interfaz->tipo, "DIALFS") == 0) {
 						acepta_instruccion_io = true;
 						break;
 					} else {
@@ -870,7 +870,7 @@ void conexion_kernel_cpu_dispatch() {
 			for (int i = 0; i < list_size(listaInterfaces); i++) {
 				t_interfaz* interfaz = list_get(listaInterfaces, i);
 				if (coincide_nombre(interfaz, nombre_fs)) {
-					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+					if (strcmp(interfaz->tipo, "DIALFS") == 0) {
 						acepta_instruccion_io = true;
 						break;
 					} else {
@@ -973,7 +973,7 @@ void conexion_kernel_cpu_dispatch() {
 			for (int i = 0; i < list_size(listaInterfaces); i++) {
 				t_interfaz* interfaz = list_get(listaInterfaces, i);
 				if (coincide_nombre(interfaz, nombre_fs)) {
-					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+					if (strcmp(interfaz->tipo, "DIALFS") == 0) {
 						acepta_instruccion_io = true;
 						break;
 					} else {
@@ -1076,7 +1076,7 @@ void conexion_kernel_cpu_dispatch() {
 			for (int i = 0; i < list_size(listaInterfaces); i++) {
 				t_interfaz* interfaz = list_get(listaInterfaces, i);
 				if (coincide_nombre(interfaz, nombre_fs)) {
-					if (strcmp(interfaz->tipo, "DialFS") == 0) {
+					if (strcmp(interfaz->tipo, "DIALFS") == 0) {
 						acepta_instruccion_io = true;
 						break;
 					} else {

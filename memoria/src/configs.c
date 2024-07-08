@@ -1,7 +1,7 @@
 #include "../include/configs.h"
 
 void init_memoria_config(void) {
-    memoria_config = config_create("/home/utnso/tp-2024-1c-ChacoForSystem/memoria/memoria.config");
+    memoria_config = config_create("memoria.config");
     if (memoria_config == NULL)
     {
         perror("Error al intertar cargar el config.");

@@ -1,7 +1,7 @@
 #include "../include/configs.h"
 
 void init_cpu_config(void) {
-    cpu_config = config_create("/home/utnso/tp-2024-1c-ChacoForSystem/cpu/cpu.config");
+    cpu_config = config_create("cpu.config");
     if (cpu_config == NULL) {
         perror("Error al intertar cargar el config.");
         exit(EXIT_FAILURE);

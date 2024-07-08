@@ -1,9 +1,7 @@
 #include <../include/configs.h>
 
 void init_entradasalida_config(char* config) {
-    char* config_concatenado = malloc(256);
-    sprintf(config_concatenado, "/home/utnso/tp-2024-1c-ChacoForSystem/entradasalida%s", config);
-    entradasalida_config = config_create(config_concatenado);
+    entradasalida_config = config_create(config);
     if (entradasalida_config == NULL) {
         perror("Error al intertar cargar el config.");
         exit(EXIT_FAILURE);
@@ -25,7 +23,7 @@ void init_entradasalida_config(char* config) {
         PUERTO_KERNEL = config_get_string_value(entradasalida_config, "PUERTO_KERNEL");
         IP_MEMORIA = config_get_string_value(entradasalida_config, "IP_MEMORIA");
         PUERTO_MEMORIA = config_get_string_value(entradasalida_config, "PUERTO_MEMORIA");
-    } else if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+    } else if(strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
         TIEMPO_UNIDAD_TRABAJO = config_get_int_value(entradasalida_config, "TIEMPO_UNIDAD_TRABAJO");
         IP_KERNEL = config_get_string_value(entradasalida_config, "IP_KERNEL");
         PUERTO_KERNEL = config_get_string_value(entradasalida_config, "PUERTO_KERNEL");
@@ -36,6 +34,4 @@ void init_entradasalida_config(char* config) {
         BLOCK_COUNT = config_get_int_value(entradasalida_config, "BLOCK_COUNT");
         RETRASO_COMPACTACION = config_get_int_value(entradasalida_config, "RETRASO_COMPACTACION");
     }
-
-    free(config_concatenado);
 }

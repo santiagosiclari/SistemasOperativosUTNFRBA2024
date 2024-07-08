@@ -34,7 +34,7 @@ void conexion_entradasalida_memoria() {
 				free(nombre_stdout_recibido);
 				free(datos_char);
 				free(datos);
-			} else if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+			} else if(strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
 				// Escribir en el bloques.dat los datos recibidos
 				write_archivo(nombre_archivo, datos, length, ptr_archivo_write, bitmap_blocks);
 
@@ -76,7 +76,7 @@ void conexion_entradasalida_memoria() {
 				free(nombre_stdin);
 				free(nombre_stdin_recibido);
 				free(string);
-			} else if(strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+			} else if(strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
 				// Avisa que ya no esta mas interrumpido el proceso
 				send_fin_io(fd_kernel, pcb_fs_read->pid, nombre_fs, strlen(nombre_fs) + 1);
 
