@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 	char* nombre = readline("> ");
     log_info(entradasalida_logger, "Nombre de la I/O leido: %s\n", nombre);
 	
-    log_info(entradasalida_logger, "Ingrese el archivo de configuracion:"); // Ejemplo --> /TECLADO.config
+    log_info(entradasalida_logger, "Ingrese el archivo de configuracion:"); // Ejemplo --> TECLADO.config
     char* config = readline("> ");
     log_info(entradasalida_logger, "Archivo de config leido: %s\n", config);
 
@@ -23,6 +23,12 @@ int main(int argc, char* argv[]) {
 
     // Inicializamos bloques y bitmap
     if (strcmp(TIPO_INTERFAZ, "DIALFS") == 0) {
+        // Crear carpeta dialfs si no existe
+        struct stat st = {0};
+        if (stat(PATH_BASE_DIALFS, &st) == -1) {
+            mkdir(PATH_BASE_DIALFS, 0777);
+        }
+
         // Concatenar con path de PATH_BASE_DIALFS
         uint32_t MAX_LENGTH = 256;
         path_bloques = malloc(MAX_LENGTH);
