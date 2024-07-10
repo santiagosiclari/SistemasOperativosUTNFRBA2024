@@ -205,7 +205,7 @@ void atender_instruccion (char* leido) {
 		// Concatenar con path de carpeta scripts-pruebas
 		uint32_t MAX_LENGTH = 256;
 		char* path = malloc(MAX_LENGTH);
-		strcpy(path, "../..");
+		strcpy(path, "/home/utnso/so-deploy/tp-2024-1c-ChacoForSystem");
    	 	strcat(path, comando_consola[1]);
 
 		FILE* archivo;

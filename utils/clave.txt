@@ -1,0 +1,7 @@
+Clave SSH:
+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
+
+Comandos:
+git clone https://github.com/sisoputnfrba/so-deploy.git
+cd so-deploy
+./deploy.sh -r=release -p=utils -p=kernel -p=cpu -p=memoria -p=entradasalida "tp-2024-1c-ChacoForSystem"
