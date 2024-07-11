@@ -1,6 +1,9 @@
 Clave SSH:
 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
 
+Clave SSH santiagosiclari :
+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
+
 Comandos:
 git clone https://github.com/sisoputnfrba/so-deploy.git
 cd so-deploy
