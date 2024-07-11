@@ -120,7 +120,7 @@ void listar_procesos(t_queue* cola, pthread_mutex_t mutex, char* estado) {
     if(queue_is_empty(cola)) {  
     	log_info(kernel_logger, "Procesos en %s: -", estado);
     } else {
-		char lista_pids[128] = "";
+		char lista_pids[1024] = "";
         t_list* elements = cola->elements;
         for(int i = 0; i < list_size(elements); i++) {
             t_pcb* pcb = (t_pcb*) list_get(elements, i);
