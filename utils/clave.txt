@@ -1,6 +1,17 @@
 Clave SSH:
 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
 
+Clave SSH santiagosiclari :
+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
+
+Clave SSH SantiFustinoni:
+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
+
+En la carpeta so-deploy hacer (ip seria cada ip de los modulos - NO hace falta comillas ni nada):
+./configure.sh IP_KERNEL ip
+./configure.sh IP_MEMORIA ip
+./configure.sh IP_CPU ip
+
 Comandos:
 git clone https://github.com/sisoputnfrba/so-deploy.git
 cd so-deploy
