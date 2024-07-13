@@ -40,6 +40,8 @@ void mandar_a_exit(char* razon, uint8_t pid) {
 	liberar_recursos(pid);
 	send_fin_proceso(fd_memoria, pid);
 	contador_procesos--;
+	sem_post(&semaforoPlanificacion);
+	sem_post(&semaforoPlanificacion2);
     log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pid, "Exec", "Exit");
 	log_info(kernel_logger, "Finaliza el proceso %d - Motivo: %s", pid, razon);
 
@@ -113,6 +115,7 @@ void conexion_kernel_cpu_dispatch() {
 
 			pcb_int->estado = 'R';
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_int->pid, "Exec", "Ready");
+			sem_post(&semaforoPlanificacion);
 			queue_push(colaReady, pcb_int);
 			pthread_mutex_unlock(&colaReadyMutex);
 			ingreso_ready_aux(colaReady, colaReadyMutex, "Ready");
@@ -132,6 +135,7 @@ void conexion_kernel_cpu_dispatch() {
 			
 			pthread_mutex_unlock(&colaExecMutex);
 			log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_fp->pid, "Exec", "Exit");
+			sem_post(&semaforoPlanificacion);
 			// Liberar memoria
 			send_fin_proceso(fd_memoria, pcb_fp->pid);
 			// Liberar recursos
@@ -216,6 +220,7 @@ void conexion_kernel_cpu_dispatch() {
 							}
 							
 							pcb_recv->estado = 'B';
+							sem_post(&semaforoPlanificacion);
             				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recv->pid, "Exec", "Blocked");
 							queue_push(r->blocked, pcb_recv);
 						}
@@ -323,7 +328,7 @@ void conexion_kernel_cpu_dispatch() {
 				}
 
 				if (queue_size(colaExec) == 0) {
-					sem_post(&semaforoPlanificacion);
+					sem_post(&semaforoPlanificacion2);
 				}
 			}
 
@@ -417,6 +422,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -513,6 +519,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -609,6 +616,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -710,6 +718,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -813,6 +822,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -917,6 +927,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -1020,6 +1031,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);
@@ -1123,6 +1135,7 @@ void conexion_kernel_cpu_dispatch() {
 				
 				pcb_recibido->estado = 'B';
 				pthread_mutex_lock(&colaBlockedMutex);
+				sem_post(&semaforoPlanificacion);
 				log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb_recibido->pid, "Exec", "Blocked");
 				queue_push(colaBlocked, pcb_recibido);
 				pthread_mutex_unlock(&colaBlockedMutex);

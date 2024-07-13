@@ -43,6 +43,7 @@ extern t_list* recursos_de_procesos;
 extern t_list* recursos;
 
 extern sem_t semaforoPlanificacion;
+extern sem_t semaforoPlanificacion2;
 
 t_pcb* buscar_pcb(t_queue* cola, uint8_t pid_a_borrar);
 void finalizar_proceso(uint8_t pid_a_borrar);

@@ -25,6 +25,7 @@ extern int contador_procesos;
 
 extern pthread_mutex_t colaExecMutex;
 extern sem_t semaforoPlanificacion;
+extern sem_t semaforoPlanificacion2;
 
 void conexion_kernel_memoria();
 int size_all_queues();

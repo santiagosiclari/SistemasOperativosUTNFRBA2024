@@ -9,6 +9,7 @@ t_queue* colaAux;
 t_list* listaInterfaces;
 
 sem_t semaforoPlanificacion;
+sem_t semaforoPlanificacion2;
 bool control_primera_vez;
 
 int main(int argc, char* argv[]) {
@@ -29,6 +30,7 @@ int main(int argc, char* argv[]) {
     //Inicializamos semaforo
     control_primera_vez = true;
     sem_init(&semaforoPlanificacion, 1, 0);
+    sem_init(&semaforoPlanificacion2, 1, 0);
 
     // Creamos lista de interfaces
     listaInterfaces = list_create();

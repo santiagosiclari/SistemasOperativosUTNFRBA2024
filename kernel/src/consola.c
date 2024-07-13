@@ -29,9 +29,10 @@ void finalizar_proceso(uint8_t pid_a_borrar) {
 	// Liberar recursos
 	liberar_recursos(pid_a_borrar);
 	contador_procesos--;
+	sem_post(&semaforoPlanificacion);
 
 	if ((queue_size(colaExec) == 0 && (queue_size(colaNew) + size_all_queues()) > 0)) {
-		sem_post(&semaforoPlanificacion);
+		sem_post(&semaforoPlanificacion2);
 	}
 
 	// Si se borra el unico proceso que quedaba entonces detener planificacion
@@ -247,7 +248,7 @@ void atender_instruccion (char* leido) {
 		log_info(kernel_logger, "Path enviado: %s", comando_consola[1]);
 	} else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0 || strcmp(comando_consola[0], "DP") == 0) {
         log_info(kernel_logger, "Se detiene la planificacion");
-        sem_wait(&semaforoPlanificacion);
+        sem_wait(&semaforoPlanificacion2);
     } else if (strcmp(comando_consola[0], "INICIAR_PLANIFICACION") == 0 || strcmp(comando_consola[0], "IPLAN") == 0) {
 		if (control_primera_vez) {
             log_info(kernel_logger, "Comienza la planificacion");
@@ -257,6 +258,7 @@ void atender_instruccion (char* leido) {
             log_info(kernel_logger, "Se retoma la planificacion");
         }
         sem_post(&semaforoPlanificacion);
+        sem_post(&semaforoPlanificacion2);
         iniciar_planificacion();
 	} else if (strcmp(comando_consola[0], "FINALIZAR_PROCESO") == 0 || strcmp(comando_consola[0], "FP") == 0) {
 		// Buscar pid en queue --> pid => comando_consola[1]

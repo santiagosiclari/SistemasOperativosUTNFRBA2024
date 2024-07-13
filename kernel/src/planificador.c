@@ -87,7 +87,7 @@ void verificar_si_todos_estan_bloqueados() {
     pthread_mutex_unlock(&colaReadyMutex);
     
     if (total_size == 0) {
-        sem_wait(&semaforoPlanificacion);
+        sem_wait(&semaforoPlanificacion2);
     }
 }
 
@@ -117,6 +117,7 @@ void planificacionFIFO() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
+        sem_wait(&semaforoPlanificacion2);
         
         while (queue_size(colaNew) > 0 && contador_procesos < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
@@ -144,11 +145,16 @@ void planificacionFIFO() {
             send_pid(fd_cpu_dispatch, pcb->pid);
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready", "Exec");
         }
+        sem_post(&semaforoPlanificacion2);
         sem_post(&semaforoPlanificacion);
 
         // Para que la consola no tenga lag cuando todos los procesos estan bloqueados
         // Ademas cuando termina hace sem_wait de la planificacion para que se pueda iniciar otra
         verificar_si_todos_estan_bloqueados();
+
+        if (queue_size(colaExec) != 0) {
+            sem_wait(&semaforoPlanificacion);
+        }
     }
 
     // sem_wait(&semaforoPlanificacion);
@@ -166,6 +172,7 @@ void planificacionRR() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
+        sem_wait(&semaforoPlanificacion2);
 
         while (queue_size(colaNew) > 0 && contador_procesos < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
@@ -197,10 +204,15 @@ void planificacionRR() {
             controlar_quantum(pcb);
         }
         sem_post(&semaforoPlanificacion);
+        sem_post(&semaforoPlanificacion2);
 
         // Para que la consola no tenga lag cuando todos los procesos estan bloqueados
         // Ademas cuando termina hace sem_wait de la planificacion para que se pueda iniciar otra
         verificar_si_todos_estan_bloqueados();
+
+        if (queue_size(colaExec) != 0) {
+            sem_wait(&semaforoPlanificacion);
+        }
     }
 
     // sem_wait(&semaforoPlanificacion);
@@ -218,6 +230,7 @@ void planificacionVRR() {
     control_planificacion = 1;
     while (control_planificacion) {
         sem_wait(&semaforoPlanificacion);
+        sem_wait(&semaforoPlanificacion2);
 
         while (queue_size(colaNew) > 0 && contador_procesos < GRADO_MULTIPROGRAMACION) {
             pthread_mutex_lock(&colaNewMutex);
@@ -271,6 +284,7 @@ void planificacionVRR() {
             tiempo_vrr = temporal_create();
             log_info(kernel_logger, "PID: %d - Estado Anterior: %s - Estado Actual: %s", pcb->pid, "Ready", "Exec");
         }
+        sem_post(&semaforoPlanificacion2);
         sem_post(&semaforoPlanificacion);
 
         // Para que la consola no tenga lag cuando todos los procesos estan bloqueados

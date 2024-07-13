@@ -27,6 +27,7 @@ extern t_list* recursos;
 
 extern bool control_primera_vez;
 extern sem_t semaforoPlanificacion;
+extern sem_t semaforoPlanificacion2;
 
 extern pthread_mutex_t colaNewMutex;
 

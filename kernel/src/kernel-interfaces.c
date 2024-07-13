@@ -73,7 +73,7 @@ void conexion_kernel_interfaces(void* arg) {
 				}
 
 				if (queue_size(colaExec) == 0) {
-					sem_post(&semaforoPlanificacion);
+					sem_post(&semaforoPlanificacion2);
 				}
 			}
 			pthread_mutex_unlock(&colaBlockedMutex);

@@ -21,6 +21,7 @@ void conexion_kernel_memoria() {
 			pthread_mutex_lock(&colaExecMutex);
 			if(!queue_is_empty(colaExec)) {
 				t_pcb* pcb_a_borrar = queue_pop(colaExec);
+				sem_post(&semaforoPlanificacion);
 				// Liberar marcos
 				send_fin_proceso(fd_memoria, pid_oom);
 				// Revisar si otro proceso se puede desbloquear
@@ -28,7 +29,7 @@ void conexion_kernel_memoria() {
 				contador_procesos--;
 
 				if ((queue_size(colaExec) == 0 && (queue_size(colaNew) + size_all_queues()) > 0)) {
-					sem_post(&semaforoPlanificacion);
+					sem_post(&semaforoPlanificacion2);
 				}
 
 				if ((queue_size(colaNew) + size_all_queues()) == 0) {
